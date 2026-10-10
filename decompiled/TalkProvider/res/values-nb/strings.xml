@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">les lynmeldinger</string>
+    <string name="ro_perm_desc">Tillat applikasjoner å lese data fra lynmeldingsoperatøren.</string>
+    <string name="wo_perm_label">skriv lynmeldinger</string>
+    <string name="wo_perm_desc">Tillat applikasjonerå skrive data til lynmeldingsoperatøren.</string>
+    <string name="app_label">Google Talk-lagring</string>
+</resources>

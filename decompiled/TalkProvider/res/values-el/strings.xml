@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">ανάγνωση άμεσων μηνυμάτων</string>
+    <string name="ro_perm_desc">Επιτρέπει στις εφαρμογές την ανάγνωση δεδομένων από τον πάροχο περιεχομένου Google Talk.</string>
+    <string name="wo_perm_label">εγγραφή άμεσων μηνυμάτων</string>
+    <string name="wo_perm_desc">Επιτρέπει στις εφαρμογές την εγγραφή δεδομένων στον πάροχο περιεχομένου Google Talk.</string>
+    <string name="app_label">Χώρος αποθήκευσης του Google Talk</string>
+</resources>

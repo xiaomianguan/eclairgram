@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">číst zprávy chatu</string>
+    <string name="ro_perm_desc">Povoluje aplikacím číst data od poskytovatele obsahu služby Google Talk.</string>
+    <string name="wo_perm_label">chatovat</string>
+    <string name="wo_perm_desc">Povoluje aplikacím psát data poskytovateli obsahu služby Google Talk.</string>
+    <string name="app_label">Úložiště služby Google Talk</string>
+</resources>

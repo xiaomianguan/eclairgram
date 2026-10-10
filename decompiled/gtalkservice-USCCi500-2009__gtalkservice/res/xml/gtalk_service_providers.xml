@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<im_providers version="1">
+    <provider name="GTalk" full_name="Google Talk" category="com.android.im.category.GTALK" />
+</im_providers>

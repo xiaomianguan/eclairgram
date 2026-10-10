@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">Chat-Nachrichten lesen</string>
+    <string name="ro_perm_desc">Ermöglicht Anwendungen das Lesen von Daten des Google Talk-Content-Anbieters</string>
+    <string name="wo_perm_label">Chat-Nachrichten verfassen</string>
+    <string name="wo_perm_desc">Ermöglicht Anwendungen das Schreiben von Daten in den Google Talk-Content-Anbieter</string>
+    <string name="app_label">Google Talk-Speicher</string>
+</resources>

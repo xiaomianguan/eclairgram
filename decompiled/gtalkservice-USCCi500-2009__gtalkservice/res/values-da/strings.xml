@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Tjenesten Google Talk</string>
+    <string name="perm_label">"Send og modtag Google Talk-IM'er"</string>
+    <string name="perm_desc">"Tillader, at programmer bruger tjenesten Google Talk til at sende og modtage IM'er. Brug af denne tjeneste forårsager databrug. Ondsindede programmer kan forårsage overdreven databrug."</string>
+    <string name="perm_data_label">Send databeskeder</string>
+    <string name="perm_data_desc">Tillader, at programmerne sender databeskeder til andre brugere med Google-konti. Programmet kan sende beskeder i baggrunden, med eller uden dit udtrykkelige samtykke. Brug af denne tjeneste medfører databrug. Ondsindede programmer kan forårsage overdreven databrug.</string>
+    <string name="perm_receive_data_message_label">Modtag beskeder og meddelelser</string>
+    <string name="perm_receive_data_message_desc">Tillader, at programmer modtager beskeder og meddelelser fra programserveren. Brug af denne tjeneste forårsager databrug. Ondsindede programmer kan forårsage overdreven databrug.</string>
+    <string name="perm_data_msg_broadcast_label">Udsender databeskeder til programmer.</string>
+    <string name="perm_data_msg_broadcast_desc">Kan udsende databeskeder fra internettet til programmer, der er registreret til at lytte til dem.</string>
+    <string name="permlab_intentVendingOnly">Send udsendelser til Android Marked.</string>
+    <string name="permdesc_intentVendingOnly">Der kan ikke sendes udsendelser til Android Marked med anmodninger om installation og fjernelse af programmer.</string>
+    <string name="permlab_heartbeat">Send impulser til Google Talk-serveren</string>
+    <string name="permdesc_heartbeat">Kan udsende en impulspakke til Google Talk-serveren for at sikre, at linjen fungerer.</string>
+    <string name="group_chat">Gruppechat: %s</string>
+    <string name="default_decline_reason">Beklager! Jeg er optaget lige nu.</string>
+    <string name="newMessages_label">Nye chatsamtaler</string>
+    <string name="notify_groupchat_label">Invitation til gruppechat</string>
+    <string name="num_unread_chats">%s ulæste chatbeskeder</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%s vil gerne chatte</string>
+    <string name="group_chat_invite_notify_text">Du har modtaget en invitation til gruppechat fra %s</string>
+    <string name="message_too_long">Du kan ikke sende beskeder på mere end 2000 tegn.</string>
+    <string name="conn_auth_error_notify_ticker">Godkendelse af Google Talk mislykkedes</string>
+    <string name="conn_auth_error_notify_title">Godkendelse af Google Talk mislykkedes</string>
+    <string name="conn_auth_error_title">Godkendelsesfejl</string>
+    <string name="conn_auth_error_message">Google Talk kunne ikke logge ind. Hvis dette er en Google Apps-konto, skal du kontrollere, at tjenesten Chat er aktiveret for denne konto.</string>
+    <string name="conn_auth_error_button_retry">Prøv igen</string>
+    <string name="conn_auth_error_button_cancel">Annuller</string>
+</resources>

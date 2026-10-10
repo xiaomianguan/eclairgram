@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Υπηρεσία Google Talk</string>
+    <string name="perm_label">Αποστολή και λήψη άμεσων μηνυμάτων Google Talk</string>
+    <string name="perm_desc">Επιτρέπει στις εφαρμογές τη χρήση της υπηρεσίας Google Talk για την αποστολή και τη λήψη άμεσων μηνυμάτων. Η χρήση της υπηρεσίας αυτής θα επιβαρύνει τη χρήση δεδομένων. Κακόβουλες εφαρμογές ενδέχεται να προκαλέσουν υπερβολική χρήση δεδομένων.</string>
+    <string name="perm_data_label">Αποστολή μηνυμάτων δεδομένων</string>
+    <string name="perm_data_desc">Επιτρέπει στις εφαρμογές να στέλνουν μηνύματα δεδομένων σε άλλους χρήστες με λογαριασμούς Google. Η εφαρμογή μπορεί να στείλει μηνύματα στο παρασκήνιο, με ή χωρίς τη ρητή συγκατάθεσή σας. Η χρήση αυτής της υπηρεσίας θα επιβαρύνει τη χρήση δεδομένων. Κακόβουλες εφαρμογές ενδέχεται να προκαλέσουν υπερβολική χρήση δεδομένων.</string>
+    <string name="perm_receive_data_message_label">Λήψη μηνυμάτων και ειδοποιήσεων</string>
+    <string name="perm_receive_data_message_desc">Επιτρέπει στις εφαρμογές να λαμβάνουν μηνύματα και ειδοποιήσεις που αποστέλλονται από τον διακομιστή εφαρμογών. Η χρήση της υπηρεσίας αυτής θα επιβαρύνει τη χρήση δεδομένων. Κακόβουλες εφαρμογές ενδέχεται να προκαλέσουν υπερβολική χρήση δεδομένων.</string>
+    <string name="perm_data_msg_broadcast_label">Μετάδοση μηνυμάτων δεδομένων σε εφαρμογές.</string>
+    <string name="perm_data_msg_broadcast_desc">Μπορεί να μεταδώσει μηνύματα δεδομένων από το διαδίκτυο στις εφαρμογές που έχουν καταχωρηθεί να τα λαμβάνουν.</string>
+    <string name="permlab_intentVendingOnly">Αποστολή εκπομπών στο Android Market.</string>
+    <string name="permdesc_intentVendingOnly">Να αποστέλλονται εκπομπές προς το Android Market με αιτήσεις για την εγκατάσταση ή την κατάργηση εγκατάστασης εφαρμογής.</string>
+    <string name="permlab_heartbeat">Αποστολή παλμού στον διακομιστή Google Talk</string>
+    <string name="permdesc_heartbeat">Μπορεί να στείλει ένα πακέτο παλμού στον διακομιστή Google Talk, για να εξασφαλίσει την καλή κατάσταση της σύνδεσης.</string>
+    <string name="group_chat">Ομαδική συζήτηση: %s</string>
+    <string name="default_decline_reason">Λυπάμαι, είμαι απασχολημένος αυτήν τη στιγμή.</string>
+    <string name="newMessages_label">Νέες συζητήσεις</string>
+    <string name="notify_groupchat_label">Πρόσκληση σε ομαδική συζήτηση</string>
+    <string name="num_unread_chats">%s μη αναγνωσμένες συζητήσεις</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%s θέλει να μπορεί να συζητήσει</string>
+    <string name="group_chat_invite_notify_text">Λάβατε μια πρόσκληση σε ομαδική συζήτηση από τον χρήστη %s</string>
+    <string name="message_too_long">Δεν μπορείτε να στείλετε μηνύματα που το μήκος τους ξεπερνά τους 2000 χαρακτήρες.</string>
+    <string name="conn_auth_error_notify_ticker">Ο έλεγχος ταυτότητας Google Talk απέτυχε</string>
+    <string name="conn_auth_error_notify_title">Ο έλεγχος ταυτότητας Google Talk απέτυχε</string>
+    <string name="conn_auth_error_title">Σφάλμα ελέγχου ταυτότητας</string>
+    <string name="conn_auth_error_message">Το Google Talk απέτυχε να συνδεθεί. Εάν πρόκειται για λογαριασμό Εφαρμογών Google, επιβεβαιώστε ότι η υπηρεσία συζήτησης είναι ενεργοποιημένη για αυτόν τον λογαριασμό.</string>
+    <string name="conn_auth_error_button_retry">Επανάληψη</string>
+    <string name="conn_auth_error_button_cancel">Άκυρο</string>
+</resources>

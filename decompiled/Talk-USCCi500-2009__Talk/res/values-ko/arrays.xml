@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="smiley_names">
+        <item>행복해</item>
+        <item>슬퍼</item>
+        <item>윙크</item>
+        <item>메롱</item>
+        <item>헉!</item>
+        <item>키스</item>
+        <item>아악</item>
+        <item>멋지네</item>
+        <item>으이구</item>
+        <item>실수했네</item>
+        <item>당황</item>
+        <item>천사</item>
+        <item>결정하기 어렵군</item>
+        <item>엉엉엉</item>
+        <item>비밀로 할게</item>
+        <item>하하하</item>
+        <item>어리둥절</item>
+        <item>능글맞은 웃음</item>
+        <item>화났어</item>
+        <item>무표정한 얼굴</item>
+        <item>따뜻한 마음</item>
+    </string-array>
+</resources>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="smiley_names">
+        <item>Glad</item>
+        <item>Trist</item>
+        <item>Blinker</item>
+        <item>Rækker tunge</item>
+        <item>Overrasket</item>
+        <item>Kysser</item>
+        <item>Råber</item>
+        <item>Sej</item>
+        <item>Pengeglad</item>
+        <item>Forlegen</item>
+        <item>Flov</item>
+        <item>Engel</item>
+        <item>Uafklaret</item>
+        <item>Græder</item>
+        <item>Lukket med syv segl</item>
+        <item>Griner</item>
+        <item>Forvirret</item>
+        <item>Smørret grin</item>
+        <item>Vred</item>
+        <item>Pokerfjæs</item>
+        <item>Hjerte</item>
+    </string-array>
+</resources>

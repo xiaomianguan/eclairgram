@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/gtalk_general_settings">
+        <CheckBoxPreference android:persistent="false" android:title="@string/auto_login" android:key="gtalk-auto-login" android:defaultValue="true" />
+        <CheckBoxPreference android:persistent="false" android:title="@string/mobile_indicator_title" android:key="gtalk-mobile-indicator" android:summary="@string/mobile_indicator_summary" android:defaultValue="true" />
+        <CheckBoxPreference android:persistent="false" android:title="@string/show_away_on_idle_title" android:key="gtalk-show-away-on-idle" android:summary="@string/show_away_on_idle_summary" android:defaultValue="true" />
+        <Preference android:title="@string/pref_gtalk_clear_search_history_title" android:key="pref_gtalk_clear_history_key" android:summary="@string/pref_gtalk_clear_search_history_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/notification_group_title">
+        <CheckBoxPreference android:persistent="false" android:title="@string/notification_enabled_title" android:key="gtalk-enable-notifications" android:summary="@string/notification_enabled_summary" android:defaultValue="true" />
+        <com.google.android.talk.ImRingtonePreference android:persistent="false" android:layout="?android:preferenceLayoutChild" android:title="@string/notification_ringtone_title" android:key="gtalk-ringtone" android:dependency="gtalk-enable-notifications" android:defaultValue="content://settings/system/notification_sound" android:ringtoneType="notification" />
+        <CheckBoxPreference android:persistent="false" android:layout="?android:preferenceLayoutChild" android:title="@string/notification_vibrate_title" android:key="gtalk-vibrate" android:summary="@string/notification_vibrate_summary" android:dependency="gtalk-enable-notifications" android:defaultValue="false" />
+    </PreferenceCategory>
+</PreferenceScreen>

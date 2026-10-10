@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">讀取即時訊息</string>
+    <string name="ro_perm_desc">允許應用程式讀取來自 Google Talk 內容供應端的資料。</string>
+    <string name="wo_perm_label">撰寫即時訊息</string>
+    <string name="wo_perm_desc">允許應用程式將資料寫入至 Google Talk 內容供應端。</string>
+    <string name="app_label">Google Talk 儲存空間</string>
+</resources>

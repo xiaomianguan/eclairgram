@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Google 토크 서비스</string>
+    <string name="perm_label">Google Talk 채팅 메시지 보내고 받기</string>
+    <string name="perm_desc">응용프로그램이 Google 토크 서비스를 사용하여 채팅 메시지를 보내고 받을 수 있게 합니다. 이 서비스를 사용하면 데이터를 소비하게 되며 악성 응용프로그램이 과다한 데이터 사용을 유발할 수 있습니다.</string>
+    <string name="perm_data_label">데이터 메시지 보내기</string>
+    <string name="perm_data_desc">응용프로그램이 다른 Google 계정 사용자에게 데이터 메시지를 보낼 수 있도록 합니다. 응용프로그램은 명시적인 동의 여부에 관계없이 백그라운드로 메시지를 보낼 수 있습니다. 이 서비스를 사용하면 데이터를 소비하게 되며 악성 응용프로그램이 과다한 데이터 사용을 유발할 수 있습니다.</string>
+    <string name="perm_receive_data_message_label">메시지 및 알림 수신</string>
+    <string name="perm_receive_data_message_desc">응용프로그램이 응용프로그램 서버에서 보낸 메시지와 알림을 수신할 수 있도록 합니다. 이 서비스를 사용하면 데이터를 소비하게 되며 악성 응용프로그램이 과다한 데이터 사용을 유발할 수 있습니다.</string>
+    <string name="perm_data_msg_broadcast_label">데이터 메시지를 응용프로그램에 전달합니다.</string>
+    <string name="perm_data_msg_broadcast_desc">인터넷에서 수신한 데이터 메시지를 등록된 응용프로그램으로 전달할 수 있습니다.</string>
+    <string name="permlab_intentVendingOnly">Android 마켓에 브로드캐스트 보내기</string>
+    <string name="permdesc_intentVendingOnly">응용프로그램 설치 및 삭제를 요청하는 브로드캐스트를 Android 마켓에 보낼 수 있습니다.</string>
+    <string name="permlab_heartbeat">Google 토크 서버로 하트비트 보내기</string>
+    <string name="permdesc_heartbeat">하트비트 패킷을 Google 토크 서버로 보내어 연결 상태를 보장할 수 있습니다.</string>
+    <string name="group_chat">그룹 채팅: %s</string>
+    <string name="default_decline_reason">죄송합니다. 지금은 통화 중입니다.</string>
+    <string name="newMessages_label">새 채팅</string>
+    <string name="notify_groupchat_label">그룹 채팅 초대</string>
+    <string name="num_unread_chats">읽지 않은 채팅 %s개</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%s님이 채팅하고 싶어합니다.</string>
+    <string name="group_chat_invite_notify_text">%s님이 그룹 채팅에 초대하셨습니다.</string>
+    <string name="message_too_long">2,000자가 넘는 메시지는 보낼 수 없습니다.</string>
+    <string name="conn_auth_error_notify_ticker">Google 토크 인증 실패</string>
+    <string name="conn_auth_error_notify_title">Google 토크 인증 실패</string>
+    <string name="conn_auth_error_title">인증 오류</string>
+    <string name="conn_auth_error_message">Google 토크 로그인에 실패했습니다. Google 애플리케이션 계정인 경우 이 계정에서 채팅 서비스를 사용하도록 설정했는지 확인하세요.</string>
+    <string name="conn_auth_error_button_retry">다시 시도</string>
+    <string name="conn_auth_error_button_cancel">취소</string>
+</resources>

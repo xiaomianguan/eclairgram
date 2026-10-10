@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">služba Google Talk</string>
+    <string name="perm_label">Odesílat a přijímat chatové zprávy služby Google Talk</string>
+    <string name="perm_desc">Umožňuje aplikacím využívat službu Google Talk k odesílání a přijímání chatových zpráv. Použití této služby zvýší objem přenesených dat. Škodlivé aplikace mohou způsobit nadměrný nárůst přeneseného objemu dat.</string>
+    <string name="perm_data_label">Odesílat datové zprávy</string>
+    <string name="perm_data_desc">Umožňuje aplikacím odesílat datové zprávy jiným uživatelům s účty Google. Aplikace může zprávy odesílat na pozadí, a to s vaším výslovným souhlasem nebo bez něj. Použití této služby zvýší objem přenesených dat. Škodlivé aplikace mohou způsobit nadměrný nárůst přeneseného objemu dat.</string>
+    <string name="perm_receive_data_message_label">Přijímat zprávy a oznámení</string>
+    <string name="perm_receive_data_message_desc">Umožňuje aplikacím přijímat zprávy a oznámení odeslaná serverem aplikace. Použití této služby zvýší objem přenesených dat. Škodlivé aplikace mohou způsobit nadměrný nárůst přeneseného objemu dat.</string>
+    <string name="perm_data_msg_broadcast_label">Vysílat datové zprávy do aplikací.</string>
+    <string name="perm_data_msg_broadcast_desc">Může odesílat datové zprávy přijaté z internetu aplikacím přihlášeným k jejich příjmu.</string>
+    <string name="permlab_intentVendingOnly">Odesílat vysílání službě Android Market.</string>
+    <string name="permdesc_intentVendingOnly">Umožňuje odesílat vysílání službě Android Market s požadavkem na instalaci a odebrání aplikací.</string>
+    <string name="permlab_heartbeat">Odesílat pakety heartbeat serveru Google Talk</string>
+    <string name="permdesc_heartbeat">Lze odesílat pakety heartbeat serveru Google Talk za účelem zajištění dobrého stavu připojení.</string>
+    <string name="group_chat">Skupinový chat: %s</string>
+    <string name="default_decline_reason">Omlouvám se, momentálně nemám čas.</string>
+    <string name="newMessages_label">Nové chaty</string>
+    <string name="notify_groupchat_label">Pozvánka k hromadnému chatu</string>
+    <string name="num_unread_chats">Nepřečtené chaty: %s</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">Uživatel %s chce chatovat</string>
+    <string name="group_chat_invite_notify_text">Obdrželi jste pozvánku k hromadnému chatu od uživatele %s</string>
+    <string name="message_too_long">Nelze odeslat zprávy delší než 2 000 znaků.</string>
+    <string name="conn_auth_error_notify_ticker">Ověření služby Google Talk se nezdařilo</string>
+    <string name="conn_auth_error_notify_title">Ověření služby Google Talk se nezdařilo</string>
+    <string name="conn_auth_error_title">Chyba ověření</string>
+    <string name="conn_auth_error_message">Přihlášení ke službě Google Talk se nezdařilo. Pokud je toto účet služby Google Apps, ověřte, zda byla pro tento účet aktivována služba Chat.</string>
+    <string name="conn_auth_error_button_retry">Zkusit znovu</string>
+    <string name="conn_auth_error_button_cancel">Zrušit</string>
+</resources>

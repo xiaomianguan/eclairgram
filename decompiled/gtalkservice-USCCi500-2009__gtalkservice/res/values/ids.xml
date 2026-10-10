@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="icon" />
+    <item type="id" name="title" />
+    <item type="id" name="avatar1" />
+    <item type="id" name="avatar2" />
+    <item type="id" name="avatar3" />
+    <item type="id" name="avatar4" />
+    <item type="id" name="avatar5" />
+    <item type="id" name="avatar6" />
+    <item type="id" name="time" />
+    <item type="id" name="avatar" />
+    <item type="id" name="message" />
+</resources>

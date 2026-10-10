@@ -1,0 +1,36 @@
+Manifest-Version: 1.0
+Created-By: 1.5.0_22 (Sun Microsystems Inc.)
+
+Name: res/drawable-hdpi/avatar_unknown.png
+SHA1-Digest: 1KbH1YPKf6LqNRcW7KyYxStD9Wo=
+
+Name: res/drawable-hdpi/app_instant_message.png
+SHA1-Digest: drkMvLtNdBsHHfC6N959vSzZi3A=
+
+Name: AndroidManifest.xml
+SHA1-Digest: Ng8gf10X9521EeTgCBHX8S5jpko=
+
+Name: res/xml/gtalk_service_providers.xml
+SHA1-Digest: cYr49SCqtQO1m+1aBoCpjl91gMg=
+
+Name: res/drawable/app_instant_message.png
+SHA1-Digest: 5lTLrbrVFFiO+LMfDH8kseQyXdc=
+
+Name: res/drawable-mdpi/avatar_unknown.png
+SHA1-Digest: PdKF37AW7fXC6jhUtIDrl49dXUw=
+
+Name: res/layout/chat_notification_dashboard.xml
+SHA1-Digest: kSsq6Nvwxcr+Vk3BsFs2ee4VKa4=
+
+Name: res/drawable-mdpi/app_instant_message.png
+SHA1-Digest: 3pVy++d+75bBnFi78QTKw+TSRmo=
+
+Name: classes.dex
+SHA1-Digest: 4fx6JNxXGcrUILVgqy3Kt27a21M=
+
+Name: res/layout/one_chat_notification.xml
+SHA1-Digest: /MbyLIWPYASErhIIedYm8OughA8=
+
+Name: resources.arsc
+SHA1-Digest: mF/eIpIRKhOusq1ma2JiB0mIiO0=
+

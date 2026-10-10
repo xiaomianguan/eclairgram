@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">ler mensagens instantâneas</string>
+    <string name="ro_perm_desc">Permite que as aplicações leiam dados a partir do fornecedor de conteúdo do Google Talk.</string>
+    <string name="wo_perm_label">escrever mensagens instantâneas</string>
+    <string name="wo_perm_desc">Permite que as aplicações escrevam dados para o fornecedor de conteúdo do Google Talk.</string>
+    <string name="app_label">Armazenamento do Google Talk</string>
+</resources>

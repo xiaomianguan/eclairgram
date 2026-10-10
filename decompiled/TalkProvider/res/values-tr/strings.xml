@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">anlık iletileri oku</string>
+    <string name="ro_perm_desc">Uygulamalara, Google Talk içerik sağlayıcısından gelen verileri okuma izni verir.</string>
+    <string name="wo_perm_label">anlık iletiler yazın</string>
+    <string name="wo_perm_desc">Uygulamalara Google Talk içerik sağlayıcısına veri yazma izni verir.</string>
+    <string name="app_label">Google Talk Deposu</string>
+</resources>

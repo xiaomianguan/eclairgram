@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">odczytaj wiadomości czatu</string>
+    <string name="ro_perm_desc">Zezwalaj aplikacjom na odczytywanie danych dostawcy zawartości komunikatora Google Talk.</string>
+    <string name="wo_perm_label">zapisz wiadomości czatu</string>
+    <string name="wo_perm_desc">Zezwalaj aplikacjom na zapisywanie danych do dostawcy zawartości komunikatora Google Talk.</string>
+    <string name="app_label">Magazyn Google Talk</string>
+</resources>

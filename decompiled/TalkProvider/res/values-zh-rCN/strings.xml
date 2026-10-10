@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">阅读即时消息</string>
+    <string name="ro_perm_desc">允许应用程序从 Google Talk 内容提供程序中读取数据。</string>
+    <string name="wo_perm_label">编写即时消息</string>
+    <string name="wo_perm_desc">允许应用程序向 Google Talk 内容提供程序写入数据。</string>
+    <string name="app_label">Google Talk 存储空间</string>
+</resources>

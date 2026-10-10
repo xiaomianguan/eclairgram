@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Google Talk 服务</string>
+    <string name="perm_label">发送和接收 Google Talk 即时消息</string>
+    <string name="perm_desc">允许应用程序使用 Google Talk 服务发送和接收即时消息。但使用该服务需要使用数据。恶意应用程序可能会借此滥用数据。</string>
+    <string name="perm_data_label">发送数据消息</string>
+    <string name="perm_data_desc">允许应用程序使用 Google 帐户将数据消息发送给其他用户。该应用程序可以采用后台模式发送消息，也可设置为自动发送或在发送前需要征得您的明确同意。但使用该服务需要使用数据。恶意应用程序可能会借此滥用数据。</string>
+    <string name="perm_receive_data_message_label">接收消息和通知</string>
+    <string name="perm_receive_data_message_desc">允许应用程序接收由应用程序服务器发送的消息和通知。但使用该服务需要使用数据。恶意应用程序可能会借此滥用数据。</string>
+    <string name="perm_data_msg_broadcast_label">将数据消息发送到应用程序。</string>
+    <string name="perm_data_msg_broadcast_desc">可将接收的互联网数据消息发送到注册收听此类消息的应用程序。</string>
+    <string name="permlab_intentVendingOnly">向 Android 电子市场发送广播消息。</string>
+    <string name="permdesc_intentVendingOnly">可以向 Android 电子市场发送广播消息，以请求安装和删除应用程序。</string>
+    <string name="permlab_heartbeat">向 Google Talk 服务器发送检测信号</string>
+    <string name="permdesc_heartbeat">可向 Google Talk 服务器发送检测信号包，以确保连接状态良好。</string>
+    <string name="group_chat">群聊：%s</string>
+    <string name="default_decline_reason">抱歉，我现在正忙。</string>
+    <string name="newMessages_label">新聊天</string>
+    <string name="notify_groupchat_label">群聊邀请</string>
+    <string name="num_unread_chats">%s 条未读聊天消息</string>
+    <string name="notification_format" formatted="false">%s：%s</string>
+    <string name="subscription_notify_text">%s想要聊天</string>
+    <string name="group_chat_invite_notify_text">您收到了来自%s的群聊邀请</string>
+    <string name="message_too_long">您不能发送长度超过 2000 个字符的消息。</string>
+    <string name="conn_auth_error_notify_ticker">Google Talk 身份验证失败</string>
+    <string name="conn_auth_error_notify_title">Google Talk 身份验证失败</string>
+    <string name="conn_auth_error_title">身份验证错误</string>
+    <string name="conn_auth_error_message">Google Talk 登录失败。如果这是一个 Google 企业应用套件帐户，请确认是否已启用此帐户的聊天服务。</string>
+    <string name="conn_auth_error_button_retry">重试</string>
+    <string name="conn_auth_error_button_cancel">取消</string>
+</resources>

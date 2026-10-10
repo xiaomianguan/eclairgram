@@ -1,0 +1,9 @@
+# Telegram 数据中心 RSA 公钥指纹（SHA1(TL(N)+TL(E)) 后 8 字节，小端）
+dc-key-1.pem	0x0bc35f3509f7b7a5
+dc-key-2.pem	0x15ae5fa8b5529542
+dc-key-3.pem	0xaeae98e13cd7f94f
+dc-key-4.pem	0x5a181b2235057d98
+dc-key-old-1.pem	0xc3b42b026ce86b21
+dc-key-old-2.pem	0x9a996a1db11c729b
+dc-key-old-3.pem	0xb05b2a6f70cdea78
+dc-key-old-4.pem	0x71e025b6c76033e3

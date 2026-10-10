@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">læs chatbeskeder</string>
+    <string name="ro_perm_desc">Tillader, at programmer læser data fra Google Talk-indholdsleverandøren.</string>
+    <string name="wo_perm_label">skriv chatbeskeder</string>
+    <string name="wo_perm_desc">Tillader, at programmer skriver data til Google Talk-indholdsleverandøren.</string>
+    <string name="app_label">Google Talk-lagerplads</string>
+</resources>

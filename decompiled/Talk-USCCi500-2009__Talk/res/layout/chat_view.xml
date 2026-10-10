@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListView android:scrollbarAlwaysDrawVerticalTrack="true" android:id="@id/history" android:fadingEdge="none" android:layout_width="fill_parent" android:layout_height="0.0dip" android:listSelector="@drawable/chat_history_selector" android:drawSelectorOnTop="true" android:stackFromBottom="true" android:transcriptMode="normal" android:cacheColorHint="#00000000" android:layout_weight="1.0" />
+    <LinearLayout android:orientation="horizontal" android:id="@id/disconnected_warning" android:background="#ffff6666" android:paddingTop="3.0dip" android:paddingBottom="3.0dip" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="0.0">
+        <ImageView android:layout_gravity="center_vertical" android:id="@id/warning_icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="5.0dip" android:layout_marginTop="2.0dip" android:layout_marginRight="5.0dip" android:src="@drawable/ic_im_message_not_sent" />
+        <TextView android:textSize="14.0sp" android:textColor="#ff000000" android:layout_gravity="center_vertical" android:id="@id/warning_text" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_marginLeft="5.0dip" android:text="@string/disconnected_warning" android:layout_weight="1.0" />
+    </LinearLayout>
+</merge>

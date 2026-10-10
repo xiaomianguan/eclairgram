@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Google Talk Hizmeti</string>
+    <string name="perm_label">Google Talk anlık iletilerini gönder ve al</string>
+    <string name="perm_desc">Uygulamalara anlık iletileri gönderip almak için Google Talk hizmetini kullanma izni verir. Bu hizmeti kullanmak veri kullanımını artıracaktır. Kötü niyetli uygulamalar aşırı veri kullanımına neden olabilir.</string>
+    <string name="perm_data_label">Veri iletileri gönder</string>
+    <string name="perm_data_desc">Uygulamalara, Google hesaplarına sahip olan diğer kullanıcılara veri iletileri gönderme izni verir. Uygulama, sizin açık onayınızla veya açık onayınız olmadan, arka planda ileti gönderebilir. Bu hizmeti kullanmak veri kullanımını artıracaktır. Kötü niyetli uygulamalar aşırı veri kullanımına neden olabilir.</string>
+    <string name="perm_receive_data_message_label">İletileri ve bildirimleri al</string>
+    <string name="perm_receive_data_message_desc">Uygulamalara uygulama sunucusu tarafından gönderilen iletileri ve bildirimleri alma izni verir. Bu hizmeti kullanmak veri kullanımını artıracaktır. Kötü niyetli uygulamalar aşırı veri kullanımına neden olabilir.</string>
+    <string name="perm_data_msg_broadcast_label">Veri iletilerini uygulamalar için yayınla</string>
+    <string name="perm_data_msg_broadcast_desc">"İnternet'ten alınan veri iletilerini, söz konusu iletileri dinlemek üzere kaydedilmiş uygulamalar için yayınlayabilir."</string>
+    <string name="permlab_intentVendingOnly">"Android Market'e yayın gönderin."</string>
+    <string name="permdesc_intentVendingOnly">"Yayınları Android Market'e gönderebilir ve uygulama yüklenmesini ve kaldırılmasını isteyebilir."</string>
+    <string name="permlab_heartbeat">Google Talk sunucusuna sinyal gönder</string>
+    <string name="permdesc_heartbeat">Bağlantının elverişliliğinden emin olmak için Google Talk sunucusuna sinyal paketi gönderebilir.</string>
+    <string name="group_chat">Grup sohbeti: %s</string>
+    <string name="default_decline_reason">Maalesef, şu an meşgulüm.</string>
+    <string name="newMessages_label">Yeni sohbetler</string>
+    <string name="notify_groupchat_label">Grup sohbeti davetiyesi</string>
+    <string name="num_unread_chats">%s okunmamış sohbet</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%s sohbet edebilmek istiyor</string>
+    <string name="group_chat_invite_notify_text">%s kullanıcısından bir grup sohbeti davetiyesi aldınız</string>
+    <string name="message_too_long">2000 karakteri aşan mesajları gönderemezsiniz.</string>
+    <string name="conn_auth_error_notify_ticker">Google Talk kimlik doğrulaması başarısız oldu</string>
+    <string name="conn_auth_error_notify_title">Google Talk kimlik doğrulaması başarısız oldu</string>
+    <string name="conn_auth_error_title">Kimlik Doğrulama Hatası</string>
+    <string name="conn_auth_error_message">Google Talk girişi yapılamadı. Bu bir Google Apps hesabı ise Sohbet hizmetinin bu hesap için etkinleştirilmiş olduğunu doğrulayın.</string>
+    <string name="conn_auth_error_button_retry">Tekrar Dene</string>
+    <string name="conn_auth_error_button_cancel">İptal</string>
+</resources>

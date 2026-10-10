@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="smiley_names">
+        <item>Feliz</item>
+        <item>Triste</item>
+        <item>Piscando</item>
+        <item>Mostrando a língua</item>
+        <item>Surpreso</item>
+        <item>Beijando</item>
+        <item>Gritando</item>
+        <item>Tranquilo</item>
+        <item>Louco por dinheiro</item>
+        <item>Falei besteira</item>
+        <item>Envergonhado</item>
+        <item>Anjo</item>
+        <item>Indeciso</item>
+        <item>Chorando</item>
+        <item>Boca fechada</item>
+        <item>Rindo</item>
+        <item>Confuso</item>
+        <item>Sorriso afetado</item>
+        <item>Louco</item>
+        <item>Sem expressão</item>
+        <item>Coração</item>
+    </string-array>
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Googleトークサービス</string>
+    <string name="perm_label">Googleトークインスタントメッセージを送受信する</string>
+    <string name="perm_desc">Googleトークサービスでのインスタントメッセージの送受信をアプリケーションに許可します。このサービスを利用するとデータ通信が発生します。悪意のあるアプリケーションにより過剰なデータ通信が発生する恐れがあります。</string>
+    <string name="perm_data_label">データメッセージを送信する</string>
+    <string name="perm_data_desc">Googleアカウントを持つ他のユーザーへのデータメッセージの送信をアプリケーションに許可します。明示的な同意の有無にかかわらず、アプリケーションはバックグラウンドでメッセージを送信できます。このサービスを利用するとデータ通信が発生します。悪意のあるアプリケーションにより過剰なデータ通信が発生する恐れがあります。</string>
+    <string name="perm_receive_data_message_label">メッセージや通知を受信する</string>
+    <string name="perm_receive_data_message_desc">アプリケーションサーバーが送信するメッセージや通知の受信をアプリケーションに許可します。このサービスを利用するとデータ通信が発生します。悪意のあるアプリケーションにより過剰なデータ通信が発生する恐れがあります。</string>
+    <string name="perm_data_msg_broadcast_label">データメッセージをアプリケーションに配信する。</string>
+    <string name="perm_data_msg_broadcast_desc">インターネットからデータメッセージを受信して、これをリッスンするように登録されたアプリケーションに配信できます。</string>
+    <string name="permlab_intentVendingOnly">Androidマーケットにブロードキャストを送信する</string>
+    <string name="permdesc_intentVendingOnly">Androidマーケットにブロードキャストを送信して、アプリケーションのインストールや削除をリクエストできます。</string>
+    <string name="permlab_heartbeat">Googleトークサーバーにハートビートを送信する</string>
+    <string name="permdesc_heartbeat">Googleトークサーバーにハートビートパケットを送信して接続の状態を確認できます。</string>
+    <string name="group_chat">グループチャット: %s</string>
+    <string name="default_decline_reason">現在取り込み中です。</string>
+    <string name="newMessages_label">新規チャット</string>
+    <string name="notify_groupchat_label">グループチャットへの招待</string>
+    <string name="num_unread_chats">%s件の未読のチャット</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%sさんがチャットに招待してくれました</string>
+    <string name="group_chat_invite_notify_text">%sさんからグループチャットへのお誘いです</string>
+    <string name="message_too_long">2,000文字を超えるメッセージは送信できません。</string>
+    <string name="conn_auth_error_notify_ticker">Googleトークの認証に失敗しました</string>
+    <string name="conn_auth_error_notify_title">Googleトークの認証に失敗しました</string>
+    <string name="conn_auth_error_title">認証エラー</string>
+    <string name="conn_auth_error_message">Googleトークのログインに失敗しました。Google Appsアカウントの場合は、チャットサービスがこのアカウントで有効になっていることを確認してください。</string>
+    <string name="conn_auth_error_button_retry">再試行</string>
+    <string name="conn_auth_error_button_cancel">キャンセル</string>
+</resources>

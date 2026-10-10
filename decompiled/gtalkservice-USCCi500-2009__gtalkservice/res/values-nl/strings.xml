@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Google Talk-service</string>
+    <string name="perm_label">Chatberichten van Google Talk verzenden en ontvangen</string>
+    <string name="perm_desc">Toepassingen mogen de service Google Talk gebruiken voor het verzenden en ontvangen van chatberichten. Deze service maakt gebruik van gegevens. Schadelijke toepassingen kunnen ervoor zorgen dat er een zeer grote hoeveelheid gegevens wordt gebruikt.</string>
+    <string name="perm_data_label">Gegevensberichten verzenden</string>
+    <string name="perm_data_desc">Hiermee kunnen toepassingen gegevensberichten verzenden naar andere gebruikers die Google-accounts hebben. De toepassing kan berichten op de achtergrond verzenden, met of zonder expliciete toestemming. Deze service maakt gebruik van gegevens. Schadelijke toepassingen kunnen ervoor zorgen dat er een zeer grote hoeveelheid gegevens wordt gebruikt.</string>
+    <string name="perm_receive_data_message_label">Berichten en meldingen ontvangen</string>
+    <string name="perm_receive_data_message_desc">Hiermee kunnen toepassingen berichten en meldingen ontvangen die zijn verzonden door de toepassingsserver. Deze service maakt gebruik van gegevens. Schadelijke toepassingen kunnen ervoor zorgen dat er een zeer grote hoeveelheid gegevens wordt gebruikt.</string>
+    <string name="perm_data_msg_broadcast_label">Gegevensberichten verzenden naar toepassingen.</string>
+    <string name="perm_data_msg_broadcast_desc">Gegevensberichten die zijn ontvangen van internet verzenden naar toepassingen waarvoor dit is ingeschakeld.</string>
+    <string name="permlab_intentVendingOnly">Berichten naar Android Market verzenden.</string>
+    <string name="permdesc_intentVendingOnly">Kan berichten verzenden naar Android Market om de installatie en verwijdering van toepassingen te verzoeken.</string>
+    <string name="permlab_heartbeat">Hartslag verzenden naar Google Talk-server</string>
+    <string name="permdesc_heartbeat">Kan een hartslagpakket verzenden naar de Google Talk-server om de gezondheid van de verbinding te garanderen.</string>
+    <string name="group_chat">Groepschat: %s</string>
+    <string name="default_decline_reason">Het spijt me, maar ik ben nu bezig.</string>
+    <string name="newMessages_label">Nieuwe chats</string>
+    <string name="notify_groupchat_label">Uitnodiging voor groepschat</string>
+    <string name="num_unread_chats">%s ongelezen chats</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%s wil kunnen chatten</string>
+    <string name="group_chat_invite_notify_text">U heeft een uitnodiging voor een groepschat ontvangen van %s</string>
+    <string name="message_too_long">U kunt geen berichten verzenden die langer dan 2000 tekens zijn.</string>
+    <string name="conn_auth_error_notify_ticker">Verificatie van Google Talk mislukt</string>
+    <string name="conn_auth_error_notify_title">Verificatie van Google Talk mislukt</string>
+    <string name="conn_auth_error_title">Verificatiefout</string>
+    <string name="conn_auth_error_message">Kan niet aanmelden bij Google Talk. Als dit een Google Apps-account is, moet u controleren of de chatservice voor dit account is ingeschakeld.</string>
+    <string name="conn_auth_error_button_retry">Opnieuw proberen</string>
+    <string name="conn_auth_error_button_cancel">Annuleren</string>
+</resources>

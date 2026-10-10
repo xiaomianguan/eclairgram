@@ -1,0 +1,33 @@
+Manifest-Version: 1.0
+Created-By: 1.5.0_22 (Sun Microsystems Inc.)
+
+Name: res/drawable/imlogo_s.png
+SHA1-Digest: p8spxCENFNu1pPa+YJdXwstjdv8=
+
+Name: res/drawable/bubble.xml
+SHA1-Digest: wHMuBgn2139xd4vx0FtfhXyhD+M=
+
+Name: res/drawable/im_bubble_highlight.9.png
+SHA1-Digest: bcIX7qnUgNrXgN2ehYU3lZ0yBYM=
+
+Name: res/drawable/ic_launcher_im.png
+SHA1-Digest: drkMvLtNdBsHHfC6N959vSzZi3A=
+
+Name: res/drawable/default_background.9.png
+SHA1-Digest: 1y6zfSGdJ/51F1se6Am/5Ga4wlI=
+
+Name: AndroidManifest.xml
+SHA1-Digest: BRVwAQpJLghQ/uv8xRqfpxz8D6I=
+
+Name: classes.dex
+SHA1-Digest: 9/rZ9e5YFOourPeZ1GPxknqmRaw=
+
+Name: res/drawable/im_bubble_normal.9.png
+SHA1-Digest: UdynvGfvN6o0tI01/CHA0Fzq2Zc=
+
+Name: res/drawable/im_bubble_pressed.9.png
+SHA1-Digest: FEtGpuwIYt9OEwCXhYh8xMfjhow=
+
+Name: resources.arsc
+SHA1-Digest: GV+XXZ/3yrRNAg4cSvqDN3Tg0JM=
+

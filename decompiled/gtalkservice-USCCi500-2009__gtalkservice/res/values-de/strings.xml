@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Google Talk-Service</string>
+    <string name="perm_label">Sofortnachrichten über Google Talk senden und erhalten</string>
+    <string name="perm_desc">Anwendungen erhalten die Möglichkeit, Sofortnachrichten über den Google Talk-Service zu senden und zu empfangen. Für diesen Dienst werden Daten genutzt. Schädliche Anwendungen können eine übermäßige Datennnutzung verursachen.</string>
+    <string name="perm_data_label">Datennachrichten senden</string>
+    <string name="perm_data_desc">Anwendungen können anderen Nutzern Datennachrichten über Google-Konten senden. Die Anwendung kann Nachrichten mit oder ohne Ihre ausdrückliche Zustimmung im Hintergrund versenden. Für diesen Dienst werden Daten genutzt. Schädliche Anwendungen können eine übermäßige Datennnutzung verursachen.</string>
+    <string name="perm_receive_data_message_label">Nachrichten und Benachrichtigungen erhalten</string>
+    <string name="perm_receive_data_message_desc">Den Anwendungen wird ermöglicht, vom Anwendungsserver gesendete Nachrichten und Benachrichtigungen zu erhalten. Für diesen Dienst werden Daten genutzt. Schädliche Anwendungen können eine übermäßige Datennnutzung verursachen.</string>
+    <string name="perm_data_msg_broadcast_label">Datennachrichten an Anwendungen senden</string>
+    <string name="perm_data_msg_broadcast_desc">Aus dem Internet erhaltene Datennachrichten können an Anwendungen gesendet werden, die für deren Abhörung registriert sind.</string>
+    <string name="permlab_intentVendingOnly">Broadcasts an Android Market senden</string>
+    <string name="permdesc_intentVendingOnly">Broadcasts können an Android Market gesendet werden, um die Installation und das Entfernen einer Anwendung anzufordern.</string>
+    <string name="permlab_heartbeat">Takt an Google Talk-Server senden</string>
+    <string name="permdesc_heartbeat">Ein Taktpaket kann an den Google Talk-Server gesendet werden, um die Integrität der Verbindung sicherzustellen.</string>
+    <string name="group_chat">Gruppen-Chat: %s</string>
+    <string name="default_decline_reason">Leider bin ich zurzeit nicht verfügbar.</string>
+    <string name="newMessages_label">Neue Chats</string>
+    <string name="notify_groupchat_label">Einladung zum Gruppen-Chat</string>
+    <string name="num_unread_chats">%s ungelesene Chats</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%s möchte mit Ihnen chatten</string>
+    <string name="group_chat_invite_notify_text">Sie haben eine Einladung zu einem Gruppen-Chat von %s erhalten.</string>
+    <string name="message_too_long">Sie können keine Nachrichten mit mehr als 2000 Zeichen senden.</string>
+    <string name="conn_auth_error_notify_ticker">Google Talk-Authentifizierung fehlgeschlagen</string>
+    <string name="conn_auth_error_notify_title">Die Google Talk-Authentifizierung ist fehlgeschlagen.</string>
+    <string name="conn_auth_error_title">Authentifizierungsfehler</string>
+    <string name="conn_auth_error_message">Google Talk konnte die Anmeldung nicht durchführen. Wenn dies ein Google Apps-Konto ist, stellen Sie sicher, dass der Chat-Dienst für dieses Konto aktiviert wurde.</string>
+    <string name="conn_auth_error_button_retry">Wiederholen</string>
+    <string name="conn_auth_error_button_cancel">Abbrechen</string>
+</resources>

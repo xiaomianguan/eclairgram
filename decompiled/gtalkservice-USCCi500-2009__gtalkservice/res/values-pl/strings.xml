@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Usługa Google Talk</string>
+    <string name="perm_label">Wysyłaj i odbieraj wiadomości czatu w Google Talk</string>
+    <string name="perm_desc">Zezwala aplikacjom na korzystanie z usługi Google Talk w celu wysyłania i odbierania wiadomości czatu. Korzystanie z tej usługi wymaga użycia danych. Złośliwe aplikacje mogą powodować nadmierne użycie danych.</string>
+    <string name="perm_data_label">Wysyłaj wiadomości z danymi</string>
+    <string name="perm_data_desc">Zezwala aplikacjom na wysyłanie wiadomości z danymi do innych użytkowników mających konta Google. Aplikacja może wysyłać wiadomości w tle po uzyskaniu wyraźnej zgody użytkownika lub bez niej. Korzystanie z tej usługi wymaga użycia danych. Złośliwe aplikacje mogą powodować nadmierne użycie danych.</string>
+    <string name="perm_receive_data_message_label">Odbieraj wiadomości i powiadomienia</string>
+    <string name="perm_receive_data_message_desc">Zezwala aplikacjom na odbieranie wiadomości i powiadomień wysyłanych przez serwer aplikacji. Korzystanie z tej usługi wymaga użycia danych. Złośliwe aplikacje mogą powodować nadmierne użycie danych.</string>
+    <string name="perm_data_msg_broadcast_label">Przesyłaj wiadomości z danymi do aplikacji</string>
+    <string name="perm_data_msg_broadcast_desc">Możliwość przesyłania wiadomości z danymi pochodzących z internetu do aplikacji zarejestrowanych jako ich odbiorcy.</string>
+    <string name="permlab_intentVendingOnly">Wysyłaj komunikaty do witryny Android Market</string>
+    <string name="permdesc_intentVendingOnly">Możliwość wysyłania komunikatów do witryny Android Market z żądaniem zainstalowania lub usunięcia aplikacji.</string>
+    <string name="permlab_heartbeat">Wyślij pakiet podtrzymujący do serwera Google Talk</string>
+    <string name="permdesc_heartbeat">Umożliwia wysyłanie pakietu podtrzymującego do serwera Google Talk, aby zapewnić poprawność połączenia.</string>
+    <string name="group_chat">Czat grupowy: %s</string>
+    <string name="default_decline_reason">Przepraszam, nie mam teraz czasu.</string>
+    <string name="newMessages_label">Nowe czaty</string>
+    <string name="notify_groupchat_label">Zaproszenie do czatu grupowego</string>
+    <string name="num_unread_chats">Liczba nieprzeczytanych czatów: %s</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">Użytkownik %s chce mieć możliwość czatowania</string>
+    <string name="group_chat_invite_notify_text">Użytkownik %s wysłał Ci zaproszenie do czatu grupowego</string>
+    <string name="message_too_long">Nie można wysyłać wiadomości, których długość przekracza 2000 znaków.</string>
+    <string name="conn_auth_error_notify_ticker">Uwierzytelnienie w usłudze Google Talk nie powiodło się</string>
+    <string name="conn_auth_error_notify_title">Uwierzytelnienie w usłudze Google Talk nie powiodło się</string>
+    <string name="conn_auth_error_title">Błąd uwierzytelniania</string>
+    <string name="conn_auth_error_message">Nie można zalogować się do Google Talk. Jeśli używasz konta Aplikacji Google, sprawdź, czy usługa czatu jest włączona na tym koncie.</string>
+    <string name="conn_auth_error_button_retry">Ponów próbę</string>
+    <string name="conn_auth_error_button_cancel">Anuluj</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">läsa chattmeddelanden</string>
+    <string name="ro_perm_desc">Tillåter att ett program skriver data från innehållsleverantören för Google Talk.</string>
+    <string name="wo_perm_label">skriva chattmeddelanden</string>
+    <string name="wo_perm_desc">Tillåter att ett program skriver data till innehållsleverantören för Google Talk.</string>
+    <string name="app_label">Google Talk-lagring</string>
+</resources>

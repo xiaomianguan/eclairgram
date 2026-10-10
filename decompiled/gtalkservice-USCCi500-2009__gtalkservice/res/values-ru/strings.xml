@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Служба Google Talk</string>
+    <string name="perm_label">Отправлять и получать мгновенные сообщения Google Talk</string>
+    <string name="perm_desc">Позволяет приложениям использовать службу Google Talk для отправки и получения мгновенных сообщений. Использование этой службы подразумевает обмен данными. Вредоносные приложения могут вызвать чрезмерный поток трафика.</string>
+    <string name="perm_data_label">Отправить сообщения с данными</string>
+    <string name="perm_data_desc">Разрешает приложениям отправлять сообщения с данными другим пользователям, имеющим аккаунты Google. Приложение может отправлять сообщения в фоновом режиме с явным согласием или без него. Использование этой службы подразумевает обмен данными. Вредоносные приложения могут вызвать чрезмерный поток трафика.</string>
+    <string name="perm_receive_data_message_label">Получать сообщения и уведомления</string>
+    <string name="perm_receive_data_message_desc">Разрешает приложениям получать сообщения и уведомления, отправленные сервером приложений. Использование этой службы подразумевает обмен данными. Вредоносные приложения могут вызвать чрезмерный поток трафика.</string>
+    <string name="perm_data_msg_broadcast_label">Отправить сообщения с данными всем приложениям.</string>
+    <string name="perm_data_msg_broadcast_desc">Может отправлять широковещательные сообщения с данными, полученными из Интернета, приложениям, которые зарегистрированы для их прослушивания.</string>
+    <string name="permlab_intentVendingOnly">Отправлять запросы в Android Маркет.</string>
+    <string name="permdesc_intentVendingOnly">Может отправлять в Android Маркет запросы на установку и удаление приложений.</string>
+    <string name="permlab_heartbeat">Отправить пакет поддержки связи на сервер Google Talk</string>
+    <string name="permdesc_heartbeat">Может отправить пакет поддержки связи на сервер Google Talk для поддержки соединения в работоспособном состоянии.</string>
+    <string name="group_chat">Групповой чат: %s</string>
+    <string name="default_decline_reason">К сожалению, мне сейчас некогда.</string>
+    <string name="newMessages_label">Новые чаты</string>
+    <string name="notify_groupchat_label">Приглашение в групповой чат</string>
+    <string name="num_unread_chats">Непрочитанных чатов: %s</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%s хочет начать чат.</string>
+    <string name="group_chat_invite_notify_text">Пользователь %s приглашает вас в групповой чат</string>
+    <string name="message_too_long">Нельзя посылать сообщения длиной более 2000 символов.</string>
+    <string name="conn_auth_error_notify_ticker">Сбой аутентификации Google Talk</string>
+    <string name="conn_auth_error_notify_title">Сбой аутентификации Google Talk</string>
+    <string name="conn_auth_error_title">Ошибка аутентификации</string>
+    <string name="conn_auth_error_message">Не удалось войти в Google Talk. Если это аккаунт Служб Google, убедитесь, что служба чата включена для этого аккаунта.</string>
+    <string name="conn_auth_error_button_retry">Повторить попытку</string>
+    <string name="conn_auth_error_button_cancel">Отмена</string>
+</resources>

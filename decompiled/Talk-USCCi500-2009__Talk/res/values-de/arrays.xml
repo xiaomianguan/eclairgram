@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="smiley_names">
+        <item>Glücklich</item>
+        <item>Traurig</item>
+        <item>Zwinkern</item>
+        <item>Zunge rausstrecken</item>
+        <item>Überrascht</item>
+        <item>Küsschen</item>
+        <item>Brüllen</item>
+        <item>Cool</item>
+        <item>Moneymouth</item>
+        <item>Fettnäpfchen</item>
+        <item>Verlegen</item>
+        <item>Engel</item>
+        <item>Unentschlossen</item>
+        <item>Weinen</item>
+        <item>Schweigen wie ein Grab</item>
+        <item>Lachen</item>
+        <item>Verwirrt</item>
+        <item>Grinsen</item>
+        <item>Verärgert</item>
+        <item>Pokergesicht</item>
+        <item>Herz</item>
+    </string-array>
+</resources>

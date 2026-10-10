@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ro_perm_label">chatberichten lezen</string>
+    <string name="ro_perm_desc">Toepassingen toestaan gegevens te lezen van de inhoudsprovider van Google Talk.</string>
+    <string name="wo_perm_label">chatberichten schrijven</string>
+    <string name="wo_perm_desc">Toepassingen toestaan gegevens te schrijven naar de inhoudsprovider van Google Talk.</string>
+    <string name="app_label">Opslagruimte van Google Talk</string>
+</resources>

@@ -1,0 +1,37 @@
+Signature-Version: 1.0
+Created-By: 1.0 (Android SignApk)
+SHA1-Digest-Manifest: taVmRMD5hMWtKMD8TcbOJfCVXOk=
+
+Name: res/drawable-hdpi/avatar_unknown.png
+SHA1-Digest: TdHP5ueo167xvfl7pyB9fbIN50k=
+
+Name: res/drawable-hdpi/app_instant_message.png
+SHA1-Digest: FKmLjRIXD7ci5jmspDOYOlJJ3+4=
+
+Name: AndroidManifest.xml
+SHA1-Digest: THLCqOVfcg/ctDpiqDXgVGp9UuY=
+
+Name: res/drawable-mdpi/avatar_unknown.png
+SHA1-Digest: oWGOGllv/pEdqTpFf2xFYiw0Bc0=
+
+Name: res/drawable/app_instant_message.png
+SHA1-Digest: 4MEclwiyIbowJLANtOic7HDyoC4=
+
+Name: res/xml/gtalk_service_providers.xml
+SHA1-Digest: ft7E28x6aNzXlVBsId5M3hlT3zA=
+
+Name: classes.dex
+SHA1-Digest: cdrXdCvlXbVMYsZgYYpmitZCOQk=
+
+Name: res/drawable-mdpi/app_instant_message.png
+SHA1-Digest: 7gFWB0G6VYGk26fUOxmF7HMQL7Y=
+
+Name: res/layout/chat_notification_dashboard.xml
+SHA1-Digest: b69g6wJUVv7BOYKAGERaubO7rlY=
+
+Name: res/layout/one_chat_notification.xml
+SHA1-Digest: jnuy6vUNvt2bhhndfK446hcVcMI=
+
+Name: resources.arsc
+SHA1-Digest: 1kDXW4wIk2nKIk+VsW+lnM2O7aM=
+

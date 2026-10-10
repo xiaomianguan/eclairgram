@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="smiley_names">
+        <item>Wesoły</item>
+        <item>Smutny</item>
+        <item>Mruga</item>
+        <item>Pokazuje język</item>
+        <item>Zaskoczenie</item>
+        <item>Całuje</item>
+        <item>Krzyczy</item>
+        <item>Na luzie</item>
+        <item>Pazerny</item>
+        <item>Nietaktowny</item>
+        <item>Zawstydzony</item>
+        <item>Anioł</item>
+        <item>Niezdecydowany</item>
+        <item>Płacze</item>
+        <item>Milczy jak grób</item>
+        <item>Śmieje się</item>
+        <item>Dezorientacja</item>
+        <item>Uśmieszek</item>
+        <item>Szalony</item>
+        <item>Twarz pokerzysty</item>
+        <item>Serce</item>
+    </string-array>
+</resources>

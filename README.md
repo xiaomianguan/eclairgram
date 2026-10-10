@@ -1,0 +1,156 @@
+# Eclairgram —— Android 2.1–4.0 的 Telegram 客户端（Google Talk 风格界面）
+
+**[简体中文](README.md)** | [English (US)](README.en.md)
+
+Eclairgram 把 **Google Talk（Android 2.1 原版 Talk）的界面** 原样保留下来，
+把后台的 **网络层换成 Telegram 的原生 MTProto 协议**，做成一款能跑在
+**Android 2.1（Eclair，API 7）到 Android 4.0（ICS，API 14）** 老机器上的
+Telegram 客户端。
+
+界面来自 [`liangmian`](https://github.com/xiaomianguan/liangmian)（对 Android 2.1
+Google Talk 的逆向工程与私有服务器复刻）：好友列表、聊天界面、状态栏、通知等
+全部沿用原版 Talk 的布局与资源，**不做任何像素级改动**，只是把“说话的对象”
+从 Google Talk 换成了 Telegram。
+
+<p align="center">
+  <img src="docs/icon_upside_down.png" alt="翻转 180° 的 Talk 图标" width="96">
+  <br>
+  <sub>沿用 liangmian 的做法：图标翻转 180°，与原版 Google Talk 区分</sub>
+</p>
+
+## 为什么是这个项目
+
+- **老系统还能用**：Android 2.1–4.0 的官方 Telegram 早已不再支持，
+  官方客户端要求 API 21+。Eclairgram 让这些“电子垃圾”重新能收发 Telegram 消息。
+- **熟悉的界面**：直接复用 Google Talk 的 UI（2.1 时代最经典的聊天界面之一）。
+- **单 APK、免 root**：所有东西打成一个 APK，`adb install` 即可，不依赖任何预装组件。
+
+## 为什么把证书内置在 App 里
+
+Telegram 的数据中心用 **RSA 公钥** 做握手鉴权（不是 TLS）。这些公钥就是
+“让 Telegram 跑起来所必需的证书”，必须内置在客户端。见
+[`certs/telegram/`](certs/telegram/)：四把现役公钥 + 四把旧公钥及指纹。
+
+另外，**Android 4.0 之前的系统不支持安装用户 CA**
+（Android 2.1 的 `core.jar` 只认系统自带的 `cacerts.bks`，根本不读
+`/data/misc/keychain`），而内置的是一份过时的根证书列表。因此当连接需要走 TLS
+时（某些网络环境下会用到），必须在 App 内自带一份现代根证书
+[`certs/roots/ca-certificates.crt`](certs/roots/)。两份证书都随 APK 一起打包。
+
+## 架构
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ Talk 界面（原版 smali + 资源，未改动）                     │
+│  好友列表 BuddyList · 聊天 ChatScreen · 状态/通知           │
+└───────────────┬──────────────────────────────────────────┘
+                │ ContentResolver / AIDL
+┌───────────────▼──────────────────────────────────────────┐
+│ GTalkService + TalkProvider（原版，未改动）               │
+│  把“联系人/消息/状态”写进 TalkProvider，界面照常渲染      │
+└───────────────┬──────────────────────────────────────────┘
+                │ MTalk/MCS（本机回环，仅 App 内部）
+┌───────────────▼──────────────────────────────────────────┐
+│ Eclairgram 桥接层（本仓库新增，纯 Java）                   │
+│  · 本机 MTalk 服务端（GTalkService 的连接对象）            │
+│  · Telegram 原生 MTProto 客户端（握手/加密/收发）          │
+│  · 对话↔好友、消息↔消息 的映射                              │
+└───────────────┬──────────────────────────────────────────┘
+                │ MTProto（obfuscated2 + abridged，AES-IGE/CTR）
+┌───────────────▼──────────────────────────────────────────┐
+│ Telegram 数据中心（内置 DC RSA 公钥 + 根证书）             │
+└──────────────────────────────────────────────────────────┘
+```
+
+## 目录结构
+
+| 路径 | 说明 |
+| --- | --- |
+| `telegram/` | **原生 MTProto 客户端**（纯 Java，桌面可测，也编进 APK） |
+| `telegram/src/.../mtproto/` | 传输、AES-IGE/CTR、RSA、TL 编解码、DH 握手、RPC |
+| `telegram/tools/TgCli.java` | 桌面验证工具（可在电脑上先跑通协议/登录） |
+| `app/` | 本应用自己的类（登录/配置、桥接层）与 4.0 兼容替身控件 |
+| `scripts/merge_single_app.py` | **核心**：把界面与桥接层合并成单一 APK |
+| `decompiled/`、`apks/` | Google Talk 的原版反编译产物与 APK（界面来源） |
+| `compat/` | 面向 Android 2.2–4.0 的兼容类与替身控件 |
+| `certs/telegram/` | Telegram 数据中心 RSA 公钥（“提证书”） |
+| `certs/roots/` | 现代根证书（供 TLS 使用；4.0 之前无法安装用户 CA） |
+| `scripts/` | 构建、模拟器、截图脚本 |
+| `server/` | 开发期用来驱动原版界面的私有 MTalk 服务器（参考实现） |
+| `docs/` | 协议与截图 |
+| `shots/` | 截图（Google Talk 原版 + Eclairgram 实测） |
+
+## 构建
+
+工具链（JDK8/JDK17、smali、Android build-tools、Android 2.1 平台与旧模拟器）
+放在仓库内被忽略的目录 `tools/`、`sdk/` 下，构建时不需要额外的全局路径。
+
+```bash
+python3 scripts/merge_single_app.py          # 构建单一 APK -> dist/eclairgram.apk
+```
+
+### 本地机密（**绝不入库**）
+
+Telegram 的 `api_id` / `api_hash` 属于机密，**不会**出现在仓库里。
+构建时从被忽略的 `local/secrets.properties` 读取并注入 APK：
+
+```properties
+# local/secrets.properties （见 .gitignore 的 /local/）
+tg.api_id=<你的 api_id>
+tg.api_hash=<你的 api_hash>
+```
+
+没有这个文件时，构建会使用占位值（App 能编译，但无法登录真实 Telegram）。
+
+## 在电脑上先跑通协议
+
+`telegram/` 是纯 Java，不依赖 Android，可以先用桌面 JVM 验证：
+
+```bash
+JDK=~/liangmian/tools/jdk17     # 或任意 JDK 8+
+$JDK/bin/javac -d /tmp/tg $(find telegram/src -name '*.java') telegram/tools/TgCli.java
+$JDK/bin/java -cp /tmp/tg TgCli handshake     # 与 Telegram 完成 DH 握手
+$JDK/bin/java -cp /tmp/tg TgCli getconfig     # 加密 RPC（help.getConfig）
+$JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，随后输入 OTP
+```
+
+`handshake` 与 `getconfig` **不需要**手机号即可验证，是最小可用的自检。
+
+## 测试设备
+
+| 设备 | 系统 | 用途 |
+| --- | --- | --- |
+| 模拟器 `gtalk21` | Android 2.1（API 7） | 主目标版本（界面基线） |
+| HTC Wildfire | Android 2.2.1 | 真机（低内存、armeabi） |
+| LG-E610 | Android 4.0.3 | 真机（ICS，界面需 4.0 替身控件） |
+
+## 界面语言
+
+- 默认资源 `values/` = **English (US)**
+- `values-zh-rCN/` = **简体中文**
+
+原版 Talk 已经自带这两套（以及更多语言）；本应用自己新增的界面
+（登录/配置页、桥接提示等）同样提供 en-US 与 zh-CN 两份。
+
+## 当前进展
+
+- [x] 从 liangmian 引入 Google Talk 的界面与“合并为单一 APK”的构建流程
+- [x] 纯 Java 原生 MTProto：obfuscated2 传输、AES-IGE/AES-CTR、RSA、TL 编解码
+- [x] **DH 握手实测通过**（与 Telegram 生产 DC 建立 auth key）
+- [x] **加密 RPC 实测通过**（`help.getConfig` 返回完整 config，含 gzip 解包）
+- [ ] `auth.sendCode` / `auth.signIn` 登录（待用测试账号联调）
+- [ ] 对话列表 / 消息历史 / 发送消息
+- [ ] 桥接层接入 Talk 界面（好友列表显示 Telegram 对话）
+- [ ] 三台设备（2.1 模拟器 / 2.2 真机 / 4.0 真机）联调与截图
+
+## 已知限制
+
+- 早期 Android 的 TLS 根证书列表过时；若网络需要 TLS，使用 App 内置的现代根证书。
+- Telegram 没有“在线状态/好友列表”的概念：对话列表会映射成好友列表，
+  “在线状态”相应地降级展示。
+- 3.0（Honeycomb，仅平板）不在支持范围内。
+
+## 致谢与许可
+
+界面与合并构建流程来自 [`liangmian`](https://github.com/xiaomianguan/liangmian)。
+Google Talk、Telegram 的相关商标归各自所有者所有；本项目仅供老设备爱好者学习使用。

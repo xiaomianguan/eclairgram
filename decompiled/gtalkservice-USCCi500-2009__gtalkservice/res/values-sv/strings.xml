@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Google Talk</string>
+    <string name="perm_label">Skicka och ta emot Google Talk-snabbmeddelanden</string>
+    <string name="perm_desc">Tillåter att program använder tjänsten Google Talk för att skicka och ta emot chattmeddelanden. Tjänsten kräver dataanvändning. Skadlig programvara kan orsaka överdriven dataanvändning.</string>
+    <string name="perm_data_label">Skicka datameddelanden</string>
+    <string name="perm_data_desc">Tillåt att program skickar datameddelanden till andra användare med Google-konton. Programmet kan skicka meddelanden i bakgrunden, med eller utan ditt uttryckliga medgivande. Tjänsten innebär dataanvändning. Skadliga program kan innebära överdriven dataanvändning.</string>
+    <string name="perm_receive_data_message_label">Ta emot meddelanden och aviseringar</string>
+    <string name="perm_receive_data_message_desc">Tillåt att program tar emot meddelanden och aviseringar från programservern. Tjänsten innebär dataanvändning. Skadliga program kan innebära överdriven dataanvändning.</string>
+    <string name="perm_data_msg_broadcast_label">Sänd datameddelanden till program.</string>
+    <string name="perm_data_msg_broadcast_desc">Kan sända datameddelanden som tagits emot från Internet till program som har registrerats för att lyssna efter dem.</string>
+    <string name="permlab_intentVendingOnly">Skicka sändningar till Android Market.</string>
+    <string name="permdesc_intentVendingOnly">Kan skicka sändningar till Android Market och begära installation och borttagningar av program.</string>
+    <string name="permlab_heartbeat">Skicka puls till Google Talk-server</string>
+    <string name="permdesc_heartbeat">Kan skicka ett pulspaket till Google Talk-servern för att kontrollera anslutningens status.</string>
+    <string name="group_chat">Gruppchatt: %s</string>
+    <string name="default_decline_reason">Jag är tyvärr upptagen just nu.</string>
+    <string name="newMessages_label">Nya chattar</string>
+    <string name="notify_groupchat_label">Inbjudan till gruppchatt</string>
+    <string name="num_unread_chats">%s olästa chattar</string>
+    <string name="notification_format" formatted="false">%s: %s</string>
+    <string name="subscription_notify_text">%s vill kunna chatta</string>
+    <string name="group_chat_invite_notify_text">Du har fått en inbjudan till gruppchatt från %s</string>
+    <string name="message_too_long">Det går inte att skicka meddelanden som är längre än 2 000 tecken.</string>
+    <string name="conn_auth_error_notify_ticker">Google Talk-autentiseringen misslyckades</string>
+    <string name="conn_auth_error_notify_title">Google Talk-autentiseringen misslyckades</string>
+    <string name="conn_auth_error_title">Autentiseringsfel</string>
+    <string name="conn_auth_error_message">Det gick inte att logga in på Google Talk. Om det här är ett Google Apps-konto kontrollerar du att chattjänsten är aktiverad för kontot.</string>
+    <string name="conn_auth_error_button_retry">Försök igen</string>
+    <string name="conn_auth_error_button_cancel">Avbryt</string>
+</resources>

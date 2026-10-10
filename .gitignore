@@ -1,0 +1,24 @@
+# 交接文档只给本机 agent 用，不入库（README 与 docs/ 才是给使用者的）
+/HANDOFF.md
+/HANDOFF.en.md
+
+# 第三方工具链与运行数据，不入库
+/tools/
+/sdk/
+/home/
+/avd/
+/logs/
+/tmp/
+*.tar.gz
+*.zip
+/build/
+/dist/*.apk
+/dist/*.idsig
+/build/*
+__pycache__/
+*.pyc
+
+# 本地机密（Telegram api_id/api_hash、测试账号等），绝不入库
+/local/
+*.secrets
+*.secrets.properties

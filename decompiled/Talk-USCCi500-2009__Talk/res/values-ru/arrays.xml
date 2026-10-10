@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="smiley_names">
+        <item>Счастливый</item>
+        <item>Грустный</item>
+        <item>Подмигиваю</item>
+        <item>Показываю язык</item>
+        <item>Удивлен</item>
+        <item>Поцелуй</item>
+        <item>Кричу</item>
+        <item>Отлично!</item>
+        <item>Молчание – золото</item>
+        <item>В замешательстве</item>
+        <item>Смущенный</item>
+        <item>Ангел</item>
+        <item>Нерешительный</item>
+        <item>Плачу</item>
+        <item>Не скажу</item>
+        <item>Смеюсь</item>
+        <item>Озадачен</item>
+        <item>Ухмылка</item>
+        <item>Злой</item>
+        <item>Невозмутимость</item>
+        <item>Сердце</item>
+    </string-array>
+</resources>

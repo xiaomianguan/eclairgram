@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Google Talk 服務</string>
+    <string name="perm_label">收發 Google Talk 即時訊息</string>
+    <string name="perm_desc">允許應用程式使用 Google Talk 服務收發即時訊息 (使用此服務會觸發資料流量；惡意應用程式可能會導致資料流量過大)。</string>
+    <string name="perm_data_label">傳送資料訊息</string>
+    <string name="perm_data_desc">允許應用程式傳送資料給其他擁有 Google 帳戶的使用者。此應用程式可在背景傳送訊息，無論是否經過您的同意 (使用此服務會觸發資料流量；惡意應用程式可能會導致資料流量過大)。</string>
+    <string name="perm_receive_data_message_label">接收訊息與通知</string>
+    <string name="perm_receive_data_message_desc">允許應用程式接收其伺服器發送的訊息與通知 (使用此服務會觸發資料流量；惡意應用程式可能會導致資料流量過大)。</string>
+    <string name="perm_data_msg_broadcast_label">向應用程式傳送廣播資料訊息。</string>
+    <string name="perm_data_msg_broadcast_desc">可以向已註冊接收廣播訊息的應用程式傳送來自網際網路的廣播資料訊息。</string>
+    <string name="permlab_intentVendingOnly">向 Android Market 傳送廣播訊息。</string>
+    <string name="permdesc_intentVendingOnly">可以向 Android Market 傳送廣播訊息，要求安裝和移除應用程式。</string>
+    <string name="permlab_heartbeat">傳送 Heartbeat 封包至 Google Talk 伺服器</string>
+    <string name="permdesc_heartbeat">可以傳送 Heartbeat 封包至 Google Talk 伺服器，來確定連線狀態正常。</string>
+    <string name="group_chat">群組即時通訊：%s</string>
+    <string name="default_decline_reason">很抱歉，我現在很忙。</string>
+    <string name="newMessages_label">新即時通訊</string>
+    <string name="notify_groupchat_label">群組通訊邀請</string>
+    <string name="num_unread_chats">%s 個未讀即時通訊</string>
+    <string name="notification_format" formatted="false">%s：%s</string>
+    <string name="subscription_notify_text">%s想要能夠與您即時通訊</string>
+    <string name="group_chat_invite_notify_text">%s傳送了群組即時通訊邀請給您</string>
+    <string name="message_too_long">外送訊息的長度上限為 2000 個字元。</string>
+    <string name="conn_auth_error_notify_ticker">Google Talk 驗證失敗</string>
+    <string name="conn_auth_error_notify_title">Google Talk 驗證失敗</string>
+    <string name="conn_auth_error_title">驗證發生錯誤</string>
+    <string name="conn_auth_error_message">無法登入 Google Talk。如果您使用的是「Google 應用服務」帳戶，請確認此帳戶已啟用即時通訊功能。</string>
+    <string name="conn_auth_error_button_retry">重試</string>
+    <string name="conn_auth_error_button_cancel">取消</string>
+</resources>

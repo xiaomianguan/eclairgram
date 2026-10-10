@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label">Service Google Talk</string>
+    <string name="perm_label">Envoyer et recevoir des messages instantanés Google Talk</string>
+    <string name="perm_desc">"Permet aux applications d'utiliser le service Google Talk pour envoyer et recevoir des messages instantanés. L'utilisation de ce service entraîne une utilisation de données. Des applications malveillantes peuvent provoquer une utilisation excessive de données."</string>
+    <string name="perm_data_label">Envoyer des messages de données</string>
+    <string name="perm_data_desc">"Permet aux applications d'envoyer des messages de données aux autres utilisateurs disposant de comptes Google. L'application peut envoyer des messages en arrière-plan sans nécessairement requérir votre consentement exprès. L'utilisation de ce service implique une utilisation des données. Des applications malveillantes sont susceptibles de provoquer une utilisation excessive des données."</string>
+    <string name="perm_receive_data_message_label">Recevoir des messages et des notifications</string>
+    <string name="perm_receive_data_message_desc">"Permet aux applications de recevoir les messages et notifications envoyés par le serveur d'applications. L'utilisation de ce service entraîne une utilisation de données. Des applications malveillantes peuvent provoquer une utilisation excessive de données."</string>
+    <string name="perm_data_msg_broadcast_label">Diffuser les messages de données aux applications</string>
+    <string name="perm_data_msg_broadcast_desc">Vous pouvez diffuser les messages de données reçus par Internet avec des applications enregistrées pour les écouter.</string>
+    <string name="permlab_intentVendingOnly">Envoyer des diffusions à Android Market.</string>
+    <string name="permdesc_intentVendingOnly">"Peut envoyer des diffusions à Android Market en demandant l'installation ou la suppression d'une application."</string>
+    <string name="permlab_heartbeat">Envoyer une pulsation au serveur Google Talk</string>
+    <string name="permdesc_heartbeat">Autorisé à envoyer un paquet de pulsation au serveur Google Talk pour vérifier la connexion.</string>
+    <string name="group_chat">Chat en groupe : %s</string>
+    <string name="default_decline_reason">Désolé, je suis occupé actuellement.</string>
+    <string name="newMessages_label">Nouveaux chats</string>
+    <string name="notify_groupchat_label">Invitation à un chat en groupe</string>
+    <string name="num_unread_chats">%s chats non lus</string>
+    <string name="notification_format" formatted="false">%s : %s</string>
+    <string name="subscription_notify_text">%s souhaiterait chatter avec vous.</string>
+    <string name="group_chat_invite_notify_text">%s vous invite à participer à un chat en groupe.</string>
+    <string name="message_too_long">Vos messages ne doivent pas dépasser 2 000 caractères.</string>
+    <string name="conn_auth_error_notify_ticker">"Échec de l'authentification sur Google Talk"</string>
+    <string name="conn_auth_error_notify_title">"Échec de l'authentification sur Google Talk"</string>
+    <string name="conn_auth_error_title">"Erreur d'authentification"</string>
+    <string name="conn_auth_error_message">"Google Talk n'a pas pu établir la connexion. S'il s'agit d'un compte Google Apps, vérifiez que le service Chat est activé pour ce compte."</string>
+    <string name="conn_auth_error_button_retry">Réessayer</string>
+    <string name="conn_auth_error_button_cancel">Annuler</string>
+</resources>

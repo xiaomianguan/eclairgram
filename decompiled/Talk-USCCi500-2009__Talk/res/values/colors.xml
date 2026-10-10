@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="chat_from">#ff7785e0</color>
+    <color name="chat_me">#ff3492c5</color>
+    <color name="presence_updates">#ffaaaaaa</color>
+    <color name="error">#ffcc5555</color>
+    <color name="status">#ff808080</color>
+    <color name="online_text_color">#ff000000</color>
+    <color name="offline_text_color">#ff808080</color>
+    <color name="custom_status_text_color">#ffffffff</color>
+    <color name="custom_status_text_edit_color">#ff000000</color>
+    <color name="picture_description_color">#ff1e90ff</color>
+    <color name="light_blue_background">#ffecfbff</color>
+</resources>
