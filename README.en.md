@@ -13,9 +13,9 @@ resources with **no pixel-level changes** — only the party we talk to changed,
 Talk to Telegram.
 
 <p align="center">
-  <img src="docs/icon_upside_down.png" alt="Talk icon flipped 180°" width="96">
+  <img src="docs/icon.png" alt="Eclairgram icon" width="96">
   <br>
-  <sub>Following liangmian: the icon is flipped 180° to tell it apart from stock Google Talk</sub>
+  <sub>Eclairgram's own icon: a paper plane in a speech bubble (no more Talk icon)</sub>
 </p>
 
 ## Why this exists

@@ -13,9 +13,9 @@ Google Talk 的逆向工程与私有服务器复刻）：好友列表、聊天�
 从 Google Talk 换成了 Telegram。
 
 <p align="center">
-  <img src="docs/icon_upside_down.png" alt="翻转 180° 的 Talk 图标" width="96">
+  <img src="docs/icon.png" alt="Eclairgram 图标" width="96">
   <br>
-  <sub>沿用 liangmian 的做法：图标翻转 180°，与原版 Google Talk 区分</sub>
+  <sub>Eclairgram 自己的图标：对话气泡里的纸飞机（不再使用 Talk 图标）</sub>
 </p>
 
 ## 为什么是这个项目
