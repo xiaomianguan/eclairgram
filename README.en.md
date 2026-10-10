@@ -167,6 +167,8 @@ messages) provide en-US and zh-CN as well.
 - [x] **per-Android-version theming** (light on 2.1 / dark on 2.2+; the chat stays white, like Talk)
 - [x] **native QuickContactBadge frames** for avatars (Talk's own frame, varies per OS version)
 - [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
+- [x] **attachments (photos/videos)**: send via the paperclip button left of the input; received media
+      shows a placeholder and is downloaded + viewed on tap (ImageView / VideoView)
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
