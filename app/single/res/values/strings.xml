@@ -46,4 +46,5 @@
     <string name="ec_type_user">User</string>
     <string name="ec_type_group">Group</string>
     <string name="ec_type_channel">Channel</string>
+    <string name="ec_saved_messages">Saved Messages</string>
 </resources>

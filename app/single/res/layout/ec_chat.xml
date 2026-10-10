@@ -16,13 +16,12 @@
         android:paddingRight="8.0dip"
         android:paddingBottom="4.0dip">
 
-        <ImageView android:id="@+id/ec_header_avatar"
+        <android.widget.QuickContactBadge android:id="@+id/ec_header_avatar"
             android:layout_width="48.0dip"
             android:layout_height="48.0dip"
             android:layout_gravity="center_vertical"
-            android:background="@drawable/im_avatar_picture_border_normal"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_contact_picture" />
+            android:scaleType="fitCenter"
+            style="?android:attr/quickContactBadgeStyleWindowMedium" />
 
         <LinearLayout
             android:orientation="vertical"

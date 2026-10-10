@@ -42,6 +42,7 @@ public class DialogsActivity extends Activity {
         long id;
         int participants;
         boolean online;
+        boolean isSelf;
     }
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -92,7 +93,7 @@ public class DialogsActivity extends Activity {
                     }
                 });
                 ImageView presence = (ImageView) v.findViewById(R.id.ec_presence);
-                if (r.type == 0) {
+                if (r.type == 0 && !r.isSelf) {
                     presence.setVisibility(View.VISIBLE);
                     presence.setImageResource(r.online
                             ? android.R.drawable.presence_online
@@ -211,10 +212,12 @@ public class DialogsActivity extends Activity {
         Map<Long, Long> photoIds = new HashMap<Long, Long>();
         Map<Long, String> usernames = new HashMap<Long, String>();
         Map<Long, Boolean> online = new HashMap<Long, Boolean>();
+        long selfId = 0;
         if (users != null) {
             for (Object o : users) {
                 TlObject u = (TlObject) o;
                 long id = u.i64("id");
+                if (u.bool("self")) selfId = id;
                 String n = u.str("first_name");
                 if (n == null) n = "";
                 String ln = u.str("last_name");
@@ -289,6 +292,10 @@ public class DialogsActivity extends Activity {
                     r.username = usernames.get(Long.valueOf(uid));
                     Boolean on = online.get(Long.valueOf(uid));
                     r.online = on != null && on.booleanValue();
+                    if (uid == selfId) {
+                        r.isSelf = true;
+                        r.name = getString(R.string.ec_saved_messages);
+                    }
                 } else if (t.equals("peerChat")) {
                     long cid = peer.i64("chat_id");
                     r.peer = MtpClient.inputPeerChat(cid);
