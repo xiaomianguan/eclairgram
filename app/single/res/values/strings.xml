@@ -36,6 +36,7 @@
     <string name="ec_message_hint">Message</string>
     <string name="ec_send">Send</string>
     <string name="ec_attach">Attach</string>
+    <string name="ec_emoji">Emoji</string>
     <string name="ec_attach_photo">Photo</string>
     <string name="ec_attach_video">Video</string>
     <string name="ec_media_photo">[Photo]</string>

@@ -36,6 +36,7 @@
     <string name="ec_message_hint">输入消息</string>
     <string name="ec_send">发送</string>
     <string name="ec_attach">添加附件</string>
+    <string name="ec_emoji">表情</string>
     <string name="ec_attach_photo">图片</string>
     <string name="ec_attach_video">视频</string>
     <string name="ec_media_photo">[图片]</string>

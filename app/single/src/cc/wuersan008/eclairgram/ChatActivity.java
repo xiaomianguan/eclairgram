@@ -127,7 +127,7 @@ public class ChatActivity extends Activity {
                     ((android.widget.LinearLayout) row).setGravity(Gravity.LEFT);
                     t.setBackgroundResource(R.drawable.ec_bubble_in);
                 }
-                t.setTextColor(0xff000000);
+                t.setTextColor(getResources().getColor(R.color.ec_text_primary));
                 if (m.mediaType != 0) {
                     t.setOnClickListener(new View.OnClickListener() {
                         public void onClick(View x) {
@@ -150,6 +150,19 @@ public class ChatActivity extends Activity {
         attach.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 onAttach();
+            }
+        });
+        ImageButton emoji = (ImageButton) findViewById(R.id.ec_emoji);
+        emoji.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onEmoji();
+            }
+        });
+        mInput.addTextChangedListener(new android.text.TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+            public void onTextChanged(CharSequence s, int a, int b, int c) {}
+            public void afterTextChanged(android.text.Editable s) {
+                EmojiFont.applyToEditable(ChatActivity.this, s, dp(20));
             }
         });
 
@@ -203,6 +216,17 @@ public class ChatActivity extends Activity {
     }
 
     // ============================================================ 附件
+    private void onEmoji() {
+        new EmojiPicker(this, new EmojiPicker.Listener() {
+            public void onEmoji(int cp) {
+                String s = new String(Character.toChars(cp));
+                int start = mInput.getSelectionStart();
+                if (start < 0) start = mInput.getText().length();
+                mInput.getText().insert(start, s);
+            }
+        }).show();
+    }
+
     private void onAttach() {
         new AlertDialog.Builder(this)
                 .setItems(new CharSequence[] {

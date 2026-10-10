@@ -66,6 +66,23 @@ public final class EmojiFont {
         return INDEX.containsKey(Integer.valueOf(cp));
     }
 
+    /** 所有可用 emoji 码点（用于表情选择器）。 */
+    public static int[] codepoints(Context ctx) {
+        ensureLoaded(ctx);
+        int n = INDEX.size();
+        int[] out = new int[n];
+        int i = 0;
+        for (Integer cp : INDEX.keySet()) {
+            out[i++] = cp.intValue();
+        }
+        java.util.Arrays.sort(out);
+        return out;
+    }
+
+    public static Bitmap bitmap(Context ctx, int cp) {
+        return get(ctx, cp);
+    }
+
     private static Bitmap get(Context ctx, int cp) {
         ensureLoaded(ctx);
         Bitmap b = CACHE.get(Integer.valueOf(cp));
@@ -111,5 +128,34 @@ public final class EmojiFont {
             i += cc;
         }
         return ss;
+    }
+
+    /** 直接在可编辑文本上刷新 emoji 位图（用于输入框，不改变文本本身）。 */
+    public static void applyToEditable(Context ctx, Spannable s, int sizePx) {
+        if (s == null) return;
+        ensureLoaded(ctx);
+        if (sData == null) return;
+        ImageSpan[] old = s.getSpans(0, s.length(), ImageSpan.class);
+        for (ImageSpan o : old) s.removeSpan(o);
+        int i = 0, n = s.length();
+        while (i < n) {
+            int cp = s.charAt(i);
+            int cc = 1;
+            if (Character.isHighSurrogate((char) cp) && i + 1 < n
+                    && Character.isLowSurrogate(s.charAt(i + 1))) {
+                cp = Character.toCodePoint((char) cp, s.charAt(i + 1));
+                cc = 2;
+            }
+            if (INDEX.containsKey(Integer.valueOf(cp))) {
+                Bitmap b = get(ctx, cp);
+                if (b != null) {
+                    Drawable d = new BitmapDrawable(ctx.getResources(), b);
+                    d.setBounds(0, 0, sizePx, sizePx);
+                    s.setSpan(new ImageSpan(d), i, i + cc,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+            i += cc;
+        }
     }
 }

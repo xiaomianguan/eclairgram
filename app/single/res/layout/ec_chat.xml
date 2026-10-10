@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#ffffffff">
+    android:background="@color/ec_window_bg">
 
     <LinearLayout android:id="@+id/ec_chat_header"
         android:orientation="horizontal"
@@ -61,7 +61,7 @@
         android:layout_width="fill_parent"
         android:layout_height="0.0dip"
         android:layout_weight="1.0"
-        android:cacheColorHint="#ffffffff"
+        android:cacheColorHint="@color/ec_window_bg"
         android:transcriptMode="normal"
         android:stackFromBottom="true" />
 
@@ -69,7 +69,15 @@
         android:orientation="horizontal"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bottombar_landscape_565">
+        android:background="@color/ec_input_bg">
+
+        <ImageButton android:id="@+id/ec_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:background="#00000000"
+            android:contentDescription="@string/ec_emoji"
+            android:src="@drawable/ic_menu_emoticons" />
 
         <ImageButton android:id="@+id/ec_attach"
             android:layout_width="wrap_content"
@@ -84,6 +92,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1.0"
             android:hint="@string/ec_message_hint"
+            android:textColor="@color/ec_text_primary"
             android:singleLine="true"
             android:inputType="textShortMessage|textAutoCorrect" />
 
