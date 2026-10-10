@@ -37,6 +37,7 @@
     <string name="ec_handshake_failed">Could not reach Telegram.</string>
 
     <string name="ec_dialogs_title">Chats</string>
+    <string name="ec_folder_all">All</string>
     <string name="ec_status_loading">Loading…</string>
     <string name="ec_no_dialogs">No chats yet.</string>
     <string name="ec_message_hint">Message</string>

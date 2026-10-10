@@ -392,14 +392,29 @@ public final class MtpClient {
 
     /** messages.getDialogs：拉取会话列表（返回原始 TlObject，由上层解读）。 */
     public TlObject getDialogs(int limit) throws IOException {
+        return getDialogs(limit, 0);
+    }
+
+    /** messages.getDialogs：folderId=0 表示“全部”，其余为会话文件夹（folder_id 字段）。 */
+    public TlObject getDialogs(int limit, int folderId) throws IOException {
+        int flags = folderId != 0 ? (1 << 1) : 0;
         Tl.Writer w = new Tl.Writer();
         w.int32(TlSchema.MESSAGES_GET_DIALOGS)
-         .int32(0)                       // flags
-         .int32(0)                       // offset_date
+         .int32(flags);                  // flags：bit1 = 有 folder_id
+        if (folderId != 0) w.int32(folderId);
+        w.int32(0)                       // offset_date
          .int32(0)                       // offset_id
          .int32(TlSchema.INPUT_PEER_EMPTY)
          .int32(limit)
          .int64(0);                      // hash
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
+    /** messages.getDialogFilters：拉取账号配置的会话文件夹。 */
+    public TlObject getDialogFilters() throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.MESSAGES_GET_DIALOG_FILTERS);
         byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
         return TlObject.read(new Tl.Reader(res));
     }

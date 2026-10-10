@@ -9,16 +9,20 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TabHost;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cc.wuersan008.eclairgram.mtproto.MtpClient;
 import cc.wuersan008.eclairgram.mtproto.TlObject;
@@ -45,14 +49,26 @@ public class DialogsActivity extends Activity {
         boolean isSelf;
     }
 
+    /** 会话文件夹（Telegram dialog filter）。id=0 是“全部”。 */
+    static final class Folder {
+        int id;
+        String title;
+    }
+
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private ArrayAdapter<Row> mAdapter;
     private ListView mList;
     private TextView mEmpty;
+    private TextView mTitle;
+    private TabHost mTabHost;
+    private View mContent;
     private TelegramManager mTg;
     private volatile boolean mLoading = false;
     private boolean mShot;
     private volatile boolean mFetchAvatars = true;
+    private int mFolderId = 0;                       // 当前文件夹
+    private final Set<Integer> mAddedFolders = new HashSet<Integer>();
+    private boolean mFoldersLoaded = false;
 
     private final TelegramManager.Listener mUpd = new TelegramManager.Listener() {
         public void onUpdate() {
@@ -63,11 +79,15 @@ public class DialogsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);   // 顶栏交给标题栏/标签栏
         mTg = TelegramManager.get(this);
         mShot = getIntent().getBooleanExtra("shot", false);
         setContentView(R.layout.ec_dialogs);
         mList = (ListView) findViewById(R.id.ec_list);
         mEmpty = (TextView) findViewById(R.id.ec_empty);
+        mTitle = (TextView) findViewById(R.id.ec_title);
+        mContent = findViewById(R.id.ec_tabcontent);
+        setupTabs();
 
         mAdapter = new ArrayAdapter<Row>(this, 0, new ArrayList<Row>()) {
             @Override
@@ -131,7 +151,110 @@ public class DialogsActivity extends Activity {
                 return true;
             }
         });
+        loadFolders();
         reload();
+    }
+
+    /** 建立 TabHost：先放一个“全部”标签让内容可见；有文件夹时再加标签并显示标签栏。 */
+    private void setupTabs() {
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        addTab(0, getString(R.string.ec_folder_all));
+        mTabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
+            public void onTabChanged(String tag) {
+                int id = parseFolderId(tag);
+                if (id == mFolderId) return;
+                mFolderId = id;
+                reload();
+            }
+        });
+    }
+
+    private void addTab(int id, String title) {
+        if (!mAddedFolders.add(Integer.valueOf(id))) return;
+        TabHost.TabSpec ts = mTabHost.newTabSpec("f" + id);
+        ts.setIndicator(title);
+        ts.setContent(R.id.ec_tabcontent);
+        mTabHost.addTab(ts);
+    }
+
+    private static int parseFolderId(String tag) {
+        try {
+            return Integer.parseInt(tag.substring(1));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /** 拉取账号的会话文件夹；有自定义文件夹时把标题栏换成标签栏。 */
+    private void loadFolders() {
+        if (mFoldersLoaded) return;
+        mFoldersLoaded = true;
+        new Thread(new Runnable() {
+            public void run() {
+                final List<Folder> folders = new ArrayList<Folder>();
+                try {
+                    TlObject res = mTg.syncGetDialogFilters();
+                    List<Object> filters = res.list("filters");
+                    if (filters != null) {
+                        for (Object o : filters) {
+                            TlObject f = (TlObject) o;
+                            String t = f.type();
+                            Folder fo = new Folder();
+                            if (t.equals("dialogFilterDefault")) {
+                                fo.id = 0;
+                                fo.title = getString(R.string.ec_folder_all);
+                            } else if (t.equals("dialogFilter")
+                                    || t.equals("dialogFilterChatlist")) {
+                                fo.id = f.i32("id");
+                                fo.title = filterTitle(f);
+                            } else {
+                                continue;
+                            }
+                            folders.add(fo);
+                        }
+                    }
+                } catch (Throwable t) {
+                    // 取不到文件夹就当作没有，退回标题栏
+                }
+                mMain.post(new Runnable() {
+                    public void run() {
+                        applyFolders(folders);
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void applyFolders(List<Folder> folders) {
+        int custom = 0;
+        for (Folder f : folders) {
+            if (f.id == 0 || mAddedFolders.contains(Integer.valueOf(f.id))) continue;
+            addTab(f.id, f.title);
+            custom++;
+        }
+        if (custom > 0) {
+            mTabHost.getTabWidget().setVisibility(View.VISIBLE);
+            mTitle.setVisibility(View.GONE);
+        }
+        // 所有标签共用同一份内容视图；addTab 会把它的可见性置为 GONE，这里恢复显示
+        if (mContent != null) mContent.setVisibility(View.VISIBLE);
+    }
+
+    private String filterTitle(TlObject f) {
+        String title = null;
+        Object t = f.get("title");
+        if (t instanceof String) {
+            title = (String) t;
+        } else if (t instanceof TlObject) {
+            title = ((TlObject) t).str("text");
+        }
+        if (title == null || title.trim().length() == 0) {
+            title = getString(R.string.ec_dialogs_title);
+        }
+        String emo = f.str("emoticon");
+        if (emo != null && emo.length() > 0) title = emo + " " + title;
+        return title;
     }
 
     @Override
@@ -166,7 +289,7 @@ public class DialogsActivity extends Activity {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    final List<Row> rows = load();
+                    final List<Row> rows = load(mFolderId);
                     android.util.Log.i("Eclairgram", "dialogs loaded: " + rows.size());
                     mMain.post(new Runnable() {
                         public void run() {
@@ -188,6 +311,8 @@ public class DialogsActivity extends Activity {
                 } catch (final Throwable t) {
                     mMain.post(new Runnable() {
                         public void run() {
+                            mAdapter.clear();
+                            mAdapter.notifyDataSetChanged();
                             mEmpty.setVisibility(View.VISIBLE);
                             mEmpty.setText(getString(R.string.ec_status_error,
                                     String.valueOf(t.getMessage())));
@@ -230,8 +355,8 @@ public class DialogsActivity extends Activity {
         return (int) (v * d + 0.5f);
     }
 
-    private List<Row> load() throws Exception {
-        TlObject d = TelegramManager.get(this).syncGetDialogs(40);
+    private List<Row> load(int folderId) throws Exception {
+        TlObject d = TelegramManager.get(this).syncGetDialogs(40, folderId);
         List<Object> users = d.list("users");
         List<Object> messages = d.list("messages");
         List<Object> dialogs = d.list("dialogs");

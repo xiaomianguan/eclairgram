@@ -66,6 +66,7 @@ public final class TlSchema {
     public static final int CHANNELS_READ_HISTORY = 0xcc104937;
     public static final int INPUT_CHANNEL = 0xf35aec28;
     public static final int MESSAGES_GET_DIALOGS = 0xa0f4cb4f;
+    public static final int MESSAGES_GET_DIALOG_FILTERS = 0xefd48c89;
     public static final int MESSAGES_GET_HISTORY = 0x4423e6c5;
     public static final int MESSAGES_SEND_MESSAGE = 0xfef48f62;
     public static final int USERS_GET_USERS = 0x0d91a548;

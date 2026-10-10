@@ -367,6 +367,20 @@ public final class TelegramManager {
         }
     }
 
+    public TlObject syncGetDialogs(int limit, int folderId) throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.getDialogs(limit, folderId);
+        }
+    }
+
+    public TlObject syncGetDialogFilters() throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.getDialogFilters();
+        }
+    }
+
     public TlObject syncGetHistory(byte[] inputPeer, int limit) throws Exception {
         synchronized (mNet) {
             ensureConnected();
