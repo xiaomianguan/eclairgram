@@ -164,6 +164,9 @@ messages) provide en-US and zh-CN as well.
 - [x] **groups and channels** (peerUser / peerChat / peerChannel can all be opened and messaged)
 - [x] **live updates** (`updates.getDifference`; the chat list refreshes automatically)
 - [x] **UI closer to stock Talk** (bubble roster rows, chat contact header, presence icons)
+- [x] **per-Android-version theming** (light on 2.1 / dark on 2.2+; the chat stays white, like Talk)
+- [x] **native QuickContactBadge frames** for avatars (Talk's own frame, varies per OS version)
+- [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen

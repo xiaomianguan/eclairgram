@@ -152,6 +152,9 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **群组与频道**（peerUser / peerChat / peerChannel 均可打开与发送）
 - [x] **实时更新**（`updates.getDifference`，会话列表自动刷新）
 - [x] **更贴近原版 Talk 的界面**（气泡式好友条目、聊天联系人栏、presence 图标）
+- [x] **主题随 Android 版本自适应**（2.1 浅色 / 2.2+ 深色；聊天界面恒为白色，与原版一致）
+- [x] **头像使用系统 QuickContactBadge 相框**（原版 Talk 用的就是这个，随系统版本变化）
+- [x] **自己的会话显示为「收藏夹」**且不显示状态；在线状态只用于其它用户
 - [x] **点按头像打开详情页**（用户/群组/频道，类似 Talk 的联系人页）
 - [x] **单一应用、单一启动图标**：已登录直接进会话列表，会话持久化，无额外设置页
 - [x] 登录页支持自带 API 凭据（BYOK）
