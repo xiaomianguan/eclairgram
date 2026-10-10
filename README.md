@@ -169,12 +169,12 @@ Eclairgram 实测（LG-E610 / Android 4.0.3，真实账号）：
 
 | 截图 | 说明 |
 | --- | --- |
-| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | 会话列表：Talk 气泡条目 + 头像 + presence 图标 |
-| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | 聊天：Talk 联系人标题栏 + `im_bubble_*` 气泡 + 时间 |
-| [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | 点按头像打开的详情页（用户/群组/频道） |
+| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | Android 4.0：深色会话列表、原生相框、用户/群/频道头像 |
+| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0：聊天（仅联系人标题栏 + 白色消息区 + 气泡） |
+| [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | Android 4.0：点按头像打开的详情页 |
+| [`shots/ec_android22_dialogs.png`](shots/ec_android22_dialogs.png) | Android 2.2 真机（HTC）：深色列表与原生相框 |
 
-Android 2.1 模拟器与 Android 2.2 真机（HTC Wildfire）上已完成安装与启动验证（无崩溃；
-两台设备均无法通过 adb 解锁，故未取得实机截图）。
+Android 2.1 模拟器上已完成安装与启动验证（该模拟器帧缓冲冻结，未取得截图）。
 
 ## 已知限制
 

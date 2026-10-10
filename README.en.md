@@ -182,13 +182,13 @@ Eclairgram on a real device (LG-E610 / Android 4.0.3, real account):
 
 | Screenshot | Description |
 | --- | --- |
-| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | chat list: Talk bubble rows + avatar + presence icon |
-| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | chat: Talk contact header + `im_bubble_*` bubbles + time |
-| [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | details page opened by tapping the profile picture |
+| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | Android 4.0: dark chat list, native frames, user/group/channel photos |
+| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0: chat (contact header only + white area + bubbles) |
+| [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | Android 4.0: details page opened by tapping the avatar |
+| [`shots/ec_android22_dialogs.png`](shots/ec_android22_dialogs.png) | Android 2.2 phone (HTC): dark list with native frames |
 
-Install and launch were also verified without crashes on the Android 2.1 emulator and the
-Android 2.2 phone (HTC Wildfire); neither device can be unlocked over adb, so no real-device
-screenshots were captured.
+Install and launch were also verified on the Android 2.1 emulator (its framebuffer is frozen, so
+no screenshot was captured).
 
 ## Known limitations
 
