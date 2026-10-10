@@ -52,6 +52,13 @@ public final class TlSchema {
     public static final int INPUT_CHECK_PASSWORD_SRP = 0xd27ff082;
     public static final int PASSWORD_KDF_ALGO_MODPOW = 0x3a912d4a;
 
+    // ---- 我的资料 / 编辑 ----
+    public static final int USERS_GET_FULL_USER = 0xb60f5918;
+    public static final int USERS_USER_FULL = 0x3b6d152e;
+    public static final int ACCOUNT_UPDATE_PROFILE = 0x78515775;
+    public static final int PHOTOS_UPLOAD_PROFILE_PHOTO = 0x0388a3b5;
+    public static final int INPUT_USER_SELF = 0xf7c1b13f;
+
     // ---- 业务方法 ----
     public static final int HELP_GET_CONFIG = 0xc4f9186b;
     public static final int UPDATES_GET_STATE = 0xedd4882a;

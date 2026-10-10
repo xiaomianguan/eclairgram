@@ -381,6 +381,28 @@ public final class TelegramManager {
         }
     }
 
+    public TlObject syncGetFullUserSelf() throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.getFullUserSelf();
+        }
+    }
+
+    public TlObject syncUpdateProfile(String firstName, String lastName, String about)
+            throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.updateProfile(firstName, lastName, about);
+        }
+    }
+
+    public TlObject syncUploadProfilePhoto(byte[] data, String name) throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.uploadProfilePhoto(data, name);
+        }
+    }
+
     public TlObject syncGetHistory(byte[] inputPeer, int limit) throws Exception {
         synchronized (mNet) {
             ensureConnected();

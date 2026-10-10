@@ -19,7 +19,7 @@
         android:scaleType="fitCenter"
         style="?android:attr/quickContactBadgeStyleWindowMedium" />
 
-    <LinearLayout
+    <LinearLayout android:id="@+id/ec_item_bubble"
         android:orientation="horizontal"
         android:layout_width="0.0dip"
         android:layout_height="wrap_content"

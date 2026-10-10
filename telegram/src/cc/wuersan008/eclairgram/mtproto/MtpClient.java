@@ -542,6 +542,14 @@ public final class MtpClient {
     /** 把一段字节作为图片上传并发送（返回 updates 对象）。 */
     public TlObject sendPhoto(byte[] inputPeer, byte[] data, String name,
                               String caption) throws IOException {
+        byte[] inputFile = uploadInputFile(data, name);
+        Tl.Writer mw = new Tl.Writer();
+        mw.int32(TlSchema.INPUT_MEDIA_UPLOADED_PHOTO).int32(0).raw(inputFile);
+        return sendMedia(inputPeer, mw.toByteArray(), caption);
+    }
+
+    /** 分片上传并返回 inputFile（sendPhoto / uploadProfilePhoto 复用）。 */
+    private byte[] uploadInputFile(byte[] data, String name) throws IOException {
         long fileId = Crypto.longLE(Crypto.random(8), 0);
         int partSize = 256 * 1024;
         int parts = (data.length + partSize - 1) / partSize;
@@ -555,13 +563,54 @@ public final class MtpClient {
         }
         Tl.Writer fw = new Tl.Writer();
         fw.int32(TlSchema.INPUT_FILE).int64(fileId).int32(parts)
-          .string(name == null ? "photo.jpg" : name)
+          .string(name == null ? "file.jpg" : name)
           .string(md5Hex(data));
-        byte[] inputFile = fw.toByteArray();
+        return fw.toByteArray();
+    }
 
-        Tl.Writer mw = new Tl.Writer();
-        mw.int32(TlSchema.INPUT_MEDIA_UPLOADED_PHOTO).int32(0).raw(inputFile);
-        return sendMedia(inputPeer, mw.toByteArray(), caption);
+    public static byte[] inputPeerSelf() {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.INPUT_PEER_SELF);
+        return w.toByteArray();
+    }
+
+    public static byte[] inputUserSelf() {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.INPUT_USER_SELF);
+        return w.toByteArray();
+    }
+
+    /** users.getFullUser(self)：自己的完整资料（含 about / profile_photo）。 */
+    public TlObject getFullUserSelf() throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.USERS_GET_FULL_USER).raw(inputUserSelf());
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));   // users.userFull
+    }
+
+    /** account.updateProfile：改名字/简介；传 null 的字段保持不变。 */
+    public TlObject updateProfile(String firstName, String lastName, String about)
+            throws IOException {
+        int flags = 0;
+        if (firstName != null) flags |= (1 << 0);
+        if (lastName != null) flags |= (1 << 1);
+        if (about != null) flags |= (1 << 2);
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.ACCOUNT_UPDATE_PROFILE).int32(flags);
+        if (firstName != null) w.string(firstName);
+        if (lastName != null) w.string(lastName);
+        if (about != null) w.string(about);
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));   // User
+    }
+
+    /** photos.uploadProfilePhoto：上传并设置为头像。 */
+    public TlObject uploadProfilePhoto(byte[] data, String name) throws IOException {
+        byte[] inputFile = uploadInputFile(data, name == null ? "profile.jpg" : name);
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.PHOTOS_UPLOAD_PROFILE_PHOTO).int32(1 << 0).raw(inputFile);
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));   // photos.photo
     }
 
     /** messages.sendMedia。 */

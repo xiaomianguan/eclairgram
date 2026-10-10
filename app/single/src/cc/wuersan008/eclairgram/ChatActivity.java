@@ -72,6 +72,7 @@ public class ChatActivity extends Activity {
     private long mId;
     private int mParticipants;
     private boolean mOnline;
+    private boolean mSelf;
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private ArrayAdapter<Msg> mAdapter;
@@ -91,6 +92,7 @@ public class ChatActivity extends Activity {
         mId = getIntent().getLongExtra("id", 0);
         mParticipants = getIntent().getIntExtra("participants", 0);
         mOnline = getIntent().getBooleanExtra("online", false);
+        mSelf = getIntent().getBooleanExtra("self", false);
 
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         setContentView(R.layout.ec_chat);
@@ -260,6 +262,7 @@ public class ChatActivity extends Activity {
         i.putExtra("username", mUsername);
         i.putExtra("id", mId);
         i.putExtra("participants", mParticipants);
+        i.putExtra("self", mSelf);
         startActivity(i);
     }
 

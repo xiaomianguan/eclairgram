@@ -6,4 +6,5 @@
     <color name="ec_text_secondary">#ff808080</color>
     <color name="ec_input_bg">#ffeeeeee</color>
     <color name="ec_row_bg">#ffeeeeee</color>
+    <color name="ec_self_bg">#ffdbe7f5</color>
 </resources>

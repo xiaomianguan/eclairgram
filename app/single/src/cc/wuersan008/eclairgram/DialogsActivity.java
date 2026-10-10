@@ -98,6 +98,9 @@ public class DialogsActivity extends Activity {
                             .inflate(R.layout.ec_dialog_item, parent, false);
                 }
                 Row r = getItem(position);
+                // 置顶的“收藏夹/我的资料”用不同背景（类似原版 Talk 的账号行）
+                v.findViewById(R.id.ec_item_bubble).setBackgroundResource(
+                        r.isSelf ? R.drawable.ec_item_bg_self : R.drawable.ec_item_bg);
                 ((TextView) v.findViewById(R.id.ec_name))
                         .setText(EmojiFont.emojify(DialogsActivity.this, r.name, dp(20)));
                 String st = r.status == null ? "" : r.status;
@@ -142,6 +145,7 @@ public class DialogsActivity extends Activity {
                 i.putExtra("id", r.id);
                 i.putExtra("participants", r.participants);
                 i.putExtra("online", r.online);
+                i.putExtra("self", r.isSelf);
                 startActivity(i);
             }
         });
@@ -280,6 +284,8 @@ public class DialogsActivity extends Activity {
         i.putExtra("username", r.username);
         i.putExtra("id", r.id);
         i.putExtra("participants", r.participants);
+        i.putExtra("self", r.isSelf);
+        i.putExtra("peer", r.peer);
         startActivity(i);
     }
 
@@ -477,6 +483,13 @@ public class DialogsActivity extends Activity {
                 r.status = msgText.get(Integer.valueOf(dg.i32("top_message")));
                 r.unread = dg.i32("unread_count");
                 rows.add(r);
+            }
+        }
+        // 把“收藏夹/我的资料”置顶（原版 Telegram 也把 Saved Messages 固定在顶部）
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i).isSelf) {
+                rows.add(0, rows.remove(i));
+                break;
             }
         }
         return rows;

@@ -72,6 +72,17 @@
     <string name="ec_type_group">群组</string>
     <string name="ec_type_channel">频道</string>
     <string name="ec_saved_messages">收藏夹</string>
+    <string name="ec_my_profile">我的资料</string>
+    <string name="ec_field_name">名字</string>
+    <string name="ec_field_first_name">名字</string>
+    <string name="ec_field_last_name">姓氏</string>
+    <string name="ec_field_bio">简介</string>
+    <string name="ec_field_photo">头像</string>
+    <string name="ec_edit_name">编辑名字</string>
+    <string name="ec_edit_bio">编辑简介</string>
+    <string name="ec_bio_empty">点按添加简介</string>
+    <string name="ec_change_photo">更换头像</string>
+    <string name="ec_saving">正在保存…</string>
     <string name="ec_online">在线</string>
     <string name="ec_offline">离线</string>
 </resources>
