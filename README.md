@@ -155,8 +155,9 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **主题随 Android 版本自适应**（2.1 浅色 / 2.2+ 深色；聊天界面恒为白色，与原版一致）
 - [x] **头像使用系统 QuickContactBadge 相框**（原版 Talk 用的就是这个，随系统版本变化）
 - [x] **自己的会话显示为「收藏夹」**且不显示状态；在线状态只用于其它用户
-- [x] **附件（图片/视频）**：输入框左侧的回形针按钮发送；接收后在气泡中显示占位，
-      点击下载并查看（图片 ImageView / 视频 VideoView）
+- [x] **附件（图片/视频）**：输入框左侧的回形针按钮发送；接收的消息**直接在气泡里
+      内联显示缩略图**（图片取较小的 PhotoSize，视频取 document 缩略图并叠加播放图标），
+      点按缩略图下载并查看原文件（图片 ImageView / 视频 VideoView）
 - [x] **Blobmoji 彩色 emoji**：老系统字体引擎不支持彩色字体，
       改为构建期抽出位图、运行时用 ImageSpan 渲染（见 `scripts/gen_emoji_pack.py`）
 - [x] **聊天界面跟随列表主题**（2.1 浅色 / 2.2+ 深色），气泡与文字一并自适应
@@ -183,6 +184,7 @@ Eclairgram 实测（LG-E610 / Android 4.0.3，真实账号）：
 | [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0：聊天（仅联系人标题栏 + 白色消息区 + 气泡） |
 | [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | Android 4.0：点按头像打开的详情页 |
 | [`shots/ec_android40_emoji.png`](shots/ec_android40_emoji.png) | Android 4.0：Blobmoji 表情选择器，按分类分节、组内顺序与现代键盘一致 |
+| [`shots/ec_android40_photo_inline.png`](shots/ec_android40_photo_inline.png) | Android 4.0：图片消息在气泡里内联显示缩略图 |
 | [`shots/ec_android22_dialogs.png`](shots/ec_android22_dialogs.png) | Android 2.2 真机（HTC）：深色列表与原生相框 |
 
 Android 2.1 模拟器上已完成安装与启动验证（该模拟器帧缓冲冻结，未取得截图）。

@@ -167,8 +167,10 @@ messages) provide en-US and zh-CN as well.
 - [x] **per-Android-version theming** (light on 2.1 / dark on 2.2+; the chat stays white, like Talk)
 - [x] **native QuickContactBadge frames** for avatars (Talk's own frame, varies per OS version)
 - [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
-- [x] **attachments (photos/videos)**: send via the paperclip button left of the input; received media
-      shows a placeholder and is downloaded + viewed on tap (ImageView / VideoView)
+- [x] **attachments (photos/videos)**: send via the paperclip button left of the input; received
+      messages **show an inline thumbnail right in the bubble** (a smaller PhotoSize for photos, the
+      document thumb + a play icon for videos); tap it to download and view the original
+      (ImageView / VideoView)
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan
 - [x] **chat UI follows the list theme** (light on 2.1 / dark on 2.2+); bubbles and text adapt too
@@ -197,6 +199,7 @@ Eclairgram on a real device (LG-E610 / Android 4.0.3, real account):
 | [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0: chat (contact header only + white area + bubbles) |
 | [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | Android 4.0: details page opened by tapping the avatar |
 | [`shots/ec_android40_emoji.png`](shots/ec_android40_emoji.png) | Android 4.0: Blobmoji emoji picker, sectioned by category in modern-keyboard order |
+| [`shots/ec_android40_photo_inline.png`](shots/ec_android40_photo_inline.png) | Android 4.0: a photo message with its inline thumbnail |
 | [`shots/ec_android22_dialogs.png`](shots/ec_android22_dialogs.png) | Android 2.2 phone (HTC): dark list with native frames |
 
 Install and launch were also verified on the Android 2.1 emulator (its framebuffer is frozen, so
