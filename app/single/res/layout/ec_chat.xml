@@ -63,6 +63,8 @@
         android:layout_height="0.0dip"
         android:layout_weight="1.0"
         android:cacheColorHint="@color/ec_window_bg"
+        android:divider="@null"
+        android:dividerHeight="0.0dip"
         android:transcriptMode="normal"
         android:stackFromBottom="true" />
 
