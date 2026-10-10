@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 无文件夹时会话列表标题栏的高度。ec_title_bar 9-patch 自带较大的最小高度，
+         需要显式指定高度才不会把标题栏撑高。 -->
+    <dimen name="ec_title_height">40.0dip</dimen>
+</resources>

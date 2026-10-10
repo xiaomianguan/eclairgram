@@ -12,14 +12,16 @@
         android:layout_height="fill_parent"
         android:background="@color/ec_window_bg">
 
+        <!-- 没有文件夹时显示标题栏。ec_title_bar 是给 48dip 头像聊天头设计的
+             9-patch，自带较大的最小高度，直接 wrap_content 会把标题栏撑得很高；
+             这里给标题栏一个正常高度，标题栏本身是固定高，标签栏出现时才会变高。 -->
         <TextView android:id="@+id/ec_title"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/ec_title_height"
             android:background="@drawable/ec_title_bar"
+            android:gravity="center_vertical"
             android:paddingLeft="8.0dip"
-            android:paddingTop="6.0dip"
             android:paddingRight="8.0dip"
-            android:paddingBottom="6.0dip"
             android:text="@string/ec_dialogs_title"
             android:textColor="#ffffffff"
             android:textStyle="bold"
