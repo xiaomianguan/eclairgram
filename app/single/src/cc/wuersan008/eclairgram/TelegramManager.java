@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import cc.wuersan008.eclairgram.mtproto.MtpClient;
+import cc.wuersan008.eclairgram.mtproto.Srp;
 import cc.wuersan008.eclairgram.mtproto.TlObject;
 import cc.wuersan008.eclairgram.mtproto.TlSchema;
 
@@ -41,6 +42,9 @@ public final class TelegramManager {
     private int mDc = DEFAULT_DC;
     private String mPhoneCodeHash;
     private byte[] mAuthKey;
+    // 两步验证（2FA）：验证码通过但账号有密码时置位，等待 checkPassword
+    private boolean mPasswordNeeded;
+    private String mPasswordHint;
     // 是否已完成 auth.signIn（授权登录）。注意：DH 握手也会生成 auth key，
     // 所以“有 key”不等于“已登录”，否则请求验证码后就会被当成已登录。
     private boolean mAuthorized;
@@ -174,15 +178,79 @@ public final class TelegramManager {
                     boolean ok = mClient.signIn(phone, mPhoneCodeHash, code);
                     if (ok) {
                         mAuthorized = true;
+                        mPasswordNeeded = false;
                         save();
                     }
                     post(cb, ok, ok ? "signed-in" : "failed");
+                } catch (MtpClient.PasswordNeededException pn) {
+                    // 验证码正确，但账号开了两步验证：接下来要提交密码
+                    mPasswordNeeded = true;
+                    fetchPasswordHint();
+                    post(cb, false, "password-needed");
                 } catch (final Throwable t) {
                     Log.e(TAG, "signIn failed", t);
                     post(cb, false, String.valueOf(t.getMessage()));
                 }
             }
         }).start();
+    }
+
+    public boolean isPasswordNeeded() {
+        return mPasswordNeeded;
+    }
+
+    public String passwordHint() {
+        return mPasswordHint;
+    }
+
+    /** best-effort 取 2FA 的提示语（失败无所谓）。 */
+    private void fetchPasswordHint() {
+        try {
+            String hint = mClient.getPassword().str("hint");
+            if (hint != null && hint.length() > 0) mPasswordHint = hint;
+        } catch (Throwable t) {
+            Log.w(TAG, "getPassword hint failed: " + t);
+        }
+    }
+
+    /** 提交两步验证密码；成功后即完成登录。 */
+    public void checkPassword(final String password, final Callback cb) {
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    synchronized (mNet) {
+                        ensureConnected();
+                        TlObject pw = mClient.getPassword();
+                        TlObject algo = pw.obj("current_algo");
+                        if (algo == null || !algo.type().equals(
+                                "passwordKdfAlgoSHA256SHA256PBKDF2HMACSHA512iter100000SHA256ModPow")) {
+                            throw new IllegalStateException("unsupported password algo");
+                        }
+                        String hint = pw.str("hint");
+                        if (hint != null && hint.length() > 0) mPasswordHint = hint;
+
+                        Srp.Check c = Srp.compute(
+                                asBytes(algo.get("salt1")), asBytes(algo.get("salt2")),
+                                algo.i32("g"), asBytes(algo.get("p")),
+                                asBytes(pw.get("srp_B")), password);
+                        boolean ok = mClient.checkPassword(pw.i64("srp_id"), c.A, c.M1);
+                        if (ok) {
+                            mAuthorized = true;
+                            mPasswordNeeded = false;
+                            save();
+                        }
+                        post(cb, ok, ok ? "signed-in" : "failed");
+                    }
+                } catch (final Throwable t) {
+                    Log.e(TAG, "checkPassword failed", t);
+                    post(cb, false, String.valueOf(t.getMessage()));
+                }
+            }
+        }).start();
+    }
+
+    private static byte[] asBytes(Object o) {
+        return (o instanceof byte[]) ? (byte[]) o : new byte[0];
     }
 
     public void logout() {

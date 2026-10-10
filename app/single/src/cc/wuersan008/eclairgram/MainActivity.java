@@ -33,9 +33,15 @@ public class MainActivity extends Activity {
     private Button mSignOut;
     private TextView mStatus;
     private LinearLayout mCodeRow;
+    // 两步验证（2FA）
+    private EditText mPassword;
+    private TextView mPasswordLabel;
+    private LinearLayout mPasswordRow;
+    private Button mCheckPassword;
 
     private TelegramManager mTg;
     private boolean mCodeSent;
+    private String mProvisionPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +128,27 @@ public class MainActivity extends Activity {
         mCodeRow.addView(mSignIn);
         root.addView(mCodeRow);
 
+        // 两步验证：验证码通过后再显示
+        mPasswordRow = new LinearLayout(this);
+        mPasswordRow.setOrientation(LinearLayout.VERTICAL);
+        mPasswordLabel = label(R.string.ec_password_label);
+        mPasswordRow.addView(mPasswordLabel);
+        mPassword = new EditText(this);
+        mPassword.setHint(R.string.ec_password_hint);
+        mPassword.setSingleLine(true);
+        mPassword.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        mPasswordRow.addView(mPassword);
+        mCheckPassword = new Button(this);
+        mCheckPassword.setText(R.string.ec_password_sign_in);
+        mCheckPassword.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onCheckPassword();
+            }
+        });
+        mPasswordRow.addView(mCheckPassword);
+        root.addView(mPasswordRow);
+
         mSignOut = new Button(this);
         mSignOut.setText(R.string.ec_sign_out);
         mSignOut.setOnClickListener(new View.OnClickListener() {
@@ -142,14 +169,25 @@ public class MainActivity extends Activity {
 
     private void refresh() {
         boolean signedIn = mTg.isSignedIn();
-        mCodeRow.setVisibility(mCodeSent || signedIn ? View.VISIBLE : View.GONE);
+        boolean pwNeeded = mTg.isPasswordNeeded() && !signedIn;
+        mCodeRow.setVisibility((mCodeSent || signedIn) && !pwNeeded ? View.VISIBLE : View.GONE);
+        mPasswordRow.setVisibility(pwNeeded ? View.VISIBLE : View.GONE);
         mSignIn.setVisibility(signedIn ? View.GONE : View.VISIBLE);
         mSendCode.setVisibility(signedIn ? View.GONE : View.VISIBLE);
         mSignOut.setVisibility(signedIn ? View.VISIBLE : View.GONE);
         mPhone.setEnabled(!signedIn);
         mApiId.setEnabled(!signedIn);
         mApiHash.setEnabled(!signedIn);
-        setStatus(getString(signedIn ? R.string.ec_status_signed_in : R.string.ec_status_idle));
+        mPassword.setEnabled(!signedIn);
+        if (pwNeeded) {
+            String hint = mTg.passwordHint();
+            mPasswordLabel.setText(hint != null && hint.length() > 0
+                    ? getString(R.string.ec_password_label_hint, hint)
+                    : getString(R.string.ec_password_label));
+            setStatus(getString(R.string.ec_status_need_password));
+        } else {
+            setStatus(getString(signedIn ? R.string.ec_status_signed_in : R.string.ec_status_idle));
+        }
     }
 
     /** 从界面读取并保存 api_id/api_hash；不合法则提示。
@@ -207,7 +245,37 @@ public class MainActivity extends Activity {
                 if (ok) {
                     refresh();
                     openDialogs();
+                    return;
+                }
+                refresh();   // 若账号有 2FA，会切到密码输入
+                if (mTg.isPasswordNeeded()) {
+                    if (mProvisionPassword != null) {   // 脚本化登录时自动提交密码
+                        mPassword.setText(mProvisionPassword);
+                        onCheckPassword();
+                    }
                 } else {
+                    setStatus(getString(R.string.ec_status_error, msg));
+                }
+            }
+        });
+    }
+
+    /** 提交两步验证密码。 */
+    private void onCheckPassword() {
+        final String pw = mPassword.getText().toString();
+        if (pw.length() == 0) {
+            setStatus(getString(R.string.ec_status_need_password));
+            return;
+        }
+        setStatus(getString(R.string.ec_status_checking_password));
+        mTg.checkPassword(pw, new TelegramManager.Callback() {
+            public void onDone(boolean ok, String msg) {
+                if (ok) {
+                    mPassword.setText("");
+                    refresh();
+                    openDialogs();
+                } else {
+                    refresh();
                     setStatus(getString(R.string.ec_status_error, msg));
                 }
             }
@@ -242,6 +310,7 @@ public class MainActivity extends Activity {
     /** 便于脚本化登录（部分老机型输入法在脚本输入时会崩）。 */
     private void applyProvisioning(Intent it) {
         if (it == null) return;
+        mProvisionPassword = it.getStringExtra("password");
         String phone = it.getStringExtra("phone");
         if (phone != null) {
             mPhone.setText(phone);

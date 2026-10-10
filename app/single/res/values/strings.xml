@@ -16,11 +16,17 @@
     <string name="ec_code_hint">12345</string>
     <string name="ec_sign_in">Sign in</string>
     <string name="ec_sign_out">Sign out</string>
+    <string name="ec_password_label">Two-step verification password</string>
+    <string name="ec_password_label_hint">Two-step verification password (hint: %1$s)</string>
+    <string name="ec_password_hint">Your password</string>
+    <string name="ec_password_sign_in">Submit password</string>
 
     <string name="ec_status_idle">Enter your phone number to sign in to Telegram.</string>
     <string name="ec_status_sending_code">Requesting a login code…</string>
     <string name="ec_status_code_sent">Code sent. Enter the code you received.</string>
     <string name="ec_status_signing_in">Signing in…</string>
+    <string name="ec_status_need_password">This account has two-step verification enabled. Enter your password.</string>
+    <string name="ec_status_checking_password">Checking your password…</string>
     <string name="ec_status_signed_in">Signed in. Loading your chats…</string>
     <string name="ec_status_signed_out">Signed out.</string>
     <string name="ec_status_error">Error: %1$s</string>

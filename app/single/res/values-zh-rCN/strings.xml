@@ -16,11 +16,17 @@
     <string name="ec_code_hint">12345</string>
     <string name="ec_sign_in">登录</string>
     <string name="ec_sign_out">退出登录</string>
+    <string name="ec_password_label">两步验证密码</string>
+    <string name="ec_password_label_hint">两步验证密码（提示：%1$s）</string>
+    <string name="ec_password_hint">请输入密码</string>
+    <string name="ec_password_sign_in">提交密码</string>
 
     <string name="ec_status_idle">输入手机号即可登录 Telegram。</string>
     <string name="ec_status_sending_code">正在请求登录验证码…</string>
     <string name="ec_status_code_sent">验证码已发送，请输入收到的验证码。</string>
     <string name="ec_status_signing_in">正在登录…</string>
+    <string name="ec_status_need_password">该账号启用了两步验证，请输入密码。</string>
+    <string name="ec_status_checking_password">正在验证密码…</string>
     <string name="ec_status_signed_in">登录成功，正在加载会话…</string>
     <string name="ec_status_signed_out">已退出登录。</string>
     <string name="ec_status_error">出错：%1$s</string>

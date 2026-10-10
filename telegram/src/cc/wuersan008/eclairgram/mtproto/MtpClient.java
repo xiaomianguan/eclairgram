@@ -227,6 +227,13 @@ public final class MtpClient {
         }
     }
 
+    /** 验证码正确，但账号开了两步验证：需要再提交密码（auth.checkPassword）。 */
+    public static final class PasswordNeededException extends IOException {
+        public PasswordNeededException() {
+            super("SESSION_PASSWORD_NEEDED");
+        }
+    }
+
     /** 返回非 null 表示拿到了目标 RPC 的结果。 */
     private Object handleMessage(byte[] body, long wantReqMsgId, long envelopeMsgId)
             throws IOException {
@@ -259,6 +266,9 @@ public final class MtpClient {
                             int target = Integer.parseInt(
                                     e.message.substring("PHONE_MIGRATE_".length()));
                             throw new MigrateException(target);
+                        }
+                        if ("SESSION_PASSWORD_NEEDED".equals(e.message)) {
+                            throw new PasswordNeededException();
                         }
                         throw new IOException("rpc error " + e.code + ": " + e.message);
                     }
@@ -623,6 +633,25 @@ public final class MtpClient {
             throw new IOException("sign up required");
         }
         throw new IOException("signIn unexpected 0x" + Integer.toHexString(ctor));
+    }
+
+    /** account.getPassword：取两步验证的 SRP 参数与 KDF 算法。 */
+    public TlObject getPassword() throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.ACCOUNT_GET_PASSWORD);
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
+    /** auth.checkPassword：提交 SRP 结果；成功时返回 auth.authorization。 */
+    public boolean checkPassword(long srpId, byte[] a, byte[] m1) throws IOException {
+        Tl.Writer pw = new Tl.Writer();
+        pw.int32(TlSchema.INPUT_CHECK_PASSWORD_SRP).int64(srpId).bytes(a).bytes(m1);
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.AUTH_CHECK_PASSWORD).raw(pw.toByteArray());
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        Tl.Reader r = new Tl.Reader(res);
+        return r.int32() == TlSchema.AUTH_AUTHORIZATION;
     }
 
     public int apiId() {

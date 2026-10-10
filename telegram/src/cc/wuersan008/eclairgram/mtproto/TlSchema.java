@@ -45,6 +45,12 @@ public final class TlSchema {
     public static final int AUTH_AUTHORIZATION = 0x2ea2c0d4;
     public static final int AUTH_AUTHORIZATION_SIGN_UP_REQUIRED = 0x44747e9a;
     public static final int CODE_SETTINGS = 0xad253d78;
+    // ---- 两步验证（2FA / SRP）----
+    public static final int ACCOUNT_GET_PASSWORD = 0x548a30f5;
+    public static final int ACCOUNT_PASSWORD = 0x957b50fb;
+    public static final int AUTH_CHECK_PASSWORD = 0xd18b4d16;
+    public static final int INPUT_CHECK_PASSWORD_SRP = 0xd27ff082;
+    public static final int PASSWORD_KDF_ALGO_MODPOW = 0x3a912d4a;
 
     // ---- 业务方法 ----
     public static final int HELP_GET_CONFIG = 0xc4f9186b;

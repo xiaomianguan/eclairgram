@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
@@ -37,11 +38,41 @@ public final class Crypto {
         return md.digest();
     }
 
+    public static byte[] sha256(byte[] data) {
+        return digest("SHA-256", data, 0, data.length);
+    }
+
     public static byte[] sha256(byte[] a, byte[] b) {
         MessageDigest md = md("SHA-256");
         md.update(a);
         md.update(b);
         return md.digest();
+    }
+
+    // ============================================================ HMAC / PBKDF2
+    public static byte[] hmacSha512(byte[] key, byte[] data) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA512");
+            mac.init(new SecretKeySpec(key, "HmacSHA512"));
+            return mac.doFinal(data);
+        } catch (Exception e) {
+            throw new RuntimeException("HmacSHA512 not available", e);
+        }
+    }
+
+    /**
+     * PBKDF2-HMAC-SHA512（Telegram 的 2FA SRP 用 100000 次）。
+     * dkLen &lt;= 64 时单块即可，无需处理多块拼接。
+     */
+    public static byte[] pbkdf2Sha512(byte[] password, byte[] salt, int iterations, int dkLen) {
+        byte[] block = concat(salt, new byte[] { 0, 0, 0, 1 });
+        byte[] u = hmacSha512(password, block);
+        byte[] out = u.clone();
+        for (int i = 1; i < iterations; i++) {
+            u = hmacSha512(password, u);
+            for (int j = 0; j < out.length; j++) out[j] ^= u[j];
+        }
+        return slice(out, 0, dkLen);
     }
 
     private static byte[] digest(String alg, byte[] data, int off, int len) {
