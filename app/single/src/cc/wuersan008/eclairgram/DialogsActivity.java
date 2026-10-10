@@ -144,6 +144,7 @@ public class DialogsActivity extends Activity {
             public void run() {
                 try {
                     final List<Row> rows = load();
+                    android.util.Log.i("Eclairgram", "dialogs loaded: " + rows.size());
                     mMain.post(new Runnable() {
                         public void run() {
                             mAdapter.clear();
