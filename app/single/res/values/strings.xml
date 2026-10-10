@@ -36,4 +36,14 @@
     <string name="ec_message_hint">Message</string>
     <string name="ec_send">Send</string>
     <string name="ec_send_failed">Could not send: %1$s</string>
+
+    <string name="ec_details_title">Details</string>
+    <string name="ec_field_type">Type</string>
+    <string name="ec_field_username">Username</string>
+    <string name="ec_field_phone">Phone</string>
+    <string name="ec_field_id">ID</string>
+    <string name="ec_field_members">Members</string>
+    <string name="ec_type_user">User</string>
+    <string name="ec_type_group">Group</string>
+    <string name="ec_type_channel">Channel</string>
 </resources>

@@ -36,4 +36,14 @@
     <string name="ec_message_hint">输入消息</string>
     <string name="ec_send">发送</string>
     <string name="ec_send_failed">发送失败：%1$s</string>
+
+    <string name="ec_details_title">详情</string>
+    <string name="ec_field_type">类型</string>
+    <string name="ec_field_username">用户名</string>
+    <string name="ec_field_phone">电话</string>
+    <string name="ec_field_id">ID</string>
+    <string name="ec_field_members">成员</string>
+    <string name="ec_type_user">用户</string>
+    <string name="ec_type_group">群组</string>
+    <string name="ec_type_channel">频道</string>
 </resources>

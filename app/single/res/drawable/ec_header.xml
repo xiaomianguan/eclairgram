@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 联系人标题栏渐变（贴近原版 Talk 的灰色标题栏） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#ff7a7a7a"
+        android:centerColor="#ff5c5c5c"
+        android:endColor="#ff444444" />
+</shape>

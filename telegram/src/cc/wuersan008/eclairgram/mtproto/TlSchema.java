@@ -48,6 +48,9 @@ public final class TlSchema {
     public static final int HELP_GET_CONFIG = 0xc4f9186b;
     public static final int UPDATES_GET_STATE = 0xedd4882a;
     public static final int UPDATES_GET_DIFFERENCE = 0x19c2f763;
+    public static final int MESSAGES_READ_HISTORY = 0x0e306d3a;
+    public static final int CHANNELS_READ_HISTORY = 0xcc104937;
+    public static final int INPUT_CHANNEL = 0xf35aec28;
     public static final int MESSAGES_GET_DIALOGS = 0xa0f4cb4f;
     public static final int MESSAGES_GET_HISTORY = 0x4423e6c5;
     public static final int MESSAGES_SEND_MESSAGE = 0xfef48f62;

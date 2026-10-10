@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -36,6 +37,11 @@ public class ChatActivity extends Activity {
 
     private byte[] mPeer;
     private String mName;
+    private long mPhotoId;
+    private int mType;
+    private String mUsername;
+    private long mId;
+    private int mParticipants;
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private ArrayAdapter<Msg> mAdapter;
@@ -49,9 +55,27 @@ public class ChatActivity extends Activity {
         mPeer = getIntent().getByteArrayExtra("peer");
         mName = getIntent().getStringExtra("name");
         if (mName == null) mName = "";
+        mPhotoId = getIntent().getLongExtra("photoId", 0);
+        mType = getIntent().getIntExtra("type", 0);
+        mUsername = getIntent().getStringExtra("username");
+        mId = getIntent().getLongExtra("id", 0);
+        mParticipants = getIntent().getIntExtra("participants", 0);
 
         setContentView(R.layout.ec_chat);
         ((TextView) findViewById(R.id.ec_chat_title)).setText(mName);
+        ((TextView) findViewById(R.id.ec_chat_subtitle)).setText(typeLabel(mType));
+
+        ImageView headerAvatar = (ImageView) findViewById(R.id.ec_header_avatar);
+        android.graphics.Bitmap b = AvatarCache.get(mPhotoId);
+        if (b != null) headerAvatar.setImageBitmap(b);
+        else headerAvatar.setImageResource(R.drawable.ic_contact_picture);
+        headerAvatar.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                openDetails();
+            }
+        });
+        ((ImageView) findViewById(R.id.ec_header_presence))
+                .setImageResource(android.R.drawable.presence_online);
         mList = (ListView) findViewById(R.id.ec_messages);
         mInput = (EditText) findViewById(R.id.ec_input);
         Button send = (Button) findViewById(R.id.ec_send);
@@ -104,6 +128,23 @@ public class ChatActivity extends Activity {
     protected void onDestroy() {
         mRunning = false;
         super.onDestroy();
+    }
+
+    private String typeLabel(int type) {
+        if (type == 1) return getString(R.string.ec_type_group);
+        if (type == 2) return getString(R.string.ec_type_channel);
+        return getString(R.string.ec_type_user);
+    }
+
+    private void openDetails() {
+        android.content.Intent i = new android.content.Intent(this, DetailsActivity.class);
+        i.putExtra("name", mName);
+        i.putExtra("photoId", mPhotoId);
+        i.putExtra("type", mType);
+        i.putExtra("username", mUsername);
+        i.putExtra("id", mId);
+        i.putExtra("participants", mParticipants);
+        startActivity(i);
     }
 
     private void onSend() {

@@ -37,6 +37,10 @@ public class DialogsActivity extends Activity {
         String status;
         int unread;
         long photoId;
+        int type;          // 0 user, 1 group(chat), 2 channel
+        String username;
+        long id;
+        int participants;
     }
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -80,8 +84,14 @@ public class DialogsActivity extends Activity {
                 } else {
                     avatar.setImageResource(R.drawable.ic_contact_picture);
                 }
+                final Row fr = r;
+                avatar.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View x) {
+                        openDetails(fr);
+                    }
+                });
                 ((ImageView) v.findViewById(R.id.ec_presence))
-                        .setImageResource(R.drawable.status_chat);
+                        .setImageResource(android.R.drawable.presence_online);
                 return v;
             }
         };
@@ -92,6 +102,11 @@ public class DialogsActivity extends Activity {
                 Intent i = new Intent(DialogsActivity.this, ChatActivity.class);
                 i.putExtra("peer", r.peer);
                 i.putExtra("name", r.name);
+                i.putExtra("photoId", r.photoId);
+                i.putExtra("type", r.type);
+                i.putExtra("username", r.username);
+                i.putExtra("id", r.id);
+                i.putExtra("participants", r.participants);
                 startActivity(i);
             }
         });
@@ -109,6 +124,17 @@ public class DialogsActivity extends Activity {
     protected void onPause() {
         mTg.removeListener(mUpd);
         super.onPause();
+    }
+
+    private void openDetails(Row r) {
+        Intent i = new Intent(this, DetailsActivity.class);
+        i.putExtra("name", r.name);
+        i.putExtra("photoId", r.photoId);
+        i.putExtra("type", r.type);
+        i.putExtra("username", r.username);
+        i.putExtra("id", r.id);
+        i.putExtra("participants", r.participants);
+        startActivity(i);
     }
 
     private void reload() {
@@ -152,6 +178,7 @@ public class DialogsActivity extends Activity {
         Map<Long, String> names = new HashMap<Long, String>();
         Map<Long, Long> access = new HashMap<Long, Long>();
         Map<Long, Long> photoIds = new HashMap<Long, Long>();
+        Map<Long, String> usernames = new HashMap<Long, String>();
         if (users != null) {
             for (Object o : users) {
                 TlObject u = (TlObject) o;
@@ -166,6 +193,10 @@ public class DialogsActivity extends Activity {
                 }
                 names.put(Long.valueOf(id), n);
                 access.put(Long.valueOf(id), Long.valueOf(u.i64("access_hash")));
+                String un = u.str("username");
+                if (un != null && un.length() > 0) {
+                    usernames.put(Long.valueOf(id), un);
+                }
                 TlObject photo = u.obj("photo");
                 if (photo != null && photo.type().equals("userProfilePhoto")) {
                     photoIds.put(Long.valueOf(id), Long.valueOf(photo.i64("photo_id")));
@@ -185,6 +216,7 @@ public class DialogsActivity extends Activity {
         }
         Map<Long, String> chatNames = new HashMap<Long, String>();
         Map<Long, Long> chatAccess = new HashMap<Long, Long>();
+        Map<Long, Integer> chatParts = new HashMap<Long, Integer>();
         if (chats != null) {
             for (Object o : chats) {
                 TlObject c = (TlObject) o;
@@ -193,6 +225,7 @@ public class DialogsActivity extends Activity {
                 chatNames.put(Long.valueOf(id), title == null ? "" : title);
                 if (c.type().equals("channel")) {
                     chatAccess.put(Long.valueOf(id), Long.valueOf(c.i64("access_hash")));
+                    chatParts.put(Long.valueOf(id), Integer.valueOf(c.i32("participants_count")));
                 }
             }
         }
@@ -211,15 +244,24 @@ public class DialogsActivity extends Activity {
                     r.name = names.get(Long.valueOf(uid));
                     Long pid = photoIds.get(Long.valueOf(uid));
                     r.photoId = pid == null ? 0L : pid.longValue();
+                    r.type = 0;
+                    r.id = uid;
+                    r.username = usernames.get(Long.valueOf(uid));
                 } else if (t.equals("peerChat")) {
                     long cid = peer.i64("chat_id");
                     r.peer = MtpClient.inputPeerChat(cid);
                     r.name = chatNames.get(Long.valueOf(cid));
+                    r.type = 1;
+                    r.id = cid;
                 } else if (t.equals("peerChannel")) {
                     long cid = peer.i64("channel_id");
                     Long ah = chatAccess.get(Long.valueOf(cid));
                     r.peer = MtpClient.inputPeerChannel(cid, ah == null ? 0L : ah.longValue());
                     r.name = chatNames.get(Long.valueOf(cid));
+                    r.type = 2;
+                    r.id = cid;
+                    Integer pc = chatParts.get(Long.valueOf(cid));
+                    r.participants = pc == null ? 0 : pc.intValue();
                 } else {
                     continue;
                 }
