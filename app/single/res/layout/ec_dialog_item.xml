@@ -13,6 +13,7 @@
         android:layout_width="48.0dip"
         android:layout_height="48.0dip"
         android:layout_gravity="center_vertical"
+        android:background="@drawable/im_avatar_picture_border_normal"
         android:scaleType="fitXY"
         android:src="@drawable/ic_contact_picture" />
 
@@ -21,7 +22,7 @@
         android:layout_width="0.0dip"
         android:layout_height="wrap_content"
         android:layout_weight="1.0"
-        android:background="@drawable/bubble"
+        android:background="@drawable/ec_item_bg"
         android:gravity="center_vertical">
 
         <LinearLayout
@@ -37,7 +38,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="@color/online_text_color"
+                android:textColor="@color/ec_text_primary"
                 android:textStyle="bold"
                 android:singleLine="true"
                 android:ellipsize="end" />
@@ -46,7 +47,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:textAppearanceSmall"
-                android:textColor="@color/status"
+                android:textColor="@color/ec_text_secondary"
                 android:singleLine="true"
                 android:ellipsize="end" />
         </LinearLayout>

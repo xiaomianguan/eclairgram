@@ -99,6 +99,23 @@ public class TgCli {
             return;
         }
 
+        if ("exportauth".equals(cmd)) {
+            int target = Integer.parseInt(args[1]);
+            cc.wuersan008.eclairgram.mtproto.MtpClient.AuthExport exp =
+                    c.exportAuthorization(target);
+            System.out.println("export id=" + exp.id + " len=" + exp.bytes.length);
+            MtpClient nc = new MtpClient(apiId, apiHash);
+            nc.setDebug(Boolean.getBoolean("debug"));
+            nc.connect(target);
+            nc.doHandshake();
+            System.out.println("handshake DC" + target + " OK");
+            nc.importAuthorization(exp.id, exp.bytes);
+            System.out.println("IMPORT OK");
+            nc.close();
+            c.close();
+            return;
+        }
+
         if ("dialogs".equals(cmd)) {
             cc.wuersan008.eclairgram.mtproto.TlObject d = c.getDialogs(30);
             System.out.println("DIALOGS type=" + d.type());

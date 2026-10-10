@@ -3,20 +3,20 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#ffffffff">
+    android:background="@color/ec_window_bg">
 
     <TextView android:id="@+id/ec_empty"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:padding="16.0dip"
         android:text="@string/ec_status_loading"
-        android:textColor="@color/status"
+        android:textColor="@color/ec_text_secondary"
         android:visibility="gone" />
 
     <ListView android:id="@+id/ec_list"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:cacheColorHint="#ffffffff"
+        android:cacheColorHint="@color/ec_window_bg"
         android:divider="#00000000"
         android:dividerHeight="0.0dip"
         android:drawSelectorOnTop="false" />

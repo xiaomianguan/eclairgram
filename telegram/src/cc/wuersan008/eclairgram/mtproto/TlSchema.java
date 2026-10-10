@@ -36,6 +36,8 @@ public final class TlSchema {
     public static final int INIT_CONNECTION = 0xc1cd5ea9;
     public static final int AUTH_SEND_CODE = 0xa677244f;
     public static final int AUTH_SIGN_IN = 0x8d52a951;
+    public static final int AUTH_EXPORT_AUTHORIZATION = 0xe5bfffcd;
+    public static final int AUTH_IMPORT_AUTHORIZATION = 0xa57a7dad;
     public static final int AUTH_SIGN_UP = 0xaac7b717;
     public static final int AUTH_RESEND_CODE = 0xcae47523;
     public static final int AUTH_LOG_OUT = 0x3e72ba19;

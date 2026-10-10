@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Eclairgram 主题颜色：默认（Android 2.x 浅色） -->
+<resources>
+    <color name="ec_window_bg">#ffffffff</color>
+    <color name="ec_text_primary">#ff000000</color>
+    <color name="ec_text_secondary">#ff808080</color>
+    <color name="ec_input_bg">#ffeeeeee</color>
+    <color name="ec_row_bg">#ffeeeeee</color>
+</resources>

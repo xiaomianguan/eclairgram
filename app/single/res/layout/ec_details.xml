@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#ffffffff">
+    android:background="@color/ec_window_bg">
 
     <LinearLayout android:orientation="horizontal"
         android:layout_width="fill_parent"
@@ -19,6 +19,7 @@
             android:layout_width="64.0dip"
             android:layout_height="64.0dip"
             android:layout_gravity="center_vertical"
+            android:background="@drawable/im_avatar_picture_border_normal"
             android:scaleType="fitXY"
             android:src="@drawable/ic_contact_picture" />
 

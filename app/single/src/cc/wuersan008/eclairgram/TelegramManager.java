@@ -305,7 +305,61 @@ public final class TelegramManager {
     public byte[] syncDownloadPeerPhoto(byte[] inputPeer, long photoId) throws Exception {
         synchronized (mNet) {
             ensureConnected();
-            return mClient.downloadPeerPhoto(inputPeer, photoId);
+            try {
+                return mClient.downloadPeerPhoto(inputPeer, photoId);
+            } catch (java.io.IOException e) {
+                int dc = parseMigrate(e.getMessage(), "FILE_MIGRATE_");
+                if (dc <= 0) return null;
+                MtpClient fc = fileClient(dc);
+                if (fc == null) return null;
+                try {
+                    return fc.downloadPeerPhoto(inputPeer, photoId);
+                } catch (Throwable t) {
+                    return null;
+                }
+            }
+        }
+    }
+
+    private final java.util.Map<Integer, MtpClient> mFileClients =
+            new java.util.HashMap<Integer, MtpClient>();
+
+    /** 头像在别的 DC 时：导出登录态、连到该 DC、导入后下载。 */
+    private MtpClient fileClient(int dc) {
+        MtpClient c = mFileClients.get(Integer.valueOf(dc));
+        if (c != null) return c;
+        try {
+            MtpClient.AuthExport exp = mClient.exportAuthorization(dc);
+            Log.i(TAG, "exported auth DC" + dc + " id=" + exp.id + " len=" + exp.bytes.length);
+            MtpClient nc = new MtpClient(apiId(), apiHash());
+            nc.connect(dc);
+            nc.doHandshake();
+            Log.i(TAG, "handshake DC" + dc + " ok");
+            nc.importAuthorization(exp.id, exp.bytes);
+            Log.i(TAG, "imported auth DC" + dc + " ok");
+            mFileClients.put(Integer.valueOf(dc), nc);
+            return nc;
+        } catch (Throwable t) {
+            Log.w(TAG, "file client DC" + dc + " failed: " + t);
+            return null;
+        }
+    }
+
+    private static int parseMigrate(String msg, String prefix) {
+        if (msg == null) return -1;
+        int i = msg.indexOf(prefix);
+        if (i < 0) return -1;
+        try {
+            String rest = msg.substring(i + prefix.length());
+            StringBuilder d = new StringBuilder();
+            for (int k = 0; k < rest.length(); k++) {
+                char ch = rest.charAt(k);
+                if (ch >= '0' && ch <= '9') d.append(ch);
+                else break;
+            }
+            return d.length() == 0 ? -1 : Integer.parseInt(d.toString());
+        } catch (Exception e) {
+            return -1;
         }
     }
 

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Eclairgram 主题颜色：Android 2.2+（Froyo 起默认深色，贴近原版 Talk） -->
+<resources>
+    <color name="ec_window_bg">#ff000000</color>
+    <color name="ec_text_primary">#ffffffff</color>
+    <color name="ec_text_secondary">#ffb0b0b0</color>
+    <color name="ec_input_bg">#ff1a1a1a</color>
+    <color name="ec_row_bg">#ff1a1a1a</color>
+</resources>

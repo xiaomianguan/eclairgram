@@ -41,6 +41,7 @@ public class DialogsActivity extends Activity {
         String username;
         long id;
         int participants;
+        boolean online;
     }
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -90,8 +91,15 @@ public class DialogsActivity extends Activity {
                         openDetails(fr);
                     }
                 });
-                ((ImageView) v.findViewById(R.id.ec_presence))
-                        .setImageResource(android.R.drawable.presence_online);
+                ImageView presence = (ImageView) v.findViewById(R.id.ec_presence);
+                if (r.type == 0) {
+                    presence.setVisibility(View.VISIBLE);
+                    presence.setImageResource(r.online
+                            ? android.R.drawable.presence_online
+                            : android.R.drawable.presence_offline);
+                } else {
+                    presence.setVisibility(View.GONE);
+                }
                 return v;
             }
         };
@@ -152,6 +160,7 @@ public class DialogsActivity extends Activity {
                             mAdapter.notifyDataSetChanged();
                             mEmpty.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
                             if (rows.isEmpty()) mEmpty.setText(R.string.ec_no_dialogs);
+                            startAvatarFetch(rows);
                         }
                     });
                 } catch (final Throwable t) {
@@ -169,6 +178,27 @@ public class DialogsActivity extends Activity {
         }).start();
     }
 
+    /** 后台逐个下载头像，下载到一个就刷新一次列表（不阻塞列表显示）。 */
+    private void startAvatarFetch(final List<Row> rows) {
+        new Thread(new Runnable() {
+            public void run() {
+                int n = 0;
+                for (final Row r : rows) {
+                    if (n >= 20) break;
+                    if (r.photoId != 0 && !AvatarCache.has(r.photoId)) {
+                        AvatarCache.load(mTg, r.peer, r.photoId);
+                        n++;
+                        mMain.post(new Runnable() {
+                            public void run() {
+                                mAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    }
+                }
+            }
+        }).start();
+    }
+
     private List<Row> load() throws Exception {
         TlObject d = TelegramManager.get(this).syncGetDialogs(40);
         List<Object> users = d.list("users");
@@ -180,6 +210,7 @@ public class DialogsActivity extends Activity {
         Map<Long, Long> access = new HashMap<Long, Long>();
         Map<Long, Long> photoIds = new HashMap<Long, Long>();
         Map<Long, String> usernames = new HashMap<Long, String>();
+        Map<Long, Boolean> online = new HashMap<Long, Boolean>();
         if (users != null) {
             for (Object o : users) {
                 TlObject u = (TlObject) o;
@@ -202,6 +233,9 @@ public class DialogsActivity extends Activity {
                 if (photo != null && photo.type().equals("userProfilePhoto")) {
                     photoIds.put(Long.valueOf(id), Long.valueOf(photo.i64("photo_id")));
                 }
+                TlObject status = u.obj("status");
+                online.put(Long.valueOf(id), Boolean.valueOf(
+                        status != null && status.type().equals("userStatusOnline")));
             }
         }
         Map<Integer, String> msgText = new HashMap<Integer, String>();
@@ -218,12 +252,17 @@ public class DialogsActivity extends Activity {
         Map<Long, String> chatNames = new HashMap<Long, String>();
         Map<Long, Long> chatAccess = new HashMap<Long, Long>();
         Map<Long, Integer> chatParts = new HashMap<Long, Integer>();
+        Map<Long, Long> chatPhotos = new HashMap<Long, Long>();
         if (chats != null) {
             for (Object o : chats) {
                 TlObject c = (TlObject) o;
                 long id = c.i64("id");
                 String title = c.str("title");
                 chatNames.put(Long.valueOf(id), title == null ? "" : title);
+                TlObject cp = c.obj("photo");
+                if (cp != null && cp.type().equals("chatPhoto")) {
+                    chatPhotos.put(Long.valueOf(id), Long.valueOf(cp.i64("photo_id")));
+                }
                 if (c.type().equals("channel")) {
                     chatAccess.put(Long.valueOf(id), Long.valueOf(c.i64("access_hash")));
                     chatParts.put(Long.valueOf(id), Integer.valueOf(c.i32("participants_count")));
@@ -248,12 +287,16 @@ public class DialogsActivity extends Activity {
                     r.type = 0;
                     r.id = uid;
                     r.username = usernames.get(Long.valueOf(uid));
+                    Boolean on = online.get(Long.valueOf(uid));
+                    r.online = on != null && on.booleanValue();
                 } else if (t.equals("peerChat")) {
                     long cid = peer.i64("chat_id");
                     r.peer = MtpClient.inputPeerChat(cid);
                     r.name = chatNames.get(Long.valueOf(cid));
                     r.type = 1;
                     r.id = cid;
+                    Long cp = chatPhotos.get(Long.valueOf(cid));
+                    r.photoId = cp == null ? 0L : cp.longValue();
                 } else if (t.equals("peerChannel")) {
                     long cid = peer.i64("channel_id");
                     Long ah = chatAccess.get(Long.valueOf(cid));
@@ -263,6 +306,8 @@ public class DialogsActivity extends Activity {
                     r.id = cid;
                     Integer pc = chatParts.get(Long.valueOf(cid));
                     r.participants = pc == null ? 0 : pc.intValue();
+                    Long cp = chatPhotos.get(Long.valueOf(cid));
+                    r.photoId = cp == null ? 0L : cp.longValue();
                 } else {
                     continue;
                 }
@@ -270,15 +315,6 @@ public class DialogsActivity extends Activity {
                 r.status = msgText.get(Integer.valueOf(dg.i32("top_message")));
                 r.unread = dg.i32("unread_count");
                 rows.add(r);
-            }
-        }
-        // 预取前若干个头像（后台线程，串行下载）
-        int fetched = 0;
-        for (Row r : rows) {
-            if (fetched >= 12) break;
-            if (r.photoId != 0 && !AvatarCache.has(r.photoId)) {
-                AvatarCache.load(mTg, r.peer, r.photoId);
-                fetched++;
             }
         }
         return rows;

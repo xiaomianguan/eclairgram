@@ -61,6 +61,7 @@ public class ChatActivity extends Activity {
         mId = getIntent().getLongExtra("id", 0);
         mParticipants = getIntent().getIntExtra("participants", 0);
 
+        requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         setContentView(R.layout.ec_chat);
         ((TextView) findViewById(R.id.ec_chat_title)).setText(mName);
         ((TextView) findViewById(R.id.ec_chat_subtitle)).setText(typeLabel(mType));

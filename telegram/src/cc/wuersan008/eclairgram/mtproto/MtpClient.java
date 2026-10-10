@@ -475,9 +475,37 @@ public final class MtpClient {
                 if (offset > 4 * 1024 * 1024) break;
             }
         } catch (IOException e) {
-            return null;   // 例如头像在别的 DC（FILE_MIGRATE）
+            String m = String.valueOf(e.getMessage());
+            if (m.contains("FILE_MIGRATE")) throw e;   // 交给上层换 DC 下载
+            return null;
         }
         return out.toByteArray();
+    }
+
+    /** auth.exportedAuthorization 的内容。 */
+    public static final class AuthExport {
+        public long id;
+        public byte[] bytes;
+    }
+
+    /** auth.exportAuthorization：把登录态导出到另一个数据中心。 */
+    public AuthExport exportAuthorization(int dcId) throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.AUTH_EXPORT_AUTHORIZATION).int32(dcId);
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        TlObject o = TlObject.read(new Tl.Reader(res));
+        AuthExport a = new AuthExport();
+        a.id = o.i64("id");
+        Object b = o.get("bytes");
+        a.bytes = (b instanceof byte[]) ? (byte[]) b : new byte[0];
+        return a;
+    }
+
+    /** auth.importAuthorization：在另一个数据中心导入登录态。 */
+    public void importAuthorization(long id, byte[] bytes) throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.AUTH_IMPORT_AUTHORIZATION).int64(id).bytes(bytes);
+        rpc(wrapped(w.toByteArray()));
     }
 
     /** auth.sendCode：请求给手机号发送验证码。 */

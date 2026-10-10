@@ -64,12 +64,12 @@ public class DetailsActivity extends Activity {
         TextView l = new TextView(this);
         l.setText(label);
         l.setWidth(dp(96));
-        l.setTextColor(0xff808080);
+        l.setTextColor(getResources().getColor(R.color.ec_text_secondary));
         row.addView(l);
 
         TextView v = new TextView(this);
         v.setText(value);
-        v.setTextColor(0xff000000);
+        v.setTextColor(getResources().getColor(R.color.ec_text_primary));
         v.setGravity(Gravity.LEFT);
         row.addView(v);
 
