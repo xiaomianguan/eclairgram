@@ -57,12 +57,50 @@ public class TgCli {
             System.out.println("handshake OK");
         }
 
-        if ("handshake".equals(cmd) || "getconfig".equals(cmd)) {
+        if ("getconfig".equals(cmd) || "handshake".equals(cmd)) {
             cc.wuersan008.eclairgram.mtproto.Tl.Writer w =
                     new cc.wuersan008.eclairgram.mtproto.Tl.Writer();
             w.int32(cc.wuersan008.eclairgram.mtproto.TlSchema.HELP_GET_CONFIG);
             byte[] res = (byte[]) c.rpc(c.wrapped(w.toByteArray()));
             System.out.println("getConfig OK, " + res.length + " bytes");
+            c.close();
+            return;
+        }
+
+        if ("send".equals(cmd)) {
+            long uid = Long.parseLong(args[1]);
+            long ah = Long.parseLong(args[2]);
+            String text = args[3];
+            cc.wuersan008.eclairgram.mtproto.TlObject res = c.sendMessageToUser(uid, ah, text);
+            System.out.println("SEND type=" + res.type());
+            c.close();
+            return;
+        }
+
+        if ("history".equals(cmd)) {
+            long uid = Long.parseLong(args[1]);
+            long ah = Long.parseLong(args[2]);
+            cc.wuersan008.eclairgram.mtproto.TlObject res = c.getHistoryUser(uid, ah, 20);
+            java.util.List<Object> msgs = res.list("messages");
+            System.out.println("HISTORY type=" + res.type() + " count="
+                    + (msgs == null ? 0 : msgs.size()));
+            if (msgs != null) {
+                for (Object o : msgs) {
+                    cc.wuersan008.eclairgram.mtproto.TlObject m =
+                            (cc.wuersan008.eclairgram.mtproto.TlObject) o;
+                    System.out.println("  " + m.type() + " id=" + m.i32("id")
+                            + " out=" + m.bool("out") + " date=" + m.i32("date")
+                            + " text=" + m.str("message"));
+                }
+            }
+            c.close();
+            return;
+        }
+
+        if ("dialogs".equals(cmd)) {
+            cc.wuersan008.eclairgram.mtproto.TlObject d = c.getDialogs(30);
+            System.out.println("DIALOGS type=" + d.type());
+            dumpDialogs(d);
             c.close();
             return;
         }
@@ -98,6 +136,48 @@ public class TgCli {
         System.err.println("unknown command: " + cmd);
         c.close();
         System.exit(2);
+    }
+
+    private static void dumpDialogs(cc.wuersan008.eclairgram.mtproto.TlObject d) {
+        java.util.List<Object> users = d.list("users");
+        java.util.List<Object> dialogs = d.list("dialogs");
+        java.util.List<Object> msgs = d.list("messages");
+        java.util.HashMap<Long, String> names = new java.util.HashMap<Long, String>();
+        if (users != null) {
+            for (Object o : users) {
+                cc.wuersan008.eclairgram.mtproto.TlObject u =
+                        (cc.wuersan008.eclairgram.mtproto.TlObject) o;
+                String n = u.str("first_name");
+                if (n == null) n = "";
+                String ln = u.str("last_name");
+                if (ln != null) n = n + " " + ln;
+                names.put(Long.valueOf(u.i64("id")), n);
+                System.out.println("  user id=" + u.i64("id") + " name=" + n
+                        + " access_hash=" + u.i64("access_hash") + " self=" + u.bool("self"));
+            }
+        }
+        int i = 0;
+        if (dialogs != null) {
+            for (Object o : dialogs) {
+                cc.wuersan008.eclairgram.mtproto.TlObject dg =
+                        (cc.wuersan008.eclairgram.mtproto.TlObject) o;
+                cc.wuersan008.eclairgram.mtproto.TlObject peer = dg.obj("peer");
+                String who = peer == null ? "?" : peer.type();
+                long pid = peer == null ? 0 : (peer.type().equals("peerUser")
+                        ? peer.i64("user_id") : peer.i64("chat_id"));
+                if (peer != null && peer.type().equals("peerChannel")) {
+                    pid = peer.i64("channel_id");
+                }
+                String nm = names.get(Long.valueOf(pid));
+                System.out.println("  #" + (++i) + " " + who + " id=" + pid
+                        + " name=" + (nm == null ? "?" : nm)
+                        + " top=" + dg.i32("top_message")
+                        + " unread=" + dg.i32("unread_count"));
+            }
+        }
+        System.out.println("  (dialogs=" + (dialogs == null ? 0 : dialogs.size())
+                + " users=" + (users == null ? 0 : users.size())
+                + " messages=" + (msgs == null ? 0 : msgs.size()) + ")");
     }
 
     private static void save(String path, Properties p) throws Exception {

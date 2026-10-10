@@ -48,8 +48,21 @@ public final class TlSchema {
     public static final int HELP_GET_CONFIG = 0xc4f9186b;
     public static final int MESSAGES_GET_DIALOGS = 0xa0f4cb4f;
     public static final int MESSAGES_GET_HISTORY = 0x4423e6c5;
-    public static final int MESSAGES_SEND_MESSAGE = 0x545cd15a;
+    public static final int MESSAGES_SEND_MESSAGE = 0xfef48f62;
     public static final int USERS_GET_USERS = 0x0d91a548;
+
+    public static final int DIALOGS = 0x15ba6c40;
+    public static final int DIALOGS_SLICE = 0x71e094f3;
+    public static final int MESSAGES = 0x1d73e7ea;
+    public static final int MESSAGES_SLICE = 0x5f206716;
+
+    public static final int INPUT_PEER_EMPTY = 0x7f3b18ea;
+    public static final int INPUT_PEER_SELF = 0x7da07ec9;
+    public static final int INPUT_PEER_USER = 0xdde8a54c;
+    public static final int INPUT_PEER_CHAT = 0x35a95cb9;
+    public static final int PEER_USER = 0x59511722;
+    public static final int PEER_CHAT = 0x36c6019a;
+    public static final int PEER_CHANNEL = 0xa2a5371e;
 
     // ---- sentCodeType ----
     public static final int SENT_CODE_TYPE_APP = 0x3dbb5986;

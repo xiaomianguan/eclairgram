@@ -349,7 +349,54 @@ public final class MtpClient {
         return invokeWithLayer(LAYER, initConnection(query));
     }
 
-    // ============================================================ 登录 API
+    // ============================================================ 业务 API
+    private static void writeInputPeerUser(Tl.Writer w, long userId, long accessHash) {
+        w.int32(TlSchema.INPUT_PEER_USER).int64(userId).int64(accessHash);
+    }
+
+    /** messages.getDialogs：拉取会话列表（返回原始 TlObject，由上层解读）。 */
+    public TlObject getDialogs(int limit) throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.MESSAGES_GET_DIALOGS)
+         .int32(0)                       // flags
+         .int32(0)                       // offset_date
+         .int32(0)                       // offset_id
+         .int32(TlSchema.INPUT_PEER_EMPTY)
+         .int32(limit)
+         .int64(0);                      // hash
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
+    /** messages.getHistory：某个用户的最近消息。 */
+    public TlObject getHistoryUser(long userId, long accessHash, int limit) throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.MESSAGES_GET_HISTORY);
+        writeInputPeerUser(w, userId, accessHash);
+        w.int32(0)                       // offset_id
+         .int32(0)                       // offset_date
+         .int32(0)                       // add_offset
+         .int32(limit)
+         .int32(0)                       // max_id
+         .int32(0)                       // min_id
+         .int64(0);                      // hash
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
+    /** messages.sendMessage：给某个用户发一条文本消息。 */
+    public TlObject sendMessageToUser(long userId, long accessHash, String text)
+            throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.MESSAGES_SEND_MESSAGE)
+         .int32(0);                      // flags
+        writeInputPeerUser(w, userId, accessHash);
+        w.string(text)
+         .int64(Crypto.longLE(Crypto.random(8), 0));   // random_id
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
     /** auth.sendCode：请求给手机号发送验证码。 */
     public TlSchema.SentCode sendCode(String phone) throws IOException {
         Tl.Writer w = new Tl.Writer();
