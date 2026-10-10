@@ -94,10 +94,19 @@ are needed.
 python3 scripts/merge_single_app.py          # build the single APK -> dist/eclairgram.apk
 ```
 
-### Local secrets (**never committed**)
+### Bring your own API key (BYOK; production ships without one)
 
-Telegram's `api_id` / `api_hash` are secrets and **never** appear in the repository. The build
-reads them from the ignored `local/secrets.properties` and injects them into the APK:
+The production build ships **without** any `api_id` / `api_hash`. The login screen
+has fields for them, so each user supplies **their own** credentials (obtained from
+<https://my.telegram.org>). This also avoids handing one person's API key to every
+user, which would be a moderation/abuse problem.
+
+The credentials are stored in the app's private SharedPreferences — never baked into
+the APK and never committed.
+
+Optional for local development: put credentials in the ignored
+`local/secrets.properties` and the build injects them as defaults (handy for testing;
+**never committed**):
 
 ```properties
 # local/secrets.properties (ignored via /local/ in .gitignore)
@@ -105,8 +114,8 @@ tg.api_id=<your api_id>
 tg.api_hash=<your api_hash>
 ```
 
-Without that file the build uses placeholders (the app still compiles, but cannot log in to the
-real Telegram).
+Without that file `BuildSecrets` uses placeholders and the app asks the user to enter
+them on the login screen.
 
 ## Try the protocol on your desktop first
 
@@ -144,8 +153,8 @@ messages) provide en-US and zh-CN as well.
 - [x] Pure-Java native MTProto: obfuscated2 transport, AES-IGE/AES-CTR, RSA, TL codec
 - [x] **DH handshake verified** against production Telegram (auth key created)
 - [x] **Encrypted RPC verified** (`help.getConfig` returns a full config, gzip handled)
-- [ ] `auth.sendCode` / `auth.signIn` login (pending testing with a test account)
-- [ ] dialogs / message history / send message
+- [x] **Login verified** (`auth.sendCode` / `auth.signIn`, including `PHONE_MIGRATE` DC switching)
+- [x] **Dialogs / history / send verified** (TL schema generates the type table; generic parsing)
 - [ ] bridge into the Talk UI (buddy list shows Telegram dialogs)
 - [ ] joint testing + screenshots on all three devices (2.1 emulator / 2.2 / 4.0)
 

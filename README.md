@@ -89,10 +89,16 @@ Telegram 的数据中心用 **RSA 公钥** 做握手鉴权（不是 TLS）。这
 python3 scripts/merge_single_app.py          # 构建单一 APK -> dist/eclairgram.apk
 ```
 
-### 本地机密（**绝不入库**）
+### 自带 API 凭据（BYOK，生产版不带 key）
 
-Telegram 的 `api_id` / `api_hash` 属于机密，**不会**出现在仓库里。
-构建时从被忽略的 `local/secrets.properties` 读取并注入 APK：
+生产版 **不带** 任何 `api_id` / `api_hash`：应用启动后在登录页里有对应的输入框，
+用户自行填入 **自己的** API 凭据（在 <https://my.telegram.org> 申请）。
+这也避免了把某一个人的 API key 分发给所有用户带来的风控问题。
+
+凭据保存在应用私有 SharedPreferences 中，不会写进 APK、也不会入库。
+
+开发构建可选：把凭据放进被忽略的 `local/secrets.properties`，构建时自动注入
+作为默认值（方便本机联调；**绝不入库**）：
 
 ```properties
 # local/secrets.properties （见 .gitignore 的 /local/）
@@ -100,7 +106,7 @@ tg.api_id=<你的 api_id>
 tg.api_hash=<你的 api_hash>
 ```
 
-没有这个文件时，构建会使用占位值（App 能编译，但无法登录真实 Telegram）。
+没有这个文件时 `BuildSecrets` 使用占位值，应用会要求用户在登录页手动填写。
 
 ## 在电脑上先跑通协议
 
@@ -138,8 +144,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] 纯 Java 原生 MTProto：obfuscated2 传输、AES-IGE/AES-CTR、RSA、TL 编解码
 - [x] **DH 握手实测通过**（与 Telegram 生产 DC 建立 auth key）
 - [x] **加密 RPC 实测通过**（`help.getConfig` 返回完整 config，含 gzip 解包）
-- [ ] `auth.sendCode` / `auth.signIn` 登录（待用测试账号联调）
-- [ ] 对话列表 / 消息历史 / 发送消息
+- [x] **登录实测通过**（`auth.sendCode` / `auth.signIn`，含 `PHONE_MIGRATE` 换 DC）
+- [x] **会话列表 / 历史消息 / 发送消息 实测通过**（由 TL schema 生成类型表，通用解析）
 - [ ] 桥接层接入 Talk 界面（好友列表显示 Telegram 对话）
 - [ ] 三台设备（2.1 模拟器 / 2.2 真机 / 4.0 真机）联调与截图
 

@@ -1298,7 +1298,7 @@ def stage_build(manifest):
     # app/privategsf/src 只用于提供 AIDL 需要的 parcelable 实现，
     # 其编译产物随后会被排除（运行时用捆绑的原始类）。
     for d in [f'{WS}/app/single/src', f'{WS}/app/privategsf/src',
-              f'{WS}/app/compat/src', f'{WS}/telegram/src',
+              f'{WS}/app/compat/src', f'{WS}/telegram/src', f'{WS}/telegram/generated',
               f'{WORK}/gensecrets', aidlgen, gen]:
         for dp, _, fs in os.walk(d):
             for f in fs:

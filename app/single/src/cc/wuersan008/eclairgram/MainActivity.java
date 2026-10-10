@@ -3,6 +3,7 @@ package cc.wuersan008.eclairgram;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -23,6 +24,8 @@ public class MainActivity extends Activity {
 
     private EditText mPhone;
     private EditText mCode;
+    private EditText mApiId;
+    private EditText mApiHash;
     private Button mSendCode;
     private Button mSignIn;
     private Button mSignOut;
@@ -59,6 +62,20 @@ public class MainActivity extends Activity {
         subtitle.setText(R.string.ec_login_subtitle);
         subtitle.setPadding(0, dp(4), 0, dp(8));
         root.addView(subtitle);
+
+        // 自带 API 凭据（BYOK）：生产版不带 key
+        root.addView(label(R.string.ec_api_id_label));
+        mApiId = new EditText(this);
+        mApiId.setInputType(InputType.TYPE_CLASS_NUMBER);
+        mApiId.setSingleLine(true);
+        if (mTg.apiId() != 0) mApiId.setText(Integer.toString(mTg.apiId()));
+        root.addView(mApiId);
+
+        root.addView(label(R.string.ec_api_hash_label));
+        mApiHash = new EditText(this);
+        mApiHash.setSingleLine(true);
+        if (mTg.hasApiCredentials()) mApiHash.setText(mTg.apiHash());
+        root.addView(mApiHash);
 
         root.addView(label(R.string.ec_phone_label));
         mPhone = new EditText(this);
@@ -118,10 +135,31 @@ public class MainActivity extends Activity {
         mSendCode.setVisibility(signedIn ? View.GONE : View.VISIBLE);
         mSignOut.setVisibility(signedIn ? View.VISIBLE : View.GONE);
         mPhone.setEnabled(!signedIn);
+        mApiId.setEnabled(!signedIn);
+        mApiHash.setEnabled(!signedIn);
         setStatus(getString(signedIn ? R.string.ec_status_signed_in : R.string.ec_status_idle));
     }
 
+    /** 从界面读取并保存 api_id/api_hash；不合法则提示。 */
+    private boolean saveApiFromUi() {
+        String idStr = mApiId.getText().toString().trim();
+        String hash = mApiHash.getText().toString().trim();
+        if (idStr.length() == 0 || hash.length() == 0) {
+            setStatus(getString(R.string.ec_status_need_api));
+            return false;
+        }
+        try {
+            int id = Integer.parseInt(idStr);
+            mTg.setApiCredentials(id, hash);
+            return true;
+        } catch (NumberFormatException e) {
+            setStatus(getString(R.string.ec_status_need_api));
+            return false;
+        }
+    }
+
     private void onSendCode() {
+        if (!saveApiFromUi()) return;
         String phone = mPhone.getText().toString().trim();
         if (phone.length() == 0) {
             setStatus(getString(R.string.ec_status_need_phone));

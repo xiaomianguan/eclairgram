@@ -26,6 +26,8 @@ public final class TelegramManager {
     private static final String KEY_AUTH = "auth_key";
     private static final String KEY_DC = "dc";
     private static final String KEY_PHONE = "phone";
+    private static final String KEY_API_ID = "api_id";
+    private static final String KEY_API_HASH = "api_hash";
     private static final int DEFAULT_DC = 2;
 
     private static TelegramManager sInstance;
@@ -69,6 +71,31 @@ public final class TelegramManager {
         return mAuthKey != null;
     }
 
+    // ---- 自带 API 凭据（BYOK）：生产版不带 key，由用户填写 ----
+    public int apiId() {
+        return mApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getInt(KEY_API_ID, BuildSecrets.API_ID);
+    }
+
+    public String apiHash() {
+        String h = mApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_API_HASH, null);
+        if (h == null || h.length() == 0) return BuildSecrets.API_HASH;
+        return h;
+    }
+
+    public void setApiCredentials(int id, String hash) {
+        mApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putInt(KEY_API_ID, id)
+                .putString(KEY_API_HASH, hash == null ? "" : hash.trim())
+                .commit();
+    }
+
+    public boolean hasApiCredentials() {
+        return apiId() != 0 && apiHash() != null && apiHash().length() > 0
+                && !"PLACEHOLDER".equals(apiHash());
+    }
+
     public String phone() {
         return mApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .getString(KEY_PHONE, "");
@@ -82,7 +109,7 @@ public final class TelegramManager {
     // ============================================================ 连接
     private boolean ensureConnected() throws Exception {
         if (mClient != null && mClient.isConnected()) return true;
-        mClient = new MtpClient(BuildSecrets.API_ID, BuildSecrets.API_HASH);
+        mClient = new MtpClient(apiId(), apiHash());
         if (mAuthKey != null) {
             mClient.connectWithAuthKey(mDc, mAuthKey);
         } else {
