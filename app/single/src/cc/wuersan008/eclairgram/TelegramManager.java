@@ -99,8 +99,7 @@ public final class TelegramManager {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    ensureConnected();
-                    TlSchema.SentCode sent = mClient.sendCode(phone);
+                    TlSchema.SentCode sent = sendCodeWithMigrate(phone);
                     mPhoneCodeHash = sent.phoneCodeHash;
                     post(cb, true, "code-sent");
                 } catch (final Throwable t) {
@@ -109,6 +108,25 @@ public final class TelegramManager {
                 }
             }
         }).start();
+    }
+
+    /** 处理 PHONE_MIGRATE_n：把账号所在的 DC 记下来，换 DC 重试一次。 */
+    private TlSchema.SentCode sendCodeWithMigrate(String phone) throws Exception {
+        ensureConnected();
+        try {
+            return mClient.sendCode(phone);
+        } catch (MtpClient.MigrateException me) {
+            Log.i(TAG, "phone migrate -> DC" + me.dc);
+            mDc = me.dc;
+            mAuthKey = null;
+            if (mClient != null) {
+                mClient.close();
+                mClient = null;
+            }
+            save();
+            ensureConnected();
+            return mClient.sendCode(phone);
+        }
     }
 
     public void signIn(final String phone, final String code, final Callback cb) {

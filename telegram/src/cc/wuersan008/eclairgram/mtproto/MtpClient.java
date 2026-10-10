@@ -217,6 +217,16 @@ public final class MtpClient {
 
     private static final Object NOSALT = new Object();
 
+    /** 服务端要求把请求发到另一个数据中心（PHONE_MIGRATE_n / NETWORK_MIGRATE_n）。 */
+    public static final class MigrateException extends IOException {
+        public final int dc;
+
+        public MigrateException(int dc) {
+            super("MIGRATE_" + dc);
+            this.dc = dc;
+        }
+    }
+
     /** 返回非 null 表示拿到了目标 RPC 的结果。 */
     private Object handleMessage(byte[] body, long wantReqMsgId) throws IOException {
         Tl.Reader r = new Tl.Reader(body);
@@ -244,6 +254,11 @@ public final class MtpClient {
                 if (innerCtor == TlSchema.RPC_ERROR) {
                     TlSchema.RpcError e = TlSchema.parseRpcError(r);
                     if (reqId == wantReqMsgId) {
+                        if (e.message != null && e.message.startsWith("PHONE_MIGRATE_")) {
+                            int target = Integer.parseInt(
+                                    e.message.substring("PHONE_MIGRATE_".length()));
+                            throw new MigrateException(target);
+                        }
                         throw new IOException("rpc error " + e.code + ": " + e.message);
                     }
                     return null;
