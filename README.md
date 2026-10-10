@@ -10,7 +10,8 @@ Telegram 客户端。
 界面来自 [`liangmian`](https://github.com/xiaomianguan/liangmian)（对 Android 2.1
 Google Talk 的逆向工程与私有服务器复刻）：好友列表、聊天界面、状态栏、通知等
 全部沿用原版 Talk 的布局与资源，**不做任何像素级改动**，只是把“说话的对象”
-从 Google Talk 换成了 Telegram。
+从 Google Talk 换成了 Telegram。唯一的例外是**应用图标**——Eclairgram 换成了
+自己的纸飞机图标（见下），不再使用原版 Talk 图标。
 
 <p align="center">
   <img src="docs/icon.png" alt="Eclairgram 图标" width="96">
@@ -79,7 +80,7 @@ Telegram 协议由仓库内 `telegram/` 的原生 MTProto 实现直接负责。
 | `certs/telegram/` | Telegram 数据中心 RSA 公钥 |
 | `certs/roots/` | 现代根证书（供 TLS 使用；4.0 之前无法安装用户 CA） |
 | `scripts/` | 构建、模拟器、截图脚本 |
-| `docs/` | 协议与截图 |
+| `docs/` | 协议文档与应用图标 |
 | `shots/` | 截图（Google Talk 原版 + Eclairgram 实测） |
 
 ## 构建
@@ -152,7 +153,7 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **群组与频道**（peerUser / peerChat / peerChannel 均可打开与发送）
 - [x] **实时更新**（`updates.getDifference`，会话列表自动刷新）
 - [x] **更贴近原版 Talk 的界面**（气泡式好友条目、聊天联系人栏、presence 图标）
-- [x] **主题随 Android 版本自适应**（2.1 浅色 / 2.2+ 深色；聊天界面恒为白色，与原版一致）
+- [x] **主题随 Android 版本自适应**（2.1 浅色 / 2.2+ 深色）
 - [x] **头像使用系统 QuickContactBadge 相框**（原版 Talk 用的就是这个，随系统版本变化）
 - [x] **自己的会话显示为「收藏夹」**且不显示状态；在线状态只用于其它用户
 - [x] **附件（图片/视频）**：输入框左侧的回形针按钮发送；接收的消息**直接在气泡里
@@ -173,6 +174,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
       （仿原版 Talk 的自我状态行 `roster_list_self_status_background`：常态纯色，
       按下/选中为透明，交给系统列表高亮，因此高亮随 Android 版本变化）
 - [x] **单一应用、单一启动图标**：已登录直接进会话列表，会话持久化，无额外设置页
+- [x] **应用图标**：Eclairgram 自己的图标（对话气泡里的纸飞机），替换原版 Talk 的启动图标
+      （`ic_launcher_eclairgram`，含 ldpi/mdpi/hdpi/xhdpi 四套尺寸）
 - [x] **会话文件夹**：账号配置了文件夹时，顶部改用原生标签栏（TabWidget）在文件夹间切换；
       没有文件夹时仍是标题栏（`messages.getDialogFilters` + `messages.getDialogs(folder_id)`）
 - [x] 登录页支持自带 API 凭据（BYOK）
@@ -189,7 +192,7 @@ Eclairgram 实测（LG-E610 / Android 4.0.3，真实账号）：
 | 截图 | 说明 |
 | --- | --- |
 | [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | Android 4.0：深色会话列表、原生相框、用户/群/频道头像 |
-| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0：聊天（仅联系人标题栏 + 白色消息区 + 气泡） |
+| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0：聊天（仅联系人标题栏 + 气泡；消息区随主题深色） |
 | [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | Android 4.0：点按头像打开的详情页 |
 | [`shots/ec_android40_emoji.png`](shots/ec_android40_emoji.png) | Android 4.0：Blobmoji 表情选择器，按分类分节、组内顺序与现代键盘一致 |
 | [`shots/ec_android40_photo_inline.png`](shots/ec_android40_photo_inline.png) | Android 4.0：图片消息在气泡里内联显示缩略图 |

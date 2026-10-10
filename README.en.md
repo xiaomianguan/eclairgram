@@ -10,7 +10,8 @@ The UI comes from [`liangmian`](https://github.com/xiaomianguan/liangmian), a re
 engineering of the Android 2.1 Google Talk client against a private server. The buddy
 list, chat screen, status bar and notifications all reuse the original Talk layouts and
 resources with **no pixel-level changes** — only the party we talk to changed, from Google
-Talk to Telegram.
+Talk to Telegram. The one exception is the **app icon**: Eclairgram uses its own paper-plane
+icon (below) instead of Talk's launcher icon.
 
 <p align="center">
   <img src="docs/icon.png" alt="Eclairgram icon" width="96">
@@ -86,7 +87,7 @@ with `app/single/res` into one resource table at build time (see
 | `certs/telegram/` | Telegram data-center RSA public keys |
 | `certs/roots/` | modern roots (for TLS; pre-4.0 can't install user CAs) |
 | `scripts/` | build, emulator and screenshot scripts |
-| `docs/` | protocol notes and screenshots |
+| `docs/` | protocol notes and the app icon |
 | `shots/` | screenshots (original Google Talk + Eclairgram) |
 
 ## Building
@@ -164,7 +165,7 @@ messages) provide en-US and zh-CN as well.
 - [x] **groups and channels** (peerUser / peerChat / peerChannel can all be opened and messaged)
 - [x] **live updates** (`updates.getDifference`; the chat list refreshes automatically)
 - [x] **UI closer to stock Talk** (bubble roster rows, chat contact header, presence icons)
-- [x] **per-Android-version theming** (light on 2.1 / dark on 2.2+; the chat stays white, like Talk)
+- [x] **per-Android-version theming** (light on 2.1 / dark on 2.2+)
 - [x] **native QuickContactBadge frames** for avatars (Talk's own frame, varies per OS version)
 - [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
 - [x] **attachments (photos/videos)**: send via the paperclip button left of the input; received
@@ -189,6 +190,8 @@ messages) provide en-US and zh-CN as well.
       pressed/selected so the system list highlight — which adapts to the Android version — shows)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
+- [x] **app icon**: Eclairgram's own icon (a paper plane in a speech bubble) replaces Talk's
+      launcher icon (`ic_launcher_eclairgram`, with ldpi/mdpi/hdpi/xhdpi sizes)
 - [x] **chat folders**: when the account has folders, the top bar becomes a native tab bar
       (TabWidget) to switch between them; otherwise the title bar stays
       (`messages.getDialogFilters` + `messages.getDialogs(folder_id)`)
@@ -207,7 +210,7 @@ Eclairgram on a real device (LG-E610 / Android 4.0.3, real account):
 | Screenshot | Description |
 | --- | --- |
 | [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | Android 4.0: dark chat list, native frames, user/group/channel photos |
-| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0: chat (contact header only + white area + bubbles) |
+| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0: chat (contact header only + bubbles; message area follows the theme) |
 | [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | Android 4.0: details page opened by tapping the avatar |
 | [`shots/ec_android40_emoji.png`](shots/ec_android40_emoji.png) | Android 4.0: Blobmoji emoji picker, sectioned by category in modern-keyboard order |
 | [`shots/ec_android40_photo_inline.png`](shots/ec_android40_photo_inline.png) | Android 4.0: a photo message with its inline thumbnail |
