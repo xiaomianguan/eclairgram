@@ -166,6 +166,21 @@ messages) provide en-US and zh-CN as well.
 - [x] login screen supports bring-your-own API key (BYOK)
 - [ ] joint testing + screenshots on all three devices (2.1 emulator / 2.2 / 4.0)
 
+## Screenshots
+
+Original Google Talk UI (from liangmian, the source of the UI elements):
+`shots/01_buddy_list.png`, `shots/02_chat.png`, `shots/29_android21_signingin.png`, etc.
+
+Eclairgram on a real device (LG-E610 / Android 4.0.3, real account):
+
+| Screenshot | Description |
+| --- | --- |
+| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | chat list: reuses Talk avatars/status/colors |
+| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | chat screen: reuses Talk `im_bubble_*` bubbles |
+
+Install and launch were also verified without crashes on the Android 2.1 emulator and the
+Android 2.2 phone (HTC Wildfire).
+
 ## Known limitations
 
 - Early Android root stores are outdated; when TLS is required the app uses its bundled modern

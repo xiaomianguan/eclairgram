@@ -153,6 +153,20 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] 登录页支持自带 API 凭据（BYOK）
 - [ ] 三台设备（2.1 模拟器 / 2.2 真机 / 4.0 真机）联调与截图
 
+## 截图
+
+原始 Google Talk 界面（来自 liangmian，作为界面元素的来源）：
+`shots/01_buddy_list.png`、`shots/02_chat.png`、`shots/29_android21_signingin.png` 等。
+
+Eclairgram 实测（LG-E610 / Android 4.0.3，真实账号）：
+
+| 截图 | 说明 |
+| --- | --- |
+| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | 会话列表：复用 Talk 的头像、状态图与配色 |
+| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | 聊天界面：复用 Talk 的 `im_bubble_*` 气泡 |
+
+Android 2.1 模拟器与 Android 2.2 真机（HTC Wildfire）上已完成安装与启动验证（无崩溃）。
+
 ## 已知限制
 
 - 早期 Android 的 TLS 根证书列表过时；若网络需要 TLS，使用 App 内置的现代根证书。
