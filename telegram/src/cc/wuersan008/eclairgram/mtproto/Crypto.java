@@ -90,22 +90,33 @@ public final class Crypto {
     }
 
     // ============================================================ AES 原子
-    private static Cipher aes() {
+    /** 取一个 AES/ECB Cipher（NoPadding）并完成 key schedule。Cipher 有状态，勿跨线程共享。 */
+    private static Cipher aes(int mode, byte[] key) {
         try {
-            return Cipher.getInstance("AES/ECB/NoPadding");
+            Cipher c = Cipher.getInstance("AES/ECB/NoPadding");
+            c.init(mode, new SecretKeySpec(key, "AES"));
+            return c;
         } catch (Exception e) {
             throw new RuntimeException("AES/ECB not available", e);
         }
     }
 
-    /** AES-ECB 加密单个 16 字节块。 */
-    static void aesEncryptBlock(byte[] key, byte[] in, int inOff, byte[] out, int outOff) {
+    /** 初始化一个可复用的 AES-ECB 加密器（只做一次 key schedule）。 */
+    static Cipher aesEncryptor(byte[] key) {
+        return aes(Cipher.ENCRYPT_MODE, key);
+    }
+
+    /** 初始化一个可复用的 AES-ECB 解密器。 */
+    static Cipher aesDecryptor(byte[] key) {
+        return aes(Cipher.DECRYPT_MODE, key);
+    }
+
+    /** 用已初始化的 Cipher 处理若干整块（ECB 无链式状态，可反复调用）。 */
+    static void aesBlocks(Cipher c, byte[] in, int inOff, int len, byte[] out, int outOff) {
         try {
-            Cipher c = aes();
-            c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"));
-            c.doFinal(in, inOff, 16, out, outOff);
+            c.doFinal(in, inOff, len, out, outOff);
         } catch (Exception e) {
-            throw new RuntimeException("aes encrypt", e);
+            throw new RuntimeException("aes blocks", e);
         }
     }
 
@@ -130,9 +141,10 @@ public final class Crypto {
         byte[] out = new byte[data.length];
         byte[] tmp = new byte[16];
         byte[] enc = new byte[16];
+        Cipher c = aesEncryptor(key);        // key schedule 只做一次
         for (int off = 0; off < data.length; off += 16) {
             for (int i = 0; i < 16; i++) tmp[i] = (byte) (data[off + i] ^ iv1[i]);
-            aesEncryptBlock(key, tmp, 0, enc, 0);
+            aesBlocks(c, tmp, 0, 16, enc, 0);
             for (int i = 0; i < 16; i++) out[off + i] = (byte) (enc[i] ^ iv2[i]);
             iv1 = slice(out, off, 16);
             iv2 = slice(data, off, 16);
@@ -149,24 +161,15 @@ public final class Crypto {
         byte[] out = new byte[cipher.length];
         byte[] tmp = new byte[16];
         byte[] dec = new byte[16];
+        Cipher c = aesDecryptor(key);        // key schedule 只做一次
         for (int off = 0; off < cipher.length; off += 16) {
             for (int i = 0; i < 16; i++) tmp[i] = (byte) (cipher[off + i] ^ iv2[i]);
-            aesEncryptBlockDec(key, tmp, 0, dec, 0);
+            aesBlocks(c, tmp, 0, 16, dec, 0);
             for (int i = 0; i < 16; i++) out[off + i] = (byte) (dec[i] ^ iv1[i]);
             iv1 = slice(cipher, off, 16);
             iv2 = slice(out, off, 16);
         }
         return out;
-    }
-
-    private static void aesEncryptBlockDec(byte[] key, byte[] in, int inOff, byte[] out, int outOff) {
-        try {
-            Cipher c = aes();
-            c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"));
-            c.doFinal(in, inOff, 16, out, outOff);
-        } catch (Exception e) {
-            throw new RuntimeException("aes decrypt", e);
-        }
     }
 
     // ============================================================ RSA
