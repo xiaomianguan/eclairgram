@@ -51,6 +51,7 @@ public class DialogsActivity extends Activity {
     private TextView mEmpty;
     private TelegramManager mTg;
     private volatile boolean mLoading = false;
+    private boolean mShot;
 
     private final TelegramManager.Listener mUpd = new TelegramManager.Listener() {
         public void onUpdate() {
@@ -62,6 +63,7 @@ public class DialogsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mTg = TelegramManager.get(this);
+        mShot = getIntent().getBooleanExtra("shot", false);
         setContentView(R.layout.ec_dialogs);
         mList = (ListView) findViewById(R.id.ec_list);
         mEmpty = (TextView) findViewById(R.id.ec_empty);
@@ -162,6 +164,13 @@ public class DialogsActivity extends Activity {
                             mEmpty.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
                             if (rows.isEmpty()) mEmpty.setText(R.string.ec_no_dialogs);
                             startAvatarFetch(rows);
+                            if (mShot) {
+                                mMain.postDelayed(new Runnable() {
+                                    public void run() {
+                                        DebugShot.capture(DialogsActivity.this, "shot_dialogs.png");
+                                    }
+                                }, 9000);
+                            }
                         }
                     });
                 } catch (final Throwable t) {

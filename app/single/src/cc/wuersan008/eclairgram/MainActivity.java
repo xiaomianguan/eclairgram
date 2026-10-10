@@ -43,7 +43,11 @@ public class MainActivity extends Activity {
         mTg = TelegramManager.get(this);
         // 会话持久化：已登录就直接进入会话列表，不再显示任何设置页。
         if (mTg.isSignedIn()) {
-            openDialogs();
+            Intent i = new Intent(this, DialogsActivity.class);
+            if (getIntent() != null && getIntent().getBooleanExtra("shot", false)) {
+                i.putExtra("shot", true);
+            }
+            startActivity(i);
             finish();
             return;
         }
