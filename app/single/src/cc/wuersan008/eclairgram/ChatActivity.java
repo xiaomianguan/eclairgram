@@ -129,12 +129,14 @@ public class ChatActivity extends Activity {
                 }
                 t.setTextColor(getResources().getColor(R.color.ec_text_primary));
                 if (m.mediaType != 0) {
+                    t.setFocusable(true);
                     t.setOnClickListener(new View.OnClickListener() {
                         public void onClick(View x) {
                             openMedia(m);
                         }
                     });
                 } else {
+                    t.setFocusable(false);
                     t.setOnClickListener(null);
                 }
                 return v;

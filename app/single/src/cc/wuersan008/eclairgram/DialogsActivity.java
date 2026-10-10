@@ -125,6 +125,12 @@ public class DialogsActivity extends Activity {
                 startActivity(i);
             }
         });
+        mList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) {
+                openDetails(mAdapter.getItem(pos));
+                return true;
+            }
+        });
         reload();
     }
 
