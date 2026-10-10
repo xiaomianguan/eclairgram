@@ -25,6 +25,7 @@ public final class TelegramManager {
     private static final String TAG = "EclairgramTg";
     private static final String PREFS = "eclairgram_tg";
     private static final String KEY_AUTH = "auth_key";
+    private static final String KEY_AUTHORIZED = "authorized";
     private static final String KEY_DC = "dc";
     private static final String KEY_PHONE = "phone";
     private static final String KEY_API_ID = "api_id";
@@ -40,6 +41,9 @@ public final class TelegramManager {
     private int mDc = DEFAULT_DC;
     private String mPhoneCodeHash;
     private byte[] mAuthKey;
+    // 是否已完成 auth.signIn（授权登录）。注意：DH 握手也会生成 auth key，
+    // 所以“有 key”不等于“已登录”，否则请求验证码后就会被当成已登录。
+    private boolean mAuthorized;
     private final Object mNet = new Object();
 
     private TelegramManager(Context ctx) {
@@ -60,17 +64,20 @@ public final class TelegramManager {
         if (hex != null && hex.length() > 0) {
             mAuthKey = fromHex(hex);
         }
+        // 旧版本只存了 auth key；升级后没有该标记时，按“有 key 即已登录”迁移。
+        mAuthorized = sp.getBoolean(KEY_AUTHORIZED, mAuthKey != null);
     }
 
     private void save() {
         SharedPreferences.Editor e = mApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
         e.putInt(KEY_DC, mDc);
+        e.putBoolean(KEY_AUTHORIZED, mAuthorized);
         if (mAuthKey != null) e.putString(KEY_AUTH, toHex(mAuthKey));
         e.commit();
     }
 
     public boolean isSignedIn() {
-        return mAuthKey != null;
+        return mAuthorized && mAuthKey != null;
     }
 
     // ---- 自带 API 凭据（BYOK）：生产版不带 key，由用户填写 ----
@@ -165,7 +172,10 @@ public final class TelegramManager {
                     ensureConnected();
                     if (mPhoneCodeHash == null) throw new IllegalStateException("no phone_code_hash");
                     boolean ok = mClient.signIn(phone, mPhoneCodeHash, code);
-                    if (ok) save();
+                    if (ok) {
+                        mAuthorized = true;
+                        save();
+                    }
                     post(cb, ok, ok ? "signed-in" : "failed");
                 } catch (final Throwable t) {
                     Log.e(TAG, "signIn failed", t);
@@ -177,6 +187,7 @@ public final class TelegramManager {
 
     public void logout() {
         mAuthKey = null;
+        mAuthorized = false;
         mPhoneCodeHash = null;
         if (mClient != null) {
             mClient.close();

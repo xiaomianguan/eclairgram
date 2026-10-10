@@ -152,10 +152,17 @@ public class MainActivity extends Activity {
         setStatus(getString(signedIn ? R.string.ec_status_signed_in : R.string.ec_status_idle));
     }
 
-    /** 从界面读取并保存 api_id/api_hash；不合法则提示。 */
+    /** 从界面读取并保存 api_id/api_hash；不合法则提示。
+     *  两个输入框都留空时，只要应用已带凭据（构建时注入或之前保存过）就直接沿用，
+     *  这样普通用户在一台手机上就能登录，不必先去电脑上申请 key。 */
     private boolean saveApiFromUi() {
         String idStr = mApiId.getText().toString().trim();
         String hash = mApiHash.getText().toString().trim();
+        if (idStr.length() == 0 && hash.length() == 0) {
+            if (mTg.hasApiCredentials()) return true;
+            setStatus(getString(R.string.ec_status_need_api));
+            return false;
+        }
         if (idStr.length() == 0 || hash.length() == 0) {
             setStatus(getString(R.string.ec_status_need_api));
             return false;
