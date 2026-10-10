@@ -172,7 +172,9 @@ messages) provide en-US and zh-CN as well.
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan
 - [x] **chat UI follows the list theme** (light on 2.1 / dark on 2.2+); bubbles and text adapt too
-- [x] **custom Blobmoji emoji picker** (old keyboards can't type these emoji)
+- [x] **custom Blobmoji emoji picker**: sectioned by the official Unicode categories
+      (smileys first, symbols/flags last) with within-section order matching modern keyboards
+      (categories and order come from `emoji-test.txt`; old keyboards can't type these emoji)
 - [x] **full D-pad navigation**: chat cards, buttons, the input and media bubbles are focusable;
       long-pressing a card opens its details
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
@@ -193,6 +195,7 @@ Eclairgram on a real device (LG-E610 / Android 4.0.3, real account):
 | [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | Android 4.0: dark chat list, native frames, user/group/channel photos |
 | [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0: chat (contact header only + white area + bubbles) |
 | [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | Android 4.0: details page opened by tapping the avatar |
+| [`shots/ec_android40_emoji.png`](shots/ec_android40_emoji.png) | Android 4.0: Blobmoji emoji picker, sectioned by category in modern-keyboard order |
 | [`shots/ec_android22_dialogs.png`](shots/ec_android22_dialogs.png) | Android 2.2 phone (HTC): dark list with native frames |
 
 Install and launch were also verified on the Android 2.1 emulator (its framebuffer is frozen, so

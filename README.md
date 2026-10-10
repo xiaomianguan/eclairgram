@@ -160,7 +160,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **Blobmoji 彩色 emoji**：老系统字体引擎不支持彩色字体，
       改为构建期抽出位图、运行时用 ImageSpan 渲染（见 `scripts/gen_emoji_pack.py`）
 - [x] **聊天界面跟随列表主题**（2.1 浅色 / 2.2+ 深色），气泡与文字一并自适应
-- [x] **自定义 Blobmoji emoji 选择器**（老系统键盘无法输入这些 emoji）
+- [x] **自定义 Blobmoji emoji 选择器**：按 Unicode 官方分类分节（表情在前、符号/旗帜在后），
+      组内顺序与现代键盘一致（分类与顺序取自 `emoji-test.txt`，老系统键盘无法输入这些 emoji）
 - [x] **全面支持方向键（D-pad）导航**：会话卡片、按钮、输入框、媒体气泡均可聚焦，
       长按卡片可打开详情
 - [x] **点按头像打开详情页**（用户/群组/频道，类似 Talk 的联系人页）
@@ -180,6 +181,7 @@ Eclairgram 实测（LG-E610 / Android 4.0.3，真实账号）：
 | [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | Android 4.0：深色会话列表、原生相框、用户/群/频道头像 |
 | [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | Android 4.0：聊天（仅联系人标题栏 + 白色消息区 + 气泡） |
 | [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | Android 4.0：点按头像打开的详情页 |
+| [`shots/ec_android40_emoji.png`](shots/ec_android40_emoji.png) | Android 4.0：Blobmoji 表情选择器，按分类分节、组内顺序与现代键盘一致 |
 | [`shots/ec_android22_dialogs.png`](shots/ec_android22_dialogs.png) | Android 2.2 真机（HTC）：深色列表与原生相框 |
 
 Android 2.1 模拟器上已完成安装与启动验证（该模拟器帧缓冲冻结，未取得截图）。
