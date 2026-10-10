@@ -442,6 +442,44 @@ public final class MtpClient {
         return TlObject.read(new Tl.Reader(res));
     }
 
+    /** upload.getFile：下载某用户的头像（inputPeerPhotoFileLocation）。失败返回 null。 */
+    public byte[] downloadPeerPhoto(byte[] inputPeer, long photoId) throws IOException {
+        Tl.Writer lw = new Tl.Writer();
+        lw.int32(0x37257e99)            // inputPeerPhotoFileLocation
+          .int32(0)                     // flags
+          .raw(inputPeer)
+          .int64(photoId);
+        byte[] location = lw.toByteArray();
+
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        long offset = 0;
+        int limit = 256 * 1024;
+        try {
+            while (true) {
+                Tl.Writer w = new Tl.Writer();
+                w.int32(0xbe5335be)     // upload.getFile
+                 .int32(0)              // flags
+                 .raw(location)
+                 .int64(offset)
+                 .int32(limit);
+                byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+                TlObject f = TlObject.read(new Tl.Reader(res));
+                if (!f.type().equals("upload.file")) break;
+                Object b = f.get("bytes");
+                if (!(b instanceof byte[])) break;
+                byte[] chunk = (byte[]) b;
+                if (chunk.length == 0) break;
+                out.write(chunk, 0, chunk.length);
+                if (chunk.length < limit) break;
+                offset += chunk.length;
+                if (offset > 4 * 1024 * 1024) break;
+            }
+        } catch (IOException e) {
+            return null;   // 例如头像在别的 DC（FILE_MIGRATE）
+        }
+        return out.toByteArray();
+    }
+
     /** auth.sendCode：请求给手机号发送验证码。 */
     public TlSchema.SentCode sendCode(String phone) throws IOException {
         Tl.Writer w = new Tl.Writer();

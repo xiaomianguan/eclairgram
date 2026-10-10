@@ -36,6 +36,7 @@ public class DialogsActivity extends Activity {
         String name;
         String status;
         int unread;
+        long photoId;
     }
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -72,8 +73,13 @@ public class DialogsActivity extends Activity {
                 String st = r.status == null ? "" : r.status;
                 if (r.unread > 0) st = "(" + r.unread + ") " + st;
                 ((TextView) v.findViewById(R.id.ec_status)).setText(st);
-                ((ImageView) v.findViewById(R.id.ec_avatar))
-                        .setImageResource(R.drawable.ic_contact_picture);
+                ImageView avatar = (ImageView) v.findViewById(R.id.ec_avatar);
+                android.graphics.Bitmap b = AvatarCache.get(r.photoId);
+                if (b != null) {
+                    avatar.setImageBitmap(b);
+                } else {
+                    avatar.setImageResource(R.drawable.ic_contact_picture);
+                }
                 ((ImageView) v.findViewById(R.id.ec_presence))
                         .setImageResource(R.drawable.status_chat);
                 return v;
@@ -145,6 +151,7 @@ public class DialogsActivity extends Activity {
 
         Map<Long, String> names = new HashMap<Long, String>();
         Map<Long, Long> access = new HashMap<Long, Long>();
+        Map<Long, Long> photoIds = new HashMap<Long, Long>();
         if (users != null) {
             for (Object o : users) {
                 TlObject u = (TlObject) o;
@@ -159,6 +166,10 @@ public class DialogsActivity extends Activity {
                 }
                 names.put(Long.valueOf(id), n);
                 access.put(Long.valueOf(id), Long.valueOf(u.i64("access_hash")));
+                TlObject photo = u.obj("photo");
+                if (photo != null && photo.type().equals("userProfilePhoto")) {
+                    photoIds.put(Long.valueOf(id), Long.valueOf(photo.i64("photo_id")));
+                }
             }
         }
         Map<Integer, String> msgText = new HashMap<Integer, String>();
@@ -198,6 +209,8 @@ public class DialogsActivity extends Activity {
                     Long ah = access.get(Long.valueOf(uid));
                     r.peer = MtpClient.inputPeerUser(uid, ah == null ? 0L : ah.longValue());
                     r.name = names.get(Long.valueOf(uid));
+                    Long pid = photoIds.get(Long.valueOf(uid));
+                    r.photoId = pid == null ? 0L : pid.longValue();
                 } else if (t.equals("peerChat")) {
                     long cid = peer.i64("chat_id");
                     r.peer = MtpClient.inputPeerChat(cid);
@@ -214,6 +227,15 @@ public class DialogsActivity extends Activity {
                 r.status = msgText.get(Integer.valueOf(dg.i32("top_message")));
                 r.unread = dg.i32("unread_count");
                 rows.add(r);
+            }
+        }
+        // 预取前若干个头像（后台线程，串行下载）
+        int fetched = 0;
+        for (Row r : rows) {
+            if (fetched >= 12) break;
+            if (r.photoId != 0 && !AvatarCache.has(r.photoId)) {
+                AvatarCache.load(mTg, r.peer, r.photoId);
+                fetched++;
             }
         }
         return rows;

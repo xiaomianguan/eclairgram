@@ -302,6 +302,13 @@ public final class TelegramManager {
         }
     }
 
+    public byte[] syncDownloadPeerPhoto(byte[] inputPeer, long photoId) throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.downloadPeerPhoto(inputPeer, photoId);
+        }
+    }
+
     // ============================================================ 工具
     private static String toHex(byte[] b) {
         StringBuilder sb = new StringBuilder(b.length * 2);
