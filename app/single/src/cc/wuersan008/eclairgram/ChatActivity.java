@@ -108,7 +108,7 @@ public class ChatActivity extends Activity {
                 final Msg m = getItem(position);
                 View row = v.findViewById(R.id.ec_msg_row);
                 TextView t = (TextView) v.findViewById(R.id.ec_msg_text);
-                t.setText(m.text);
+                t.setText(EmojiFont.emojify(ChatActivity.this, m.text, dp(20)));
                 if (m.out) {
                     ((android.widget.LinearLayout) row).setGravity(Gravity.RIGHT);
                     t.setBackgroundResource(R.drawable.im_bubble_highlight);
@@ -396,5 +396,10 @@ public class ChatActivity extends Activity {
             Thread.sleep(ms);
         } catch (InterruptedException ignored) {
         }
+    }
+
+    private int dp(int v) {
+        float d = getResources().getDisplayMetrics().density;
+        return (int) (v * d + 0.5f);
     }
 }

@@ -145,6 +145,7 @@ def main():
     if os.path.exists(base):
         os.remove(base)
     run([f'{BT}/aapt', 'package', '-f', '-M', manifest, '-S', f'{WORK}/res',
+         '-A', f'{WS}/app/single/assets',
          '-I', AJAR, '-J', gen, '-F', base,
          '--min-sdk-version', '7', '--target-sdk-version', '7'])
 

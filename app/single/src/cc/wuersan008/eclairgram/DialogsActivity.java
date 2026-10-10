@@ -77,10 +77,12 @@ public class DialogsActivity extends Activity {
                             .inflate(R.layout.ec_dialog_item, parent, false);
                 }
                 Row r = getItem(position);
-                ((TextView) v.findViewById(R.id.ec_name)).setText(r.name);
+                ((TextView) v.findViewById(R.id.ec_name))
+                        .setText(EmojiFont.emojify(DialogsActivity.this, r.name, dp(20)));
                 String st = r.status == null ? "" : r.status;
                 if (r.unread > 0) st = "(" + r.unread + ") " + st;
-                ((TextView) v.findViewById(R.id.ec_status)).setText(st);
+                ((TextView) v.findViewById(R.id.ec_status))
+                        .setText(EmojiFont.emojify(DialogsActivity.this, st, dp(16)));
                 ImageView avatar = (ImageView) v.findViewById(R.id.ec_avatar);
                 android.graphics.Bitmap b = AvatarCache.get(r.photoId);
                 if (b != null) {
@@ -207,6 +209,11 @@ public class DialogsActivity extends Activity {
                 }
             }
         }).start();
+    }
+
+    private int dp(int v) {
+        float d = getResources().getDisplayMetrics().density;
+        return (int) (v * d + 0.5f);
     }
 
     private List<Row> load() throws Exception {
