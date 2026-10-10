@@ -168,6 +168,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
       长按卡片可打开详情
 - [x] **点按头像打开详情页**（用户/群组/频道，类似 Talk 的联系人页）
 - [x] **单一应用、单一启动图标**：已登录直接进会话列表，会话持久化，无额外设置页
+- [x] **会话文件夹**：账号配置了文件夹时，顶部改用原生标签栏（TabWidget）在文件夹间切换；
+      没有文件夹时仍是标题栏（`messages.getDialogFilters` + `messages.getDialogs(folder_id)`）
 - [x] 登录页支持自带 API 凭据（BYOK）
 - [x] **两步验证（2FA）**：验证码通过后若账号有密码，登录页再要求输入密码（SRP 6a）
 - [ ] 三台设备（2.1 模拟器 / 2.2 真机 / 4.0 真机）联调与截图

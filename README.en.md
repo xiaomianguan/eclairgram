@@ -183,6 +183,9 @@ messages) provide en-US and zh-CN as well.
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
+- [x] **chat folders**: when the account has folders, the top bar becomes a native tab bar
+      (TabWidget) to switch between them; otherwise the title bar stays
+      (`messages.getDialogFilters` + `messages.getDialogs(folder_id)`)
 - [x] login screen supports bring-your-own API key (BYOK)
 - [x] **two-step verification (2FA)**: after the code is accepted, if the account has a password the
       login screen asks for it (SRP 6a)
