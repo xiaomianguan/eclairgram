@@ -162,7 +162,8 @@ messages) provide en-US and zh-CN as well.
 - [x] **Login verified** (`auth.sendCode` / `auth.signIn`, including `PHONE_MIGRATE` DC switching)
 - [x] **Dialogs / history / send verified** (TL schema generates the type table; generic parsing)
 - [x] **Talk UI elements reused for the chat list and chat screen** (avatars/status/bubbles/colors)
-- [x] **groups and channels** (peerUser / peerChat / peerChannel can all be opened and messaged)
+- [x] **groups and channels** (peerUser / peerChat / peerChannel can all be opened and messaged;
+      supergroups `megagroup`/`gigagroup` show as "Group", only broadcast channels show as "Channel")
 - [x] **live updates** (`updates.getDifference`; the chat list refreshes automatically)
 - [x] **UI closer to stock Talk** (bubble roster rows, chat contact header, presence icons)
 - [x] **per-Android-version theming** (light on 2.1 / dark on 2.2+)

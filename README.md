@@ -150,7 +150,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **登录实测通过**（`auth.sendCode` / `auth.signIn`，含 `PHONE_MIGRATE` 换 DC）
 - [x] **会话列表 / 历史消息 / 发送消息 实测通过**（由 TL schema 生成类型表，通用解析）
 - [x] **复用 Talk 界面元素做出会话列表与聊天界面**（头像/状态图/气泡/配色）
-- [x] **群组与频道**（peerUser / peerChat / peerChannel 均可打开与发送）
+- [x] **群组与频道**（peerUser / peerChat / peerChannel 均可打开与发送；
+      超级群 `megagroup`/`gigagroup` 显示为「群组」，只有广播频道才显示为「频道」）
 - [x] **实时更新**（`updates.getDifference`，会话列表自动刷新）
 - [x] **更贴近原版 Talk 的界面**（气泡式好友条目、聊天联系人栏、presence 图标）
 - [x] **主题随 Android 版本自适应**（2.1 浅色 / 2.2+ 深色）
