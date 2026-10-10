@@ -184,7 +184,9 @@ messages) provide en-US and zh-CN as well.
 - [x] **My Profile**: tap the Saved Messages avatar to view and edit your photo, name and bio
       (`users.getFullUser` / `account.updateProfile` / `photos.uploadProfilePhoto`)
 - [x] **pinned Saved Messages**: the chat list keeps Saved Messages/My Profile at the top with a
-      distinct background (like Talk's own account row)
+      distinct full-row background (mirrors Talk's self-status row
+      `roster_list_self_status_background`: a solid color normally, transparent when
+      pressed/selected so the system list highlight — which adapts to the Android version — shows)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
 - [x] **chat folders**: when the account has folders, the top bar becomes a native tab bar

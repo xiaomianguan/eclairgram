@@ -169,8 +169,9 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **点按头像打开详情页**（用户/群组/频道，类似 Talk 的联系人页）
 - [x] **我的资料**：点按收藏夹头像进入，可查看并修改头像、名字与简介
       （`users.getFullUser` / `account.updateProfile` / `photos.uploadProfilePhoto`）
-- [x] **收藏夹置顶**：会话列表把“收藏夹/我的资料”放在最上方，并使用不同背景
-      （类似原版 Talk 的账号行）
+- [x] **收藏夹置顶**：会话列表把“收藏夹/我的资料”放在最上方，整行铺不同底色
+      （仿原版 Talk 的自我状态行 `roster_list_self_status_background`：常态纯色，
+      按下/选中为透明，交给系统列表高亮，因此高亮随 Android 版本变化）
 - [x] **单一应用、单一启动图标**：已登录直接进会话列表，会话持久化，无额外设置页
 - [x] **会话文件夹**：账号配置了文件夹时，顶部改用原生标签栏（TabWidget）在文件夹间切换；
       没有文件夹时仍是标题栏（`messages.getDialogFilters` + `messages.getDialogs(folder_id)`）
