@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Eclairgram 自己的界面文案：默认 = English (US) -->
+<resources>
+    <string name="ec_app_name">Eclairgram</string>
+    <string name="ec_login_title">Eclairgram</string>
+    <string name="ec_login_subtitle">Sign in to Telegram</string>
+
+    <string name="ec_phone_label">Phone number (with country code)</string>
+    <string name="ec_phone_hint">+1 555 000 1234</string>
+    <string name="ec_send_code">Send code</string>
+
+    <string name="ec_code_label">Code</string>
+    <string name="ec_code_hint">12345</string>
+    <string name="ec_sign_in">Sign in</string>
+    <string name="ec_sign_out">Sign out</string>
+
+    <string name="ec_status_idle">Enter your phone number to sign in to Telegram.</string>
+    <string name="ec_status_sending_code">Requesting a login code…</string>
+    <string name="ec_status_code_sent">Code sent. Enter the code you received.</string>
+    <string name="ec_status_signing_in">Signing in…</string>
+    <string name="ec_status_signed_in">Signed in. Loading your chats…</string>
+    <string name="ec_status_signed_out">Signed out.</string>
+    <string name="ec_status_error">Error: %1$s</string>
+    <string name="ec_status_need_phone">Please enter a phone number.</string>
+
+    <string name="ec_connecting">Connecting to Telegram…</string>
+    <string name="ec_handshake_failed">Could not reach Telegram.</string>
+</resources>
