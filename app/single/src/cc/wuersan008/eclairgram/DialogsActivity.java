@@ -424,6 +424,7 @@ public class DialogsActivity extends Activity {
         Map<Long, Long> chatAccess = new HashMap<Long, Long>();
         Map<Long, Integer> chatParts = new HashMap<Long, Integer>();
         Map<Long, Long> chatPhotos = new HashMap<Long, Long>();
+        Set<Long> megagroups = new HashSet<Long>();
         if (chats != null) {
             for (Object o : chats) {
                 TlObject c = (TlObject) o;
@@ -437,6 +438,10 @@ public class DialogsActivity extends Activity {
                 if (c.type().equals("channel")) {
                     chatAccess.put(Long.valueOf(id), Long.valueOf(c.i64("access_hash")));
                     chatParts.put(Long.valueOf(id), Integer.valueOf(c.i32("participants_count")));
+                    // megagroup / gigagroup 是“超级群”，属于群组而不是广播频道
+                    if (c.bool("megagroup") || c.bool("gigagroup")) {
+                        megagroups.add(Long.valueOf(id));
+                    }
                 }
             }
         }
@@ -477,7 +482,8 @@ public class DialogsActivity extends Activity {
                     Long ah = chatAccess.get(Long.valueOf(cid));
                     r.peer = MtpClient.inputPeerChannel(cid, ah == null ? 0L : ah.longValue());
                     r.name = chatNames.get(Long.valueOf(cid));
-                    r.type = 2;
+                    // 超级群（megagroup/gigagroup）显示为群组，其余才是广播频道
+                    r.type = megagroups.contains(Long.valueOf(cid)) ? 1 : 2;
                     r.id = cid;
                     Integer pc = chatParts.get(Long.valueOf(cid));
                     r.participants = pc == null ? 0 : pc.intValue();
