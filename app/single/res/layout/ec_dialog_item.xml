@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 单个会话条目：头像 + 名称 + 最近消息 + 在线图 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="?android:listPreferredItemHeight"
+    android:paddingLeft="6.0dip"
+    android:paddingTop="2.0dip"
+    android:paddingRight="6.0dip"
+    android:paddingBottom="2.0dip">
+
+    <ImageView android:id="@+id/ec_avatar"
+        android:layout_width="48.0dip"
+        android:layout_height="48.0dip"
+        android:layout_gravity="center_vertical"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_contact_picture" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0.0dip"
+        android:layout_height="fill_parent"
+        android:layout_weight="1.0"
+        android:paddingLeft="8.0dip"
+        android:paddingRight="8.0dip"
+        android:gravity="center_vertical">
+
+        <TextView android:id="@+id/ec_name"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:textColor="#ff000000"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end" />
+
+        <TextView android:id="@+id/ec_status"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:textAppearanceSmall"
+            android:textColor="@color/status"
+            android:singleLine="true"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <ImageView android:id="@+id/ec_presence"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:scaleType="fitXY"
+        android:src="@drawable/status_chat" />
+</LinearLayout>

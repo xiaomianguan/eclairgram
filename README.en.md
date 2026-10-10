@@ -43,22 +43,22 @@ the APK.
 
 ## Architecture
 
+Eclairgram is a **standalone app**: it reuses Google Talk's **UI elements**
+(layouts, drawables, colors, strings) but does **not** package Talk's code or
+services. The Telegram protocol is handled directly by the native MTProto
+implementation in `telegram/`.
+
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ Talk UI (original smali + resources, untouched)           │
-│  BuddyList · ChatScreen · status/notifications            │
+│ Eclairgram (this app's own Activities, pure Java)         │
+│  MainActivity     login (BYOK + phone + code); skipped    │
+│                   when already signed in                  │
+│  DialogsActivity  chat list (reuses Talk avatars/status)  │
+│  ChatActivity     chat (reuses Talk im_bubble_* bubbles)  │
 └───────────────┬──────────────────────────────────────────┘
-                │ ContentResolver / AIDL
+                │ TelegramManager (background thread + session)
 ┌───────────────▼──────────────────────────────────────────┐
-│ GTalkService + TalkProvider (original, untouched)         │
-│  writes contacts/messages/presence into TalkProvider      │
-└───────────────┬──────────────────────────────────────────┘
-                │ MTalk/MCS (loopback, inside the app only)
-┌───────────────▼──────────────────────────────────────────┐
-│ Eclairgram bridge (new, pure Java)                        │
-│  · in-app MTalk server (the object GTalkService talks to) │
-│  · native Telegram MTProto client (handshake/crypto)      │
-│  · maps Telegram dialogs↔buddies, messages↔messages       │
+│ telegram/: native MTProto (transport/handshake/RPC/API)   │
 └───────────────┬──────────────────────────────────────────┘
                 │ MTProto (obfuscated2 + abridged, AES-IGE/CTR)
 ┌───────────────▼──────────────────────────────────────────┐
@@ -66,21 +66,26 @@ the APK.
 └──────────────────────────────────────────────────────────┘
 ```
 
+The UI resources come from `decompiled/Talk-USCCi500-2009__Talk/res` and are merged
+with `app/single/res` into one resource table at build time (see
+`scripts/merge_single_app.py`).
+
 ## Repository layout
 
 | Path | Description |
 | --- | --- |
 | `telegram/` | **Native MTProto client** (pure Java; desktop-testable and compiled into the APK) |
-| `telegram/src/.../mtproto/` | transport, AES-IGE/CTR, RSA, TL codec, DH handshake, RPC |
+| `telegram/schema/` | official TL schema (layer 229) |
+| `telegram/generated/` | generated TL type table (`scripts/gen_tl_schema.py`) |
 | `telegram/tools/TgCli.java` | desktop harness to validate the protocol/login first |
-| `app/` | this app's own classes (login/config, bridge) and 4.0 compat widgets |
-| `scripts/merge_single_app.py` | **core**: merges the UI and bridge into a single APK |
-| `decompiled/`, `apks/` | Google Talk decompiled output and APKs (the UI source) |
-| `compat/` | Android 2.2–4.0 compatibility classes and replacement widgets |
+| `app/single/src/` | this app's own Activities and TelegramManager |
+| `app/single/res/` | this app's own resources (en-US and zh-CN strings) |
+| `scripts/merge_single_app.py` | **core**: merges Talk UI resources + this app's code into one APK |
+| `scripts/gen_tl_schema.py` | generates the Java type table from the TL schema |
+| `decompiled/`, `apks/` | Google Talk decompiled output and APKs (source of UI elements) |
 | `certs/telegram/` | Telegram data-center RSA public keys |
 | `certs/roots/` | modern roots (for TLS; pre-4.0 can't install user CAs) |
 | `scripts/` | build, emulator and screenshot scripts |
-| `server/` | private MTalk server used during development to drive the original UI |
 | `docs/` | protocol notes and screenshots |
 | `shots/` | screenshots (original Google Talk + Eclairgram) |
 
@@ -155,7 +160,10 @@ messages) provide en-US and zh-CN as well.
 - [x] **Encrypted RPC verified** (`help.getConfig` returns a full config, gzip handled)
 - [x] **Login verified** (`auth.sendCode` / `auth.signIn`, including `PHONE_MIGRATE` DC switching)
 - [x] **Dialogs / history / send verified** (TL schema generates the type table; generic parsing)
-- [ ] bridge into the Talk UI (buddy list shows Telegram dialogs)
+- [x] **Talk UI elements reused for the chat list and chat screen** (avatars/status/bubbles/colors)
+- [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
+      the session persists; no extra setup screen
+- [x] login screen supports bring-your-own API key (BYOK)
 - [ ] joint testing + screenshots on all three devices (2.1 emulator / 2.2 / 4.0)
 
 ## Known limitations

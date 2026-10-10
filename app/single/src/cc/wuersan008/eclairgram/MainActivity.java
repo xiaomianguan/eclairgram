@@ -22,6 +22,8 @@ import android.widget.TextView;
  */
 public class MainActivity extends Activity {
 
+    private static final String TAG = "Eclairgram";
+
     private EditText mPhone;
     private EditText mCode;
     private EditText mApiId;
@@ -39,6 +41,12 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mTg = TelegramManager.get(this);
+        // 会话持久化：已登录就直接进入会话列表，不再显示任何设置页。
+        if (mTg.isSignedIn()) {
+            openDialogs();
+            finish();
+            return;
+        }
         setContentView(buildUi());
         refresh();
         applyProvisioning(getIntent());
@@ -187,7 +195,7 @@ public class MainActivity extends Activity {
             public void onDone(boolean ok, String msg) {
                 if (ok) {
                     refresh();
-                    openTalkUi();
+                    openDialogs();
                 } else {
                     setStatus(getString(R.string.ec_status_error, msg));
                 }
@@ -195,14 +203,12 @@ public class MainActivity extends Activity {
         });
     }
 
-    /** 登录成功后进入原版 Talk 界面（好友列表）。 */
-    private void openTalkUi() {
+    /** 登录成功后进入会话列表（eclairgram 自己的界面）。 */
+    private void openDialogs() {
         try {
-            Intent i = new Intent();
-            i.setClassName(ServerConfig.PKG, "com.google.android.talk.BuddyList");
-            startActivity(i);
+            startActivity(new Intent(this, DialogsActivity.class));
         } catch (Throwable t) {
-            Log.e(Config.TAG, "open Talk UI failed", t);
+            Log.e(TAG, "open dialogs failed", t);
         }
     }
 

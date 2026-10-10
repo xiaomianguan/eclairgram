@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import cc.wuersan008.eclairgram.mtproto.MtpClient;
+import cc.wuersan008.eclairgram.mtproto.TlObject;
 import cc.wuersan008.eclairgram.mtproto.TlSchema;
 
 /**
@@ -39,6 +40,7 @@ public final class TelegramManager {
     private int mDc = DEFAULT_DC;
     private String mPhoneCodeHash;
     private byte[] mAuthKey;
+    private final Object mNet = new Object();
 
     private TelegramManager(Context ctx) {
         mApp = ctx.getApplicationContext();
@@ -189,6 +191,28 @@ public final class TelegramManager {
                 cb.onDone(ok, msg);
             }
         });
+    }
+
+    // ============================================================ 同步接口（供界面线程池调用）
+    public TlObject syncGetDialogs(int limit) throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.getDialogs(limit);
+        }
+    }
+
+    public TlObject syncGetHistory(long userId, long accessHash, int limit) throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.getHistoryUser(userId, accessHash, limit);
+        }
+    }
+
+    public void syncSendMessage(long userId, long accessHash, String text) throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            mClient.sendMessageToUser(userId, accessHash, text);
+        }
     }
 
     // ============================================================ 工具

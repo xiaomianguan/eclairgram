@@ -29,4 +29,11 @@
 
     <string name="ec_connecting">正在连接 Telegram…</string>
     <string name="ec_handshake_failed">无法连接 Telegram。</string>
+
+    <string name="ec_dialogs_title">会话</string>
+    <string name="ec_status_loading">正在加载…</string>
+    <string name="ec_no_dialogs">暂无会话。</string>
+    <string name="ec_message_hint">输入消息</string>
+    <string name="ec_send">发送</string>
+    <string name="ec_send_failed">发送失败：%1$s</string>
 </resources>

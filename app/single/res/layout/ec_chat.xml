@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 聊天界面：标题 + 消息列表 + 输入行，气泡用 Talk 的 im_bubble_* -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#ffffffff">
+
+    <TextView android:id="@+id/ec_chat_title"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="#ff2f3d4a"
+        android:padding="6.0dip"
+        android:textColor="#ffffffff"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <ListView android:id="@+id/ec_messages"
+        android:layout_width="fill_parent"
+        android:layout_height="0.0dip"
+        android:layout_weight="1.0"
+        android:cacheColorHint="#00000000"
+        android:transcriptMode="normal"
+        android:stackFromBottom="true" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bubble">
+
+        <EditText android:id="@+id/ec_input"
+            android:layout_width="0.0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.0"
+            android:hint="@string/ec_message_hint"
+            android:singleLine="true"
+            android:inputType="textShortMessage|textAutoCorrect" />
+
+        <Button android:id="@+id/ec_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ec_send" />
+    </LinearLayout>
+</LinearLayout>

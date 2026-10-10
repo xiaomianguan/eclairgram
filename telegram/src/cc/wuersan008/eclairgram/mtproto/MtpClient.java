@@ -205,7 +205,7 @@ public final class MtpClient {
             while (System.currentTimeMillis() < deadline) {
                 byte[] raw = transport.recv();
                 MtpState.Message msg = state.decrypt(raw);
-                Object res = handleMessage(msg.body, msgId);
+                Object res = handleMessage(msg.body, msgId, msg.msgId);
                 if (res == NOSALT) { resend = true; break; }
                 if (res != null) return res;
             }
@@ -228,12 +228,13 @@ public final class MtpClient {
     }
 
     /** 返回非 null 表示拿到了目标 RPC 的结果。 */
-    private Object handleMessage(byte[] body, long wantReqMsgId) throws IOException {
+    private Object handleMessage(byte[] body, long wantReqMsgId, long envelopeMsgId)
+            throws IOException {
         Tl.Reader r = new Tl.Reader(body);
         int ctor = r.int32();
         if (ctor == TlSchema.GZIP_PACKED) {
             byte[] packed = r.bytes();
-            return handleMessage(gunzip(packed), wantReqMsgId);
+            return handleMessage(gunzip(packed), wantReqMsgId, envelopeMsgId);
         }
         switch (ctor) {
             case TlSchema.MSG_CONTAINER: {
@@ -243,7 +244,7 @@ public final class MtpClient {
                     r.int32();      // seq
                     int len = r.int32();
                     byte[] inner = r.read(len);
-                    Object res = handleMessage(inner, wantReqMsgId);
+                    Object res = handleMessage(inner, wantReqMsgId, envelopeMsgId);
                     if (res != null) return res;
                 }
                 return null;
@@ -283,6 +284,17 @@ public final class MtpClient {
                 TlSchema.BadSalt bs = TlSchema.parseBadSalt(r);
                 state.salt = bs.newSalt;
                 log("bad_server_salt -> " + bs.newSalt);
+                return NOSALT;
+            }
+            case TlSchema.BAD_MSG_NOTIFICATION: {
+                long badId = r.int64();
+                r.int32();   // bad_msg_seqno
+                int code = r.int32();
+                log("bad_msg_notification code=" + code);
+                if (code == 16 || code == 17) {
+                    // 设备时钟不准：用服务端消息的 msg_id 推算时间偏移
+                    state.updateTimeOffset(envelopeMsgId);
+                }
                 return NOSALT;
             }
             case TlSchema.PONG:

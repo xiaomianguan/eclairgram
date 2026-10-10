@@ -39,22 +39,20 @@ Telegram 的数据中心用 **RSA 公钥** 做握手鉴权（不是 TLS）。这
 
 ## 架构
 
+Eclairgram 是一个**独立应用**：它把 Google Talk 的**界面元素**
+（布局、drawable、配色、字符串）拿来用，但**不打包 Talk 的代码/服务**。
+Telegram 协议由仓库内 `telegram/` 的原生 MTProto 实现直接负责。
+
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ Talk 界面（原版 smali + 资源，未改动）                     │
-│  好友列表 BuddyList · 聊天 ChatScreen · 状态/通知           │
+│ Eclairgram（本应用自己的 Activity，纯 Java）               │
+│  MainActivity   登录（BYOK + 手机号 + 验证码），已登录则跳过 │
+│  DialogsActivity 会话列表（复用 Talk 的头像/状态图/配色）    │
+│  ChatActivity    聊天（复用 Talk 的 im_bubble_* 气泡）      │
 └───────────────┬──────────────────────────────────────────┘
-                │ ContentResolver / AIDL
+                │ TelegramManager（后台线程 + 会话持久化）
 ┌───────────────▼──────────────────────────────────────────┐
-│ GTalkService + TalkProvider（原版，未改动）               │
-│  把“联系人/消息/状态”写进 TalkProvider，界面照常渲染      │
-└───────────────┬──────────────────────────────────────────┘
-                │ MTalk/MCS（本机回环，仅 App 内部）
-┌───────────────▼──────────────────────────────────────────┐
-│ Eclairgram 桥接层（本仓库新增，纯 Java）                   │
-│  · 本机 MTalk 服务端（GTalkService 的连接对象）            │
-│  · Telegram 原生 MTProto 客户端（握手/加密/收发）          │
-│  · 对话↔好友、消息↔消息 的映射                              │
+│ telegram/：原生 MTProto（传输 / 握手 / 加密 RPC / 业务）   │
 └───────────────┬──────────────────────────────────────────┘
                 │ MTProto（obfuscated2 + abridged，AES-IGE/CTR）
 ┌───────────────▼──────────────────────────────────────────┐
@@ -62,21 +60,25 @@ Telegram 的数据中心用 **RSA 公钥** 做握手鉴权（不是 TLS）。这
 └──────────────────────────────────────────────────────────┘
 ```
 
+界面资源来自 `decompiled/Talk-USCCi500-2009__Talk/res`，
+构建时与 `app/single/res` 合并进同一个资源表（见 `scripts/merge_single_app.py`）。
+
 ## 目录结构
 
 | 路径 | 说明 |
 | --- | --- |
 | `telegram/` | **原生 MTProto 客户端**（纯 Java，桌面可测，也编进 APK） |
-| `telegram/src/.../mtproto/` | 传输、AES-IGE/CTR、RSA、TL 编解码、DH 握手、RPC |
+| `telegram/schema/` | 官方 TL schema（层级 229） |
+| `telegram/generated/` | 由 schema 生成的 TL 类型表（`scripts/gen_tl_schema.py`） |
 | `telegram/tools/TgCli.java` | 桌面验证工具（可在电脑上先跑通协议/登录） |
-| `app/` | 本应用自己的类（登录/配置、桥接层）与 4.0 兼容替身控件 |
-| `scripts/merge_single_app.py` | **核心**：把界面与桥接层合并成单一 APK |
-| `decompiled/`、`apks/` | Google Talk 的原版反编译产物与 APK（界面来源） |
-| `compat/` | 面向 Android 2.2–4.0 的兼容类与替身控件 |
-| `certs/telegram/` | Telegram 数据中心 RSA 公钥（“提证书”） |
+| `app/single/src/` | 本应用自己的 Activity 与 TelegramManager |
+| `app/single/res/` | 本应用自己的资源（含 en-US 与 zh-CN 文案） |
+| `scripts/merge_single_app.py` | **核心**：合并 Talk 界面资源 + 本应用代码为单一 APK |
+| `scripts/gen_tl_schema.py` | 由 TL schema 生成 Java 类型表 |
+| `decompiled/`、`apks/` | Google Talk 的反编译产物与 APK（界面元素来源） |
+| `certs/telegram/` | Telegram 数据中心 RSA 公钥 |
 | `certs/roots/` | 现代根证书（供 TLS 使用；4.0 之前无法安装用户 CA） |
 | `scripts/` | 构建、模拟器、截图脚本 |
-| `server/` | 开发期用来驱动原版界面的私有 MTalk 服务器（参考实现） |
 | `docs/` | 协议与截图 |
 | `shots/` | 截图（Google Talk 原版 + Eclairgram 实测） |
 
@@ -146,7 +148,9 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **加密 RPC 实测通过**（`help.getConfig` 返回完整 config，含 gzip 解包）
 - [x] **登录实测通过**（`auth.sendCode` / `auth.signIn`，含 `PHONE_MIGRATE` 换 DC）
 - [x] **会话列表 / 历史消息 / 发送消息 实测通过**（由 TL schema 生成类型表，通用解析）
-- [ ] 桥接层接入 Talk 界面（好友列表显示 Telegram 对话）
+- [x] **复用 Talk 界面元素做出会话列表与聊天界面**（头像/状态图/气泡/配色）
+- [x] **单一应用、单一启动图标**：已登录直接进会话列表，会话持久化，无额外设置页
+- [x] 登录页支持自带 API 凭据（BYOK）
 - [ ] 三台设备（2.1 模拟器 / 2.2 真机 / 4.0 真机）联调与截图
 
 ## 已知限制
