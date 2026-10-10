@@ -25,6 +25,7 @@ public final class EmojiFont {
 
     private static boolean sLoaded;
     private static byte[] sData;
+    private static int[] sOrder;
     private static final HashMap<Integer, int[]> INDEX = new HashMap<Integer, int[]>();
     private static final HashMap<Integer, Bitmap> CACHE = new HashMap<Integer, Bitmap>();
 
@@ -46,16 +47,20 @@ public final class EmojiFont {
             while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
             in.close();
             byte[] d = bos.toByteArray();
-            if (d.length < 8 || d[0] != 'E' || d[1] != 'C' || d[2] != 'P' || d[3] != '1') return;
+            if (d.length < 8 || d[0] != 'E' || d[1] != 'C' || d[2] != 'P' || d[3] != '2') return;
             int count = le32(d, 4);
             int off = 8;
-            for (int i = 0; i < count && off + 12 <= d.length; i++) {
+            int[] order = new int[count];
+            for (int i = 0; i < count && off + 13 <= d.length; i++) {
                 int cp = le32(d, off);
                 int o = le32(d, off + 4);
                 int l = le32(d, off + 8);
-                INDEX.put(Integer.valueOf(cp), new int[] { o, l });
-                off += 12;
+                int cat = d[off + 12] & 0xff;
+                INDEX.put(Integer.valueOf(cp), new int[] { o, l, cat });
+                order[i] = cp;
+                off += 13;
             }
+            sOrder = order;
             sData = d;
         } catch (Throwable t) {
             sData = null;
@@ -66,17 +71,17 @@ public final class EmojiFont {
         return INDEX.containsKey(Integer.valueOf(cp));
     }
 
-    /** 所有可用 emoji 码点（用于表情选择器）。 */
+    /** 所有可用 emoji 码点（已按分类与组内顺序排好，用于表情选择器）。 */
     public static int[] codepoints(Context ctx) {
         ensureLoaded(ctx);
-        int n = INDEX.size();
-        int[] out = new int[n];
-        int i = 0;
-        for (Integer cp : INDEX.keySet()) {
-            out[i++] = cp.intValue();
-        }
-        java.util.Arrays.sort(out);
-        return out;
+        return sOrder == null ? new int[0] : sOrder;
+    }
+
+    /** 码点所属分类序号（0 表情 ... 8 旗帜, 9 其它）。 */
+    public static int category(Context ctx, int cp) {
+        ensureLoaded(ctx);
+        int[] e = INDEX.get(Integer.valueOf(cp));
+        return e == null ? 9 : e[2];
     }
 
     public static Bitmap bitmap(Context ctx, int cp) {

@@ -37,6 +37,16 @@
     <string name="ec_send">发送</string>
     <string name="ec_attach">添加附件</string>
     <string name="ec_emoji">表情</string>
+    <string name="ec_cat_0">表情</string>
+    <string name="ec_cat_1">人物</string>
+    <string name="ec_cat_2">动物与自然</string>
+    <string name="ec_cat_3">食物与饮品</string>
+    <string name="ec_cat_4">旅行与地点</string>
+    <string name="ec_cat_5">活动</string>
+    <string name="ec_cat_6">物品</string>
+    <string name="ec_cat_7">符号</string>
+    <string name="ec_cat_8">旗帜</string>
+    <string name="ec_cat_9">其它</string>
     <string name="ec_attach_photo">图片</string>
     <string name="ec_attach_video">视频</string>
     <string name="ec_media_photo">[图片]</string>

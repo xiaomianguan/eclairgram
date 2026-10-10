@@ -37,6 +37,16 @@
     <string name="ec_send">Send</string>
     <string name="ec_attach">Attach</string>
     <string name="ec_emoji">Emoji</string>
+    <string name="ec_cat_0">Smileys &amp; Emotion</string>
+    <string name="ec_cat_1">People &amp; Body</string>
+    <string name="ec_cat_2">Animals &amp; Nature</string>
+    <string name="ec_cat_3">Food &amp; Drink</string>
+    <string name="ec_cat_4">Travel &amp; Places</string>
+    <string name="ec_cat_5">Activities</string>
+    <string name="ec_cat_6">Objects</string>
+    <string name="ec_cat_7">Symbols</string>
+    <string name="ec_cat_8">Flags</string>
+    <string name="ec_cat_9">Other</string>
     <string name="ec_attach_photo">Photo</string>
     <string name="ec_attach_video">Video</string>
     <string name="ec_media_photo">[Photo]</string>
