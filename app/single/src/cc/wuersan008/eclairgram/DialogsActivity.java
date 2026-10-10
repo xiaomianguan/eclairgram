@@ -98,9 +98,16 @@ public class DialogsActivity extends Activity {
                             .inflate(R.layout.ec_dialog_item, parent, false);
                 }
                 Row r = getItem(position);
-                // 置顶的“收藏夹/我的资料”用不同背景（类似原版 Talk 的账号行）
-                v.findViewById(R.id.ec_item_bubble).setBackgroundResource(
-                        r.isSelf ? R.drawable.ec_item_bg_self : R.drawable.ec_item_bg);
+                // 置顶的“收藏夹/我的资料”按原版 Talk 的自我状态行处理：整行铺背景，
+                // 按下/选中交给系统列表高亮（ec_item_bg_self）；其它行仍用气泡背景。
+                View bubble = v.findViewById(R.id.ec_item_bubble);
+                if (r.isSelf) {
+                    v.setBackgroundResource(R.drawable.ec_item_bg_self);
+                    bubble.setBackgroundDrawable(null);
+                } else {
+                    v.setBackgroundDrawable(null);
+                    bubble.setBackgroundResource(R.drawable.ec_item_bg);
+                }
                 ((TextView) v.findViewById(R.id.ec_name))
                         .setText(EmojiFont.emojify(DialogsActivity.this, r.name, dp(20)));
                 String st = r.status == null ? "" : r.status;
