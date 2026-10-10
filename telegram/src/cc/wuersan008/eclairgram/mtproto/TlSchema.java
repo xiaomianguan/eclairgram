@@ -60,6 +60,7 @@ public final class TlSchema {
     public static final int INPUT_PEER_SELF = 0x7da07ec9;
     public static final int INPUT_PEER_USER = 0xdde8a54c;
     public static final int INPUT_PEER_CHAT = 0x35a95cb9;
+    public static final int INPUT_PEER_CHANNEL = 0x27bcbbfc;
     public static final int PEER_USER = 0x59511722;
     public static final int PEER_CHAT = 0x36c6019a;
     public static final int PEER_CHANNEL = 0xa2a5371e;

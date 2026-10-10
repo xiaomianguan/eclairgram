@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cc.wuersan008.eclairgram.mtproto.MtpClient;
 import cc.wuersan008.eclairgram.mtproto.TlObject;
 
 /**
@@ -31,8 +32,7 @@ import cc.wuersan008.eclairgram.mtproto.TlObject;
 public class DialogsActivity extends Activity {
 
     static final class Row {
-        long uid;
-        long accessHash;
+        byte[] peer;
         String name;
         String status;
     }
@@ -73,8 +73,7 @@ public class DialogsActivity extends Activity {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
                 Row r = mAdapter.getItem(pos);
                 Intent i = new Intent(DialogsActivity.this, ChatActivity.class);
-                i.putExtra("uid", r.uid);
-                i.putExtra("accessHash", r.accessHash);
+                i.putExtra("peer", r.peer);
                 i.putExtra("name", r.name);
                 startActivity(i);
             }
@@ -120,6 +119,7 @@ public class DialogsActivity extends Activity {
         List<Object> users = d.list("users");
         List<Object> messages = d.list("messages");
         List<Object> dialogs = d.list("dialogs");
+        List<Object> chats = d.list("chats");
 
         Map<Long, String> names = new HashMap<Long, String>();
         Map<Long, Long> access = new HashMap<Long, Long>();
@@ -150,20 +150,45 @@ public class DialogsActivity extends Activity {
                 }
             }
         }
+        Map<Long, String> chatNames = new HashMap<Long, String>();
+        Map<Long, Long> chatAccess = new HashMap<Long, Long>();
+        if (chats != null) {
+            for (Object o : chats) {
+                TlObject c = (TlObject) o;
+                long id = c.i64("id");
+                String title = c.str("title");
+                chatNames.put(Long.valueOf(id), title == null ? "" : title);
+                if (c.type().equals("channel")) {
+                    chatAccess.put(Long.valueOf(id), Long.valueOf(c.i64("access_hash")));
+                }
+            }
+        }
         List<Row> rows = new ArrayList<Row>();
         if (dialogs != null) {
             for (Object o : dialogs) {
                 TlObject dg = (TlObject) o;
                 TlObject peer = dg.obj("peer");
-                if (peer == null || !peer.type().equals("peerUser")) continue;
-                long uid = peer.i64("user_id");
+                if (peer == null) continue;
                 Row r = new Row();
-                r.uid = uid;
-                Long ah = access.get(Long.valueOf(uid));
-                r.accessHash = ah == null ? 0L : ah.longValue();
-                String nm = names.get(Long.valueOf(uid));
-                if (nm == null || nm.trim().length() == 0) nm = "User " + uid;
-                r.name = nm;
+                String t = peer.type();
+                if (t.equals("peerUser")) {
+                    long uid = peer.i64("user_id");
+                    Long ah = access.get(Long.valueOf(uid));
+                    r.peer = MtpClient.inputPeerUser(uid, ah == null ? 0L : ah.longValue());
+                    r.name = names.get(Long.valueOf(uid));
+                } else if (t.equals("peerChat")) {
+                    long cid = peer.i64("chat_id");
+                    r.peer = MtpClient.inputPeerChat(cid);
+                    r.name = chatNames.get(Long.valueOf(cid));
+                } else if (t.equals("peerChannel")) {
+                    long cid = peer.i64("channel_id");
+                    Long ah = chatAccess.get(Long.valueOf(cid));
+                    r.peer = MtpClient.inputPeerChannel(cid, ah == null ? 0L : ah.longValue());
+                    r.name = chatNames.get(Long.valueOf(cid));
+                } else {
+                    continue;
+                }
+                if (r.name == null || r.name.trim().length() == 0) r.name = "Chat";
                 r.status = msgText.get(Integer.valueOf(dg.i32("top_message")));
                 rows.add(r);
             }

@@ -201,17 +201,17 @@ public final class TelegramManager {
         }
     }
 
-    public TlObject syncGetHistory(long userId, long accessHash, int limit) throws Exception {
+    public TlObject syncGetHistory(byte[] inputPeer, int limit) throws Exception {
         synchronized (mNet) {
             ensureConnected();
-            return mClient.getHistoryUser(userId, accessHash, limit);
+            return mClient.getHistory(inputPeer, limit);
         }
     }
 
-    public void syncSendMessage(long userId, long accessHash, String text) throws Exception {
+    public void syncSendMessage(byte[] inputPeer, String text) throws Exception {
         synchronized (mNet) {
             ensureConnected();
-            mClient.sendMessageToUser(userId, accessHash, text);
+            mClient.sendMessage(inputPeer, text);
         }
     }
 

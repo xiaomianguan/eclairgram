@@ -34,8 +34,7 @@ public class ChatActivity extends Activity {
         String text;
     }
 
-    private long mUid;
-    private long mAccessHash;
+    private byte[] mPeer;
     private String mName;
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -47,8 +46,7 @@ public class ChatActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mUid = getIntent().getLongExtra("uid", 0);
-        mAccessHash = getIntent().getLongExtra("accessHash", 0);
+        mPeer = getIntent().getByteArrayExtra("peer");
         mName = getIntent().getStringExtra("name");
         if (mName == null) mName = "";
 
@@ -116,7 +114,7 @@ public class ChatActivity extends Activity {
             public void run() {
                 try {
                     TelegramManager.get(ChatActivity.this)
-                            .syncSendMessage(mUid, mAccessHash, text);
+                            .syncSendMessage(mPeer, text);
                 } catch (final Throwable t) {
                     mMain.post(new Runnable() {
                         public void run() {
@@ -135,7 +133,7 @@ public class ChatActivity extends Activity {
     private void refresh() {
         try {
             TlObject hist = TelegramManager.get(this)
-                    .syncGetHistory(mUid, mAccessHash, 50);
+                    .syncGetHistory(mPeer, 50);
             List<Object> msgs = hist.list("messages");
             final List<Msg> out = new ArrayList<Msg>();
             if (msgs != null) {

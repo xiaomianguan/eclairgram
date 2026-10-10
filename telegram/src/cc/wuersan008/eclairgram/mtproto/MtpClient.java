@@ -362,8 +362,22 @@ public final class MtpClient {
     }
 
     // ============================================================ 业务 API
-    private static void writeInputPeerUser(Tl.Writer w, long userId, long accessHash) {
+    public static byte[] inputPeerUser(long userId, long accessHash) {
+        Tl.Writer w = new Tl.Writer();
         w.int32(TlSchema.INPUT_PEER_USER).int64(userId).int64(accessHash);
+        return w.toByteArray();
+    }
+
+    public static byte[] inputPeerChat(long chatId) {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.INPUT_PEER_CHAT).int64(chatId);
+        return w.toByteArray();
+    }
+
+    public static byte[] inputPeerChannel(long channelId, long accessHash) {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.INPUT_PEER_CHANNEL).int64(channelId).int64(accessHash);
+        return w.toByteArray();
     }
 
     /** messages.getDialogs：拉取会话列表（返回原始 TlObject，由上层解读）。 */
@@ -380,11 +394,11 @@ public final class MtpClient {
         return TlObject.read(new Tl.Reader(res));
     }
 
-    /** messages.getHistory：某个用户的最近消息。 */
-    public TlObject getHistoryUser(long userId, long accessHash, int limit) throws IOException {
+    /** messages.getHistory：某个 peer 的最近消息。 */
+    public TlObject getHistory(byte[] inputPeer, int limit) throws IOException {
         Tl.Writer w = new Tl.Writer();
         w.int32(TlSchema.MESSAGES_GET_HISTORY);
-        writeInputPeerUser(w, userId, accessHash);
+        w.raw(inputPeer);
         w.int32(0)                       // offset_id
          .int32(0)                       // offset_date
          .int32(0)                       // add_offset
@@ -396,13 +410,12 @@ public final class MtpClient {
         return TlObject.read(new Tl.Reader(res));
     }
 
-    /** messages.sendMessage：给某个用户发一条文本消息。 */
-    public TlObject sendMessageToUser(long userId, long accessHash, String text)
-            throws IOException {
+    /** messages.sendMessage：给某个 peer 发一条文本消息。 */
+    public TlObject sendMessage(byte[] inputPeer, String text) throws IOException {
         Tl.Writer w = new Tl.Writer();
         w.int32(TlSchema.MESSAGES_SEND_MESSAGE)
          .int32(0);                      // flags
-        writeInputPeerUser(w, userId, accessHash);
+        w.raw(inputPeer);
         w.string(text)
          .int64(Crypto.longLE(Crypto.random(8), 0));   // random_id
         byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));

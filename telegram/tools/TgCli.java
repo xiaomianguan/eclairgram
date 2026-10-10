@@ -71,7 +71,8 @@ public class TgCli {
             long uid = Long.parseLong(args[1]);
             long ah = Long.parseLong(args[2]);
             String text = args[3];
-            cc.wuersan008.eclairgram.mtproto.TlObject res = c.sendMessageToUser(uid, ah, text);
+            cc.wuersan008.eclairgram.mtproto.TlObject res =
+                    c.sendMessage(MtpClient.inputPeerUser(uid, ah), text);
             System.out.println("SEND type=" + res.type());
             c.close();
             return;
@@ -80,7 +81,8 @@ public class TgCli {
         if ("history".equals(cmd)) {
             long uid = Long.parseLong(args[1]);
             long ah = Long.parseLong(args[2]);
-            cc.wuersan008.eclairgram.mtproto.TlObject res = c.getHistoryUser(uid, ah, 20);
+            cc.wuersan008.eclairgram.mtproto.TlObject res =
+                    c.getHistory(MtpClient.inputPeerUser(uid, ah), 20);
             java.util.List<Object> msgs = res.list("messages");
             System.out.println("HISTORY type=" + res.type() + " count="
                     + (msgs == null ? 0 : msgs.size()));
