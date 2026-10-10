@@ -174,7 +174,8 @@ messages) provide en-US and zh-CN as well.
 - [x] **chat UI follows the list theme** (light on 2.1 / dark on 2.2+); bubbles and text adapt too
 - [x] **custom Blobmoji emoji picker**: sectioned by the official Unicode categories
       (smileys first, symbols/flags last) with within-section order matching modern keyboards
-      (categories and order come from `emoji-test.txt`; old keyboards can't type these emoji)
+      (categories and order come from `emoji-test.txt`; old keyboards can't type these emoji);
+      fully operable with the D-pad (left/right within a row, up/down between rows, centre to pick)
 - [x] **full D-pad navigation**: chat cards, buttons, the input and media bubbles are focusable;
       long-pressing a card opens its details
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
