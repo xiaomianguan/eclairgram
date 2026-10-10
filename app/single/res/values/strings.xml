@@ -35,6 +35,13 @@
     <string name="ec_no_dialogs">No chats yet.</string>
     <string name="ec_message_hint">Message</string>
     <string name="ec_send">Send</string>
+    <string name="ec_attach">Attach</string>
+    <string name="ec_attach_photo">Photo</string>
+    <string name="ec_attach_video">Video</string>
+    <string name="ec_media_photo">[Photo]</string>
+    <string name="ec_media_video">[Video]</string>
+    <string name="ec_media_downloading">Downloading…</string>
+    <string name="ec_media_failed">Could not load media</string>
     <string name="ec_send_failed">Could not send: %1$s</string>
 
     <string name="ec_details_title">Details</string>

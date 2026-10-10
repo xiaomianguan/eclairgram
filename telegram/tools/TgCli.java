@@ -116,6 +116,17 @@ public class TgCli {
             return;
         }
 
+        if ("sendphoto".equals(cmd)) {
+            long uid = Long.parseLong(args[1]);
+            long ah = Long.parseLong(args[2]);
+            byte[] data = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(args[3]));
+            cc.wuersan008.eclairgram.mtproto.TlObject res =
+                    c.sendPhoto(MtpClient.inputPeerUser(uid, ah), data, "photo.jpg", "eclairgram photo test");
+            System.out.println("PHOTO SENT " + data.length + " bytes -> " + res.type());
+            c.close();
+            return;
+        }
+
         if ("dialogs".equals(cmd)) {
             cc.wuersan008.eclairgram.mtproto.TlObject d = c.getDialogs(30);
             System.out.println("DIALOGS type=" + d.type());

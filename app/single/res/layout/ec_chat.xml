@@ -71,6 +71,14 @@
         android:layout_height="wrap_content"
         android:background="#ffeeeeee">
 
+        <ImageButton android:id="@+id/ec_attach"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:background="#00000000"
+            android:contentDescription="@string/ec_attach"
+            android:src="@drawable/ec_attach" />
+
         <EditText android:id="@+id/ec_input"
             android:layout_width="0.0dip"
             android:layout_height="wrap_content"

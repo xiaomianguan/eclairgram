@@ -51,6 +51,12 @@ public final class TlSchema {
     public static final int UPDATES_GET_STATE = 0xedd4882a;
     public static final int UPDATES_GET_DIFFERENCE = 0x19c2f763;
     public static final int MESSAGES_READ_HISTORY = 0x0e306d3a;
+    public static final int MESSAGES_SEND_MEDIA = 0x0330e77f;
+    public static final int UPLOAD_SAVE_FILE_PART = 0xb304a621;
+    public static final int INPUT_FILE = 0xf52ff27f;
+    public static final int INPUT_MEDIA_UPLOADED_PHOTO = 0x7d8375da;
+    public static final int INPUT_PHOTO_FILE_LOCATION = 0x40181ffe;
+    public static final int INPUT_DOCUMENT_FILE_LOCATION = 0xbad07584;
     public static final int CHANNELS_READ_HISTORY = 0xcc104937;
     public static final int INPUT_CHANNEL = 0xf35aec28;
     public static final int MESSAGES_GET_DIALOGS = 0xa0f4cb4f;

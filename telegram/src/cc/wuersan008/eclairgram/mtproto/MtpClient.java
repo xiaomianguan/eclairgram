@@ -442,44 +442,126 @@ public final class MtpClient {
         return TlObject.read(new Tl.Reader(res));
     }
 
-    /** upload.getFile：下载某用户的头像（inputPeerPhotoFileLocation）。失败返回 null。 */
-    public byte[] downloadPeerPhoto(byte[] inputPeer, long photoId) throws IOException {
+    /** 构建 inputPeerPhotoFileLocation（头像）。 */
+    public static byte[] peerPhotoLocation(byte[] inputPeer, long photoId) {
         Tl.Writer lw = new Tl.Writer();
-        lw.int32(0x37257e99)            // inputPeerPhotoFileLocation
-          .int32(0)                     // flags
-          .raw(inputPeer)
-          .int64(photoId);
-        byte[] location = lw.toByteArray();
+        lw.int32(0x37257e99).int32(0).raw(inputPeer).int64(photoId);
+        return lw.toByteArray();
+    }
 
+    /** 构建 inputPhotoFileLocation（消息里的照片）。 */
+    public static byte[] photoFileLocation(long id, long accessHash,
+                                           byte[] fileReference, String thumbSize) {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.INPUT_PHOTO_FILE_LOCATION).int64(id).int64(accessHash)
+         .bytes(fileReference == null ? new byte[0] : fileReference)
+         .string(thumbSize == null ? "" : thumbSize);
+        return w.toByteArray();
+    }
+
+    /** 构建 inputDocumentFileLocation（消息里的文件/视频）。 */
+    public static byte[] documentFileLocation(long id, long accessHash,
+                                              byte[] fileReference, String thumbSize) {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.INPUT_DOCUMENT_FILE_LOCATION).int64(id).int64(accessHash)
+         .bytes(fileReference == null ? new byte[0] : fileReference)
+         .string(thumbSize == null ? "" : thumbSize);
+        return w.toByteArray();
+    }
+
+    /** upload.getFile：按 InputFileLocation 下载（失败时 FILE_MIGRATE 会抛出）。 */
+    public byte[] downloadLocation(byte[] location) throws IOException {
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
         long offset = 0;
         int limit = 256 * 1024;
-        try {
-            while (true) {
-                Tl.Writer w = new Tl.Writer();
-                w.int32(0xbe5335be)     // upload.getFile
-                 .int32(0)              // flags
-                 .raw(location)
-                 .int64(offset)
-                 .int32(limit);
-                byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
-                TlObject f = TlObject.read(new Tl.Reader(res));
-                if (!f.type().equals("upload.file")) break;
-                Object b = f.get("bytes");
-                if (!(b instanceof byte[])) break;
-                byte[] chunk = (byte[]) b;
-                if (chunk.length == 0) break;
-                out.write(chunk, 0, chunk.length);
-                if (chunk.length < limit) break;
-                offset += chunk.length;
-                if (offset > 4 * 1024 * 1024) break;
-            }
-        } catch (IOException e) {
-            String m = String.valueOf(e.getMessage());
-            if (m.contains("FILE_MIGRATE")) throw e;   // 交给上层换 DC 下载
-            return null;
+        while (true) {
+            Tl.Writer w = new Tl.Writer();
+            w.int32(0xbe5335be)         // upload.getFile
+             .int32(0)                  // flags
+             .raw(location)
+             .int64(offset)
+             .int32(limit);
+            byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+            TlObject f = TlObject.read(new Tl.Reader(res));
+            if (!f.type().equals("upload.file")) break;
+            Object b = f.get("bytes");
+            if (!(b instanceof byte[])) break;
+            byte[] chunk = (byte[]) b;
+            if (chunk.length == 0) break;
+            out.write(chunk, 0, chunk.length);
+            if (chunk.length < limit) break;
+            offset += chunk.length;
+            if (offset > 16 * 1024 * 1024) break;
         }
         return out.toByteArray();
+    }
+
+    /** 下载某用户的头像（inputPeerPhotoFileLocation）。 */
+    public byte[] downloadPeerPhoto(byte[] inputPeer, long photoId) throws IOException {
+        try {
+            return downloadLocation(peerPhotoLocation(inputPeer, photoId));
+        } catch (IOException e) {
+            if (String.valueOf(e.getMessage()).contains("FILE_MIGRATE")) throw e;
+            return null;
+        }
+    }
+
+    // ============================================================ 上传 / 发送媒体
+    /** upload.saveFilePart：分片上传。 */
+    public void saveFilePart(long fileId, int part, byte[] bytes) throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.UPLOAD_SAVE_FILE_PART).int64(fileId).int32(part).bytes(bytes);
+        rpc(wrapped(w.toByteArray()));
+    }
+
+    /** 把一段字节作为图片上传并发送（返回 updates 对象）。 */
+    public TlObject sendPhoto(byte[] inputPeer, byte[] data, String name,
+                              String caption) throws IOException {
+        long fileId = Crypto.longLE(Crypto.random(8), 0);
+        int partSize = 256 * 1024;
+        int parts = (data.length + partSize - 1) / partSize;
+        if (parts == 0) parts = 1;
+        for (int i = 0; i < parts; i++) {
+            int off = i * partSize;
+            int len = Math.min(partSize, data.length - off);
+            byte[] chunk = new byte[len];
+            System.arraycopy(data, off, chunk, 0, len);
+            saveFilePart(fileId, i, chunk);
+        }
+        Tl.Writer fw = new Tl.Writer();
+        fw.int32(TlSchema.INPUT_FILE).int64(fileId).int32(parts)
+          .string(name == null ? "photo.jpg" : name)
+          .string(md5Hex(data));
+        byte[] inputFile = fw.toByteArray();
+
+        Tl.Writer mw = new Tl.Writer();
+        mw.int32(TlSchema.INPUT_MEDIA_UPLOADED_PHOTO).int32(0).raw(inputFile);
+        return sendMedia(inputPeer, mw.toByteArray(), caption);
+    }
+
+    /** messages.sendMedia。 */
+    public TlObject sendMedia(byte[] inputPeer, byte[] media, String caption) throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.MESSAGES_SEND_MEDIA)
+         .int32(0);                     // flags
+        w.raw(inputPeer);
+        w.raw(media);
+        w.string(caption == null ? "" : caption)
+         .int64(Crypto.longLE(Crypto.random(8), 0));
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
+    private static String md5Hex(byte[] data) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] d = md.digest(data);
+            StringBuilder sb = new StringBuilder();
+            for (byte x : d) sb.append(String.format("%02x", x));
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     /** auth.exportedAuthorization 的内容。 */

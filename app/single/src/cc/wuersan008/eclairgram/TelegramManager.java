@@ -321,6 +321,35 @@ public final class TelegramManager {
         }
     }
 
+    /** 按 InputFileLocation 下载消息里的媒体（同样处理 FILE_MIGRATE）。 */
+    public byte[] syncDownloadLocation(byte[] location) throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            try {
+                return mClient.downloadLocation(location);
+            } catch (java.io.IOException e) {
+                int dc = parseMigrate(e.getMessage(), "FILE_MIGRATE_");
+                if (dc <= 0) return null;
+                MtpClient fc = fileClient(dc);
+                if (fc == null) return null;
+                try {
+                    return fc.downloadLocation(location);
+                } catch (Throwable t) {
+                    return null;
+                }
+            }
+        }
+    }
+
+    /** 上传并发送一张图片。 */
+    public void syncSendPhoto(byte[] inputPeer, byte[] data, String name, String caption)
+            throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            mClient.sendPhoto(inputPeer, data, name, caption);
+        }
+    }
+
     private final java.util.Map<Integer, MtpClient> mFileClients =
             new java.util.HashMap<Integer, MtpClient>();
 
