@@ -422,6 +422,26 @@ public final class MtpClient {
         return TlObject.read(new Tl.Reader(res));
     }
 
+    /** updates.getState：获取当前的 pts/qts/date/seq。 */
+    public TlObject getState() throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.UPDATES_GET_STATE);
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
+    /** updates.getDifference：拉取自 pts 以来的新消息与更新。 */
+    public TlObject getDifference(int pts, int date, int qts) throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.UPDATES_GET_DIFFERENCE)
+         .int32(0)          // flags
+         .int32(pts)
+         .int32(date)
+         .int32(qts);
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
     /** auth.sendCode：请求给手机号发送验证码。 */
     public TlSchema.SentCode sendCode(String phone) throws IOException {
         Tl.Writer w = new Tl.Writer();

@@ -193,6 +193,93 @@ public final class TelegramManager {
         });
     }
 
+    // ============================================================ 实时更新
+    /** 有新消息/更新时回调（在后台线程调用）。 */
+    public interface Listener {
+        void onUpdate();
+    }
+
+    private final java.util.concurrent.CopyOnWriteArrayList<Listener> mListeners =
+            new java.util.concurrent.CopyOnWriteArrayList<Listener>();
+    private volatile boolean mUpdatesRunning = false;
+    private int mPts, mQts, mDate;
+    private boolean mUpdatesInit = false;
+
+    public void addListener(Listener l) {
+        if (!mListeners.contains(l)) mListeners.add(l);
+        if (!mUpdatesRunning && isSignedIn()) startUpdates();
+    }
+
+    public void removeListener(Listener l) {
+        mListeners.remove(l);
+    }
+
+    private void notifyListeners() {
+        for (Listener l : mListeners) {
+            try {
+                l.onUpdate();
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    private void startUpdates() {
+        mUpdatesRunning = true;
+        new Thread(new Runnable() {
+            public void run() {
+                updateLoop();
+            }
+        }).start();
+    }
+
+    private void updateLoop() {
+        while (true) {
+            try {
+                boolean changed = false;
+                synchronized (mNet) {
+                    ensureConnected();
+                    if (!mUpdatesInit) {
+                        TlObject st = mClient.getState();
+                        mPts = st.i32("pts");
+                        mQts = st.i32("qts");
+                        mDate = st.i32("date");
+                        mUpdatesInit = true;
+                    }
+                    TlObject diff = mClient.getDifference(mPts, mDate, mQts);
+                    String t = diff.type();
+                    if (t.equals("updates.difference") || t.equals("updates.differenceSlice")) {
+                        TlObject st = diff.obj(t.equals("updates.difference")
+                                ? "state" : "intermediate_state");
+                        if (st != null) {
+                            mPts = st.i32("pts");
+                            mQts = st.i32("qts");
+                            mDate = st.i32("date");
+                        }
+                        java.util.List<Object> nm = diff.list("new_messages");
+                        if (nm != null && !nm.isEmpty()) changed = true;
+                    } else if (t.equals("updates.differenceEmpty")) {
+                        mDate = diff.i32("date");
+                    } else if (t.equals("updates.differenceTooLong")) {
+                        mUpdatesInit = false;
+                    }
+                }
+                if (changed) notifyListeners();
+            } catch (Throwable e) {
+                Log.w(TAG, "update loop: " + e);
+                mUpdatesInit = false;
+                sleepQuiet(3000);
+            }
+            sleepQuiet(2500);
+        }
+    }
+
+    private static void sleepQuiet(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException ignored) {
+        }
+    }
+
     // ============================================================ 同步接口（供界面线程池调用）
     public TlObject syncGetDialogs(int limit) throws Exception {
         synchronized (mNet) {

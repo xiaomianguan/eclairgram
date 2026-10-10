@@ -41,10 +41,19 @@ public class DialogsActivity extends Activity {
     private ArrayAdapter<Row> mAdapter;
     private ListView mList;
     private TextView mEmpty;
+    private TelegramManager mTg;
+    private volatile boolean mLoading = false;
+
+    private final TelegramManager.Listener mUpd = new TelegramManager.Listener() {
+        public void onUpdate() {
+            reload();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mTg = TelegramManager.get(this);
         setContentView(R.layout.ec_dialogs);
         mList = (ListView) findViewById(R.id.ec_list);
         mEmpty = (TextView) findViewById(R.id.ec_empty);
@@ -84,10 +93,19 @@ public class DialogsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        mTg.addListener(mUpd);
         reload();
     }
 
+    @Override
+    protected void onPause() {
+        mTg.removeListener(mUpd);
+        super.onPause();
+    }
+
     private void reload() {
+        if (mLoading) return;
+        mLoading = true;
         new Thread(new Runnable() {
             public void run() {
                 try {
@@ -109,6 +127,8 @@ public class DialogsActivity extends Activity {
                                     String.valueOf(t.getMessage())));
                         }
                     });
+                } finally {
+                    mLoading = false;
                 }
             }
         }).start();

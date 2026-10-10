@@ -46,6 +46,8 @@ public final class TlSchema {
 
     // ---- 业务方法 ----
     public static final int HELP_GET_CONFIG = 0xc4f9186b;
+    public static final int UPDATES_GET_STATE = 0xedd4882a;
+    public static final int UPDATES_GET_DIFFERENCE = 0x19c2f763;
     public static final int MESSAGES_GET_DIALOGS = 0xa0f4cb4f;
     public static final int MESSAGES_GET_HISTORY = 0x4423e6c5;
     public static final int MESSAGES_SEND_MESSAGE = 0xfef48f62;
