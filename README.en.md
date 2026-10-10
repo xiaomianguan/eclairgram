@@ -184,6 +184,8 @@ messages) provide en-US and zh-CN as well.
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
 - [x] login screen supports bring-your-own API key (BYOK)
+- [x] **two-step verification (2FA)**: after the code is accepted, if the account has a password the
+      login screen asks for it (SRP 6a)
 - [ ] joint testing + screenshots on all three devices (2.1 emulator / 2.2 / 4.0)
 
 ## Screenshots
