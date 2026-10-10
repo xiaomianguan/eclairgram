@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 单条消息：气泡背景与对齐在代码里按 in/out 设置（复用 Talk 的 im_bubble_*） -->
+<!-- 单条消息：气泡背景与对齐在代码里按 in/out 设置（复用 Talk 的 im_bubble_*）；
+     带附件时气泡里先放一张缩略图，再放说明文字与时间 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/ec_msg_row"
     android:orientation="horizontal"
@@ -10,11 +11,37 @@
     android:paddingRight="6.0dip"
     android:paddingBottom="2.0dip">
 
-    <TextView android:id="@+id/ec_msg_text"
+    <LinearLayout android:id="@+id/ec_msg_bubble"
+        android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:maxWidth="240.0dip"
-        android:padding="6.0dip"
-        android:textSize="16.0sp"
-        android:textColor="@color/online_text_color" />
+        android:padding="3.0dip">
+
+        <FrameLayout android:id="@+id/ec_msg_thumbwrap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:visibility="gone">
+
+            <ImageView android:id="@+id/ec_msg_thumb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="fitCenter" />
+
+            <ImageView android:id="@+id/ec_msg_play"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_media_play"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <TextView android:id="@+id/ec_msg_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="240.0dip"
+            android:padding="6.0dip"
+            android:textSize="16.0sp"
+            android:textColor="@color/online_text_color" />
+    </LinearLayout>
 </LinearLayout>

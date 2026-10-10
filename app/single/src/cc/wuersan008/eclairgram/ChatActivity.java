@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,8 +18,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,8 +49,17 @@ public class ChatActivity extends Activity {
         boolean out;
         String text;
         int mediaType;        // 0 无, 1 图片, 2 视频
-        byte[] location;      // InputFileLocation（可下载）
+        byte[] location;      // 原文件的 InputFileLocation（可下载）
         String mediaName;
+        // 内联缩略图
+        byte[] thumbLocation; // 缩略图的 InputFileLocation（可下载，可能为 null）
+        byte[] thumbInline;   // 内联字节（photoCachedSize，可能为 null）
+        String thumbKey;      // 缓存键
+        int thumbW, thumbH;   // 缩略图尺寸（用于排版）
+
+        boolean hasThumb() {
+            return thumbKey != null && (thumbInline != null || thumbLocation != null);
+        }
     }
 
     private static final int REQ_PICK = 1;
@@ -117,27 +131,75 @@ public class ChatActivity extends Activity {
                             .inflate(R.layout.ec_message_item, parent, false);
                 }
                 final Msg m = getItem(position);
-                View row = v.findViewById(R.id.ec_msg_row);
+                LinearLayout row = (LinearLayout) v.findViewById(R.id.ec_msg_row);
+                LinearLayout bubble = (LinearLayout) v.findViewById(R.id.ec_msg_bubble);
+                final FrameLayout thumbWrap = (FrameLayout) v.findViewById(R.id.ec_msg_thumbwrap);
+                final ImageView thumb = (ImageView) v.findViewById(R.id.ec_msg_thumb);
+                ImageView play = (ImageView) v.findViewById(R.id.ec_msg_play);
                 TextView t = (TextView) v.findViewById(R.id.ec_msg_text);
+
+                row.setGravity(m.out ? Gravity.RIGHT : Gravity.LEFT);
+                bubble.setBackgroundResource(m.out ? R.drawable.ec_bubble_out : R.drawable.ec_bubble_in);
+
                 t.setText(EmojiFont.emojify(ChatActivity.this, m.text, dp(20)));
-                if (m.out) {
-                    ((android.widget.LinearLayout) row).setGravity(Gravity.RIGHT);
-                    t.setBackgroundResource(R.drawable.ec_bubble_out);
-                } else {
-                    ((android.widget.LinearLayout) row).setGravity(Gravity.LEFT);
-                    t.setBackgroundResource(R.drawable.ec_bubble_in);
-                }
                 t.setTextColor(getResources().getColor(R.color.ec_text_primary));
+
+                if (m.hasThumb()) {
+                    thumbWrap.setVisibility(View.VISIBLE);
+                    int maxW = dp(200), maxH = dp(200);
+                    int iw = m.thumbW > 0 ? m.thumbW : 4;
+                    int ih = m.thumbH > 0 ? m.thumbH : 3;
+                    float scale = Math.min((float) maxW / iw, (float) maxH / ih);
+                    int dw = Math.max(dp(48), (int) (iw * scale));
+                    int dh = Math.max(dp(48), (int) (ih * scale));
+                    thumb.setLayoutParams(new FrameLayout.LayoutParams(dw, dh));
+                    play.setVisibility(m.mediaType == 2 ? View.VISIBLE : View.GONE);
+                    play.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+
+                    final String key = m.thumbKey;
+                    thumb.setTag(key);
+                    Bitmap b = ThumbCache.get(key);
+                    if (b != null) {
+                        thumb.setImageBitmap(b);
+                        thumb.setBackgroundColor(0);
+                    } else {
+                        thumb.setImageBitmap(null);
+                        thumb.setBackgroundColor(0x22000000);
+                        ThumbCache.load(ChatActivity.this, key, m.thumbLocation, m.thumbInline,
+                                dp(150), new ThumbCache.Listener() {
+                                    public void onThumb(String k, Bitmap bmp) {
+                                        if (bmp == null) return;
+                                        if (key.equals(thumb.getTag())) {
+                                            thumb.setImageBitmap(bmp);
+                                            thumb.setBackgroundColor(0);
+                                        } else {
+                                            // 视图已被复用：刷新一次让缓存里的缩略图立刻出现
+                                            mAdapter.notifyDataSetChanged();
+                                        }
+                                    }
+                                });
+                    }
+                } else {
+                    thumbWrap.setVisibility(View.GONE);
+                    thumb.setTag(null);
+                }
+
+                // 媒体气泡整体可聚焦/可点按：气泡背景自带 state_focused 蓝边，
+                // D-pad 聚焦到整条消息，中键打开原文件（无缩略图时也一样）。
+                t.setFocusable(false);
+                t.setOnClickListener(null);
                 if (m.mediaType != 0) {
-                    t.setFocusable(true);
-                    t.setOnClickListener(new View.OnClickListener() {
+                    bubble.setFocusable(true);
+                    bubble.setClickable(true);
+                    bubble.setOnClickListener(new View.OnClickListener() {
                         public void onClick(View x) {
                             openMedia(m);
                         }
                     });
                 } else {
-                    t.setFocusable(false);
-                    t.setOnClickListener(null);
+                    bubble.setFocusable(false);
+                    bubble.setClickable(false);
+                    bubble.setOnClickListener(null);
                 }
                 return v;
             }
@@ -353,35 +415,70 @@ public class ChatActivity extends Activity {
                         if (photo != null && photo.type().equals("photo")) {
                             mm.mediaType = 1;
                             mm.mediaName = getString(R.string.ec_media_photo);
-                            mm.location = MtpClient.photoFileLocation(
-                                    photo.i64("id"), photo.i64("access_hash"),
-                                    asBytes(photo.get("file_reference")), biggestPhoto(photo));
+                            long pid = photo.i64("id");
+                            long pah = photo.i64("access_hash");
+                            byte[] pref = asBytes(photo.get("file_reference"));
+                            mm.location = MtpClient.photoFileLocation(pid, pah, pref, biggestPhoto(photo));
+                            // 内联缩略图：选一个较小的普通尺寸
+                            String tt = photoThumbType(photo);
+                            if (tt != null) {
+                                int[] dim = photoSizeDims(photo, tt);
+                                mm.thumbLocation = MtpClient.photoFileLocation(pid, pah, pref, tt);
+                                mm.thumbW = dim[0];
+                                mm.thumbH = dim[1];
+                                mm.thumbKey = "p" + pid + ":" + tt;
+                            }
                         }
                     } else if (media != null && media.type().equals("messageMediaDocument")) {
                         TlObject doc = media.obj("document");
                         if (doc != null && doc.type().equals("document")) {
                             mm.mediaType = 2;
                             mm.mediaName = getString(R.string.ec_media_video);
-                            mm.location = MtpClient.documentFileLocation(
-                                    doc.i64("id"), doc.i64("access_hash"),
-                                    asBytes(doc.get("file_reference")), "");
+                            long did = doc.i64("id");
+                            long dah = doc.i64("access_hash");
+                            byte[] dref = asBytes(doc.get("file_reference"));
+                            mm.location = MtpClient.documentFileLocation(did, dah, dref, "");
+                            // 视频缩略图：优先 photoCachedSize 的内联字节，否则下载某个 photoSize
+                            Object[] th = documentThumb(doc);
+                            if (th != null) {
+                                byte[] inline = (byte[]) th[0];
+                                String tt = (String) th[1];
+                                int tw = ((Integer) th[2]).intValue();
+                                int thh = ((Integer) th[3]).intValue();
+                                if (inline != null && inline.length > 0) {
+                                    mm.thumbInline = inline;
+                                } else if (tt != null) {
+                                    mm.thumbLocation = MtpClient.documentFileLocation(did, dah, dref, tt);
+                                }
+                                if (tw <= 0 || thh <= 0) {
+                                    int[] vd = videoDims(doc);
+                                    if (vd != null) { tw = vd[0]; thh = vd[1]; }
+                                }
+                                mm.thumbW = tw;
+                                mm.thumbH = thh;
+                                mm.thumbKey = "d" + did + ":" + (tt == null ? "cached" : tt);
+                            }
                         }
                     }
-                    if (mm.mediaType != 0) {
+                    // 没有可用缩略图时，退回旧的 [图片]/[视频] 文本标记
+                    if (mm.mediaType != 0 && !mm.hasThumb()) {
                         String tag = mm.mediaType == 1
                                 ? getString(R.string.ec_media_photo)
                                 : getString(R.string.ec_media_video);
                         text = text.length() == 0 ? tag : (tag + " " + text);
                     }
-                    if (text.length() == 0) continue;
+                    if (text.length() == 0 && mm.mediaType == 0) continue;
                     if (!mm.out) {
                         TlObject from = m.obj("from_id");
                         if (from != null && from.type().equals("peerUser")) {
                             String sn = unames.get(Long.valueOf(from.i64("user_id")));
-                            if (sn != null && sn.length() > 0) text = sn + ": " + text;
+                            if (sn != null && sn.length() > 0) {
+                                text = text.length() == 0 ? sn : (sn + ": " + text);
+                            }
                         }
                     }
-                    mm.text = text + "\n" + time(m.i32("date"));
+                    String when = time(m.i32("date"));
+                    mm.text = text.length() == 0 ? when : (text + "\n" + when);
                     out.add(mm);
                 }
             }
@@ -402,7 +499,12 @@ public class ChatActivity extends Activity {
         return (o instanceof byte[]) ? (byte[]) o : new byte[0];
     }
 
-    /** 取最大的 PhotoSize 的 type（用于下载原图）。 */
+    /** 可下载的尺寸类型（photoSize / photoSizeProgressive）。 */
+    private static boolean downloadableSize(String t) {
+        return t.equals("photoSize") || t.equals("photoSizeProgressive");
+    }
+
+    /** 取最大的可下载尺寸的 type（用于下载原图）。 */
     private static String biggestPhoto(TlObject photo) {
         List<Object> sizes = photo.list("sizes");
         String best = "x";
@@ -410,7 +512,7 @@ public class ChatActivity extends Activity {
         if (sizes != null) {
             for (Object o : sizes) {
                 TlObject s = (TlObject) o;
-                if (!s.type().equals("photoSize")) continue;
+                if (!downloadableSize(s.type())) continue;
                 int area = s.i32("w") * s.i32("h");
                 if (area >= bestArea) {
                     bestArea = area;
@@ -419,6 +521,119 @@ public class ChatActivity extends Activity {
             }
         }
         return best == null ? "x" : best;
+    }
+
+    /** 取一个适合内联显示的小尺寸 type：优先 >=100px 里最小的，否则取最大的。 */
+    private static String photoThumbType(TlObject photo) {
+        List<Object> sizes = photo.list("sizes");
+        if (sizes == null) return null;
+        String small = null;
+        int smallArea = Integer.MAX_VALUE;
+        String big = null;
+        int bigArea = 0;
+        for (Object o : sizes) {
+            TlObject s = (TlObject) o;
+            if (!downloadableSize(s.type())) continue;
+            int area = s.i32("w") * s.i32("h");
+            if (area >= 100 * 100 && area < smallArea) {
+                smallArea = area;
+                small = s.str("type");
+            }
+            if (area >= bigArea) {
+                bigArea = area;
+                big = s.str("type");
+            }
+        }
+        return small != null ? small : big;
+    }
+
+    private static int[] photoSizeDims(TlObject photo, String type) {
+        List<Object> sizes = photo.list("sizes");
+        if (sizes != null) {
+            for (Object o : sizes) {
+                TlObject s = (TlObject) o;
+                if (type.equals(s.str("type"))) {
+                    return new int[] { s.i32("w"), s.i32("h") };
+                }
+            }
+        }
+        return new int[] { 0, 0 };
+    }
+
+    /** document 的缩略图：{内联字节|null, type|null, w, h}。 */
+    private static Object[] documentThumb(TlObject doc) {
+        List<Object> thumbs = doc.list("thumbs");
+        if (thumbs == null) return null;
+        byte[] inline = null;
+        int tw = 0, th = 0;
+        String small = null;
+        int smallArea = Integer.MAX_VALUE;
+        String big = null;
+        int bigArea = 0;
+        int bw = 0, bh = 0;
+        for (Object o : thumbs) {
+            TlObject s = (TlObject) o;
+            String t = s.type();
+            int w = s.i32("w"), h = s.i32("h");
+            int area = w * h;
+            if (t.equals("photoCachedSize")) {
+                Object b = s.get("bytes");
+                if (inline == null && b instanceof byte[] && ((byte[]) b).length > 0) {
+                    inline = (byte[]) b;
+                    tw = w;
+                    th = h;
+                }
+            } else if (downloadableSize(t)) {
+                if (area >= 100 * 100 && area < smallArea) {
+                    smallArea = area;
+                    small = s.str("type");
+                }
+                if (area >= bigArea) {
+                    bigArea = area;
+                    big = s.str("type");
+                    bw = w;
+                    bh = h;
+                }
+            }
+        }
+        if (inline != null) {
+            return new Object[] { inline, "cached", Integer.valueOf(tw), Integer.valueOf(th) };
+        }
+        if (small != null) {
+            int[] d = documentSizeDims(doc, small);
+            return new Object[] { null, small, Integer.valueOf(d[0]), Integer.valueOf(d[1]) };
+        }
+        if (big != null) {
+            return new Object[] { null, big, Integer.valueOf(bw), Integer.valueOf(bh) };
+        }
+        return null;
+    }
+
+    private static int[] documentSizeDims(TlObject doc, String type) {
+        List<Object> thumbs = doc.list("thumbs");
+        if (thumbs != null) {
+            for (Object o : thumbs) {
+                TlObject s = (TlObject) o;
+                if (type.equals(s.str("type"))) {
+                    return new int[] { s.i32("w"), s.i32("h") };
+                }
+            }
+        }
+        return new int[] { 0, 0 };
+    }
+
+    /** 视频属性里的尺寸（缩略图没有 w/h 时用）。 */
+    private static int[] videoDims(TlObject doc) {
+        List<Object> attrs = doc.list("attributes");
+        if (attrs != null) {
+            for (Object o : attrs) {
+                TlObject a = (TlObject) o;
+                if (a.type().equals("documentAttributeVideo")) {
+                    return new int[] { a.i32("w"), a.i32("h") };
+                }
+            }
+        }
+        return null;
     }
 
     private static String time(int unix) {
