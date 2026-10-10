@@ -135,6 +135,22 @@ public class ChatActivity extends Activity {
             TlObject hist = TelegramManager.get(this)
                     .syncGetHistory(mPeer, 50);
             List<Object> msgs = hist.list("messages");
+            java.util.Map<Long, String> unames = new java.util.HashMap<Long, String>();
+            List<Object> users = hist.list("users");
+            if (users != null) {
+                for (Object o : users) {
+                    TlObject u = (TlObject) o;
+                    String n = u.str("first_name");
+                    if (n == null) n = "";
+                    String ln = u.str("last_name");
+                    if (ln != null && ln.length() > 0) n = n.length() > 0 ? n + " " + ln : ln;
+                    if (n.length() == 0) {
+                        String un = u.str("username");
+                        n = un == null ? ("User " + u.i64("id")) : ("@" + un);
+                    }
+                    unames.put(Long.valueOf(u.i64("id")), n);
+                }
+            }
             final List<Msg> out = new ArrayList<Msg>();
             if (msgs != null) {
                 List<Object> ordered = new ArrayList<Object>(msgs);
@@ -146,7 +162,14 @@ public class ChatActivity extends Activity {
                     if (text == null || text.length() == 0) continue;
                     Msg mm = new Msg();
                     mm.out = m.bool("out");
-                    mm.text = text;
+                    if (!mm.out) {
+                        TlObject from = m.obj("from_id");
+                        if (from != null && from.type().equals("peerUser")) {
+                            String sn = unames.get(Long.valueOf(from.i64("user_id")));
+                            if (sn != null && sn.length() > 0) text = sn + ": " + text;
+                        }
+                    }
+                    mm.text = text + "\n" + time(m.i32("date"));
                     out.add(mm);
                 }
             }
@@ -161,6 +184,12 @@ public class ChatActivity extends Activity {
         } catch (Throwable t) {
             // 忽略：下次轮询重试
         }
+    }
+
+    private static String time(int unix) {
+        if (unix <= 0) return "";
+        java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("HH:mm");
+        return f.format(new java.util.Date(unix * 1000L));
     }
 
     private static void sleep(long ms) {

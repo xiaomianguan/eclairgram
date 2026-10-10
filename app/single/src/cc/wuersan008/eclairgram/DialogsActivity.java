@@ -35,6 +35,7 @@ public class DialogsActivity extends Activity {
         byte[] peer;
         String name;
         String status;
+        int unread;
     }
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -68,8 +69,9 @@ public class DialogsActivity extends Activity {
                 }
                 Row r = getItem(position);
                 ((TextView) v.findViewById(R.id.ec_name)).setText(r.name);
-                ((TextView) v.findViewById(R.id.ec_status))
-                        .setText(r.status == null ? "" : r.status);
+                String st = r.status == null ? "" : r.status;
+                if (r.unread > 0) st = "(" + r.unread + ") " + st;
+                ((TextView) v.findViewById(R.id.ec_status)).setText(st);
                 ((ImageView) v.findViewById(R.id.ec_avatar))
                         .setImageResource(R.drawable.ic_contact_picture);
                 ((ImageView) v.findViewById(R.id.ec_presence))
@@ -210,6 +212,7 @@ public class DialogsActivity extends Activity {
                 }
                 if (r.name == null || r.name.trim().length() == 0) r.name = "Chat";
                 r.status = msgText.get(Integer.valueOf(dg.i32("top_message")));
+                r.unread = dg.i32("unread_count");
                 rows.add(r);
             }
         }

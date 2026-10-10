@@ -149,6 +149,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **登录实测通过**（`auth.sendCode` / `auth.signIn`，含 `PHONE_MIGRATE` 换 DC）
 - [x] **会话列表 / 历史消息 / 发送消息 实测通过**（由 TL schema 生成类型表，通用解析）
 - [x] **复用 Talk 界面元素做出会话列表与聊天界面**（头像/状态图/气泡/配色）
+- [x] **群组与频道**（peerUser / peerChat / peerChannel 均可打开与发送）
+- [x] **实时更新**（`updates.getDifference`，会话列表自动刷新）
 - [x] **单一应用、单一启动图标**：已登录直接进会话列表，会话持久化，无额外设置页
 - [x] 登录页支持自带 API 凭据（BYOK）
 - [ ] 三台设备（2.1 模拟器 / 2.2 真机 / 4.0 真机）联调与截图

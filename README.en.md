@@ -161,6 +161,8 @@ messages) provide en-US and zh-CN as well.
 - [x] **Login verified** (`auth.sendCode` / `auth.signIn`, including `PHONE_MIGRATE` DC switching)
 - [x] **Dialogs / history / send verified** (TL schema generates the type table; generic parsing)
 - [x] **Talk UI elements reused for the chat list and chat screen** (avatars/status/bubbles/colors)
+- [x] **groups and channels** (peerUser / peerChat / peerChannel can all be opened and messaged)
+- [x] **live updates** (`updates.getDifference`; the chat list refreshes automatically)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
 - [x] login screen supports bring-your-own API key (BYOK)
