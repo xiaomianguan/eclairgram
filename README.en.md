@@ -173,6 +173,8 @@ messages) provide en-US and zh-CN as well.
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan
 - [x] **chat UI follows the list theme** (light on 2.1 / dark on 2.2+); bubbles and text adapt too
 - [x] **custom Blobmoji emoji picker** (old keyboards can't type these emoji)
+- [x] **full D-pad navigation**: chat cards, buttons, the input and media bubbles are focusable;
+      long-pressing a card opens its details
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
