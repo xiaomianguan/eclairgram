@@ -181,6 +181,10 @@ messages) provide en-US and zh-CN as well.
 - [x] **full D-pad navigation**: chat cards, buttons, the input and media bubbles are focusable;
       long-pressing a card opens its details
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
+- [x] **My Profile**: tap the Saved Messages avatar to view and edit your photo, name and bio
+      (`users.getFullUser` / `account.updateProfile` / `photos.uploadProfilePhoto`)
+- [x] **pinned Saved Messages**: the chat list keeps Saved Messages/My Profile at the top with a
+      distinct background (like Talk's own account row)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
 - [x] **chat folders**: when the account has folders, the top bar becomes a native tab bar
