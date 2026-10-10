@@ -163,6 +163,8 @@ messages) provide en-US and zh-CN as well.
 - [x] **Talk UI elements reused for the chat list and chat screen** (avatars/status/bubbles/colors)
 - [x] **groups and channels** (peerUser / peerChat / peerChannel can all be opened and messaged)
 - [x] **live updates** (`updates.getDifference`; the chat list refreshes automatically)
+- [x] **UI closer to stock Talk** (bubble roster rows, chat contact header, presence icons)
+- [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen
 - [x] login screen supports bring-your-own API key (BYOK)
@@ -177,11 +179,13 @@ Eclairgram on a real device (LG-E610 / Android 4.0.3, real account):
 
 | Screenshot | Description |
 | --- | --- |
-| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | chat list: reuses Talk avatars/status/colors |
-| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | chat screen: reuses Talk `im_bubble_*` bubbles |
+| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | chat list: Talk bubble rows + avatar + presence icon |
+| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | chat: Talk contact header + `im_bubble_*` bubbles + time |
+| [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | details page opened by tapping the profile picture |
 
 Install and launch were also verified without crashes on the Android 2.1 emulator and the
-Android 2.2 phone (HTC Wildfire).
+Android 2.2 phone (HTC Wildfire); neither device can be unlocked over adb, so no real-device
+screenshots were captured.
 
 ## Known limitations
 

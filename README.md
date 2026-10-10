@@ -151,6 +151,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **复用 Talk 界面元素做出会话列表与聊天界面**（头像/状态图/气泡/配色）
 - [x] **群组与频道**（peerUser / peerChat / peerChannel 均可打开与发送）
 - [x] **实时更新**（`updates.getDifference`，会话列表自动刷新）
+- [x] **更贴近原版 Talk 的界面**（气泡式好友条目、聊天联系人栏、presence 图标）
+- [x] **点按头像打开详情页**（用户/群组/频道，类似 Talk 的联系人页）
 - [x] **单一应用、单一启动图标**：已登录直接进会话列表，会话持久化，无额外设置页
 - [x] 登录页支持自带 API 凭据（BYOK）
 - [ ] 三台设备（2.1 模拟器 / 2.2 真机 / 4.0 真机）联调与截图
@@ -164,10 +166,12 @@ Eclairgram 实测（LG-E610 / Android 4.0.3，真实账号）：
 
 | 截图 | 说明 |
 | --- | --- |
-| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | 会话列表：复用 Talk 的头像、状态图与配色 |
-| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | 聊天界面：复用 Talk 的 `im_bubble_*` 气泡 |
+| [`shots/ec_android40_dialogs_en.png`](shots/ec_android40_dialogs_en.png) | 会话列表：Talk 气泡条目 + 头像 + presence 图标 |
+| [`shots/ec_android40_chat_en.png`](shots/ec_android40_chat_en.png) | 聊天：Talk 联系人标题栏 + `im_bubble_*` 气泡 + 时间 |
+| [`shots/ec_android40_details_en.png`](shots/ec_android40_details_en.png) | 点按头像打开的详情页（用户/群组/频道） |
 
-Android 2.1 模拟器与 Android 2.2 真机（HTC Wildfire）上已完成安装与启动验证（无崩溃）。
+Android 2.1 模拟器与 Android 2.2 真机（HTC Wildfire）上已完成安装与启动验证（无崩溃；
+两台设备均无法通过 adb 解锁，故未取得实机截图）。
 
 ## 已知限制
 
