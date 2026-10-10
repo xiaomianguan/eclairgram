@@ -54,4 +54,6 @@
     <string name="ec_type_group">Group</string>
     <string name="ec_type_channel">Channel</string>
     <string name="ec_saved_messages">Saved Messages</string>
+    <string name="ec_online">Online</string>
+    <string name="ec_offline">Offline</string>
 </resources>

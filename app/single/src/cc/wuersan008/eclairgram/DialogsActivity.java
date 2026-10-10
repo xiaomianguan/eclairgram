@@ -52,6 +52,7 @@ public class DialogsActivity extends Activity {
     private TelegramManager mTg;
     private volatile boolean mLoading = false;
     private boolean mShot;
+    private volatile boolean mFetchAvatars = true;
 
     private final TelegramManager.Listener mUpd = new TelegramManager.Listener() {
         public void onUpdate() {
@@ -120,6 +121,7 @@ public class DialogsActivity extends Activity {
                 i.putExtra("username", r.username);
                 i.putExtra("id", r.id);
                 i.putExtra("participants", r.participants);
+                i.putExtra("online", r.online);
                 startActivity(i);
             }
         });
@@ -129,12 +131,14 @@ public class DialogsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        mFetchAvatars = true;
         mTg.addListener(mUpd);
         reload();
     }
 
     @Override
     protected void onPause() {
+        mFetchAvatars = false;
         mTg.removeListener(mUpd);
         super.onPause();
     }
@@ -196,7 +200,7 @@ public class DialogsActivity extends Activity {
             public void run() {
                 int n = 0;
                 for (final Row r : rows) {
-                    if (n >= 20) break;
+                    if (!mFetchAvatars || n >= 6) break;
                     if (r.photoId != 0 && !AvatarCache.has(r.photoId)) {
                         AvatarCache.load(mTg, r.peer, r.photoId);
                         n++;
@@ -205,6 +209,10 @@ public class DialogsActivity extends Activity {
                                 mAdapter.notifyDataSetChanged();
                             }
                         });
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException ignored) {
+                        }
                     }
                 }
             }

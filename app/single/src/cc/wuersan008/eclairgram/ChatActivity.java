@@ -57,6 +57,7 @@ public class ChatActivity extends Activity {
     private String mUsername;
     private long mId;
     private int mParticipants;
+    private boolean mOnline;
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private ArrayAdapter<Msg> mAdapter;
@@ -75,11 +76,14 @@ public class ChatActivity extends Activity {
         mUsername = getIntent().getStringExtra("username");
         mId = getIntent().getLongExtra("id", 0);
         mParticipants = getIntent().getIntExtra("participants", 0);
+        mOnline = getIntent().getBooleanExtra("online", false);
 
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         setContentView(R.layout.ec_chat);
         ((TextView) findViewById(R.id.ec_chat_title)).setText(mName);
-        ((TextView) findViewById(R.id.ec_chat_subtitle)).setText(typeLabel(mType));
+        ((TextView) findViewById(R.id.ec_chat_subtitle)).setText(
+                mType == 0 ? getString(mOnline ? R.string.ec_online : R.string.ec_offline)
+                           : typeLabel(mType));
 
         ImageView headerAvatar = (ImageView) findViewById(R.id.ec_header_avatar);
         android.graphics.Bitmap b = AvatarCache.get(mPhotoId);
@@ -90,8 +94,15 @@ public class ChatActivity extends Activity {
                 openDetails();
             }
         });
-        ((ImageView) findViewById(R.id.ec_header_presence))
-                .setImageResource(android.R.drawable.presence_online);
+        ImageView headerPresence = (ImageView) findViewById(R.id.ec_header_presence);
+        if (mType == 0) {
+            headerPresence.setVisibility(View.VISIBLE);
+            headerPresence.setImageResource(mOnline
+                    ? android.R.drawable.presence_online
+                    : android.R.drawable.presence_offline);
+        } else {
+            headerPresence.setVisibility(View.GONE);
+        }
         mList = (ListView) findViewById(R.id.ec_messages);
         mInput = (EditText) findViewById(R.id.ec_input);
         Button send = (Button) findViewById(R.id.ec_send);
@@ -111,13 +122,12 @@ public class ChatActivity extends Activity {
                 t.setText(EmojiFont.emojify(ChatActivity.this, m.text, dp(20)));
                 if (m.out) {
                     ((android.widget.LinearLayout) row).setGravity(Gravity.RIGHT);
-                    t.setBackgroundResource(R.drawable.im_bubble_highlight);
-                    t.setTextColor(getResources().getColor(R.color.chat_me));
+                    t.setBackgroundResource(R.drawable.ec_bubble_out);
                 } else {
                     ((android.widget.LinearLayout) row).setGravity(Gravity.LEFT);
-                    t.setBackgroundResource(R.drawable.im_bubble_normal);
-                    t.setTextColor(getResources().getColor(R.color.chat_from));
+                    t.setBackgroundResource(R.drawable.ec_bubble_in);
                 }
+                t.setTextColor(0xff000000);
                 if (m.mediaType != 0) {
                     t.setOnClickListener(new View.OnClickListener() {
                         public void onClick(View x) {

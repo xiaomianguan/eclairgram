@@ -54,4 +54,6 @@
     <string name="ec_type_group">群组</string>
     <string name="ec_type_channel">频道</string>
     <string name="ec_saved_messages">收藏夹</string>
+    <string name="ec_online">在线</string>
+    <string name="ec_offline">离线</string>
 </resources>
