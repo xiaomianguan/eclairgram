@@ -16,7 +16,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application android:label="@string/ec_app_name"
-        android:icon="@drawable/ic_launcher_google_talk">
+        android:icon="@drawable/ic_launcher_eclairgram">
 
         <activity android:name=".MainActivity"
             android:label="@string/ec_app_name"
