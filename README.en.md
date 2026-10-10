@@ -169,6 +169,8 @@ messages) provide en-US and zh-CN as well.
 - [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
 - [x] **attachments (photos/videos)**: send via the paperclip button left of the input; received media
       shows a placeholder and is downloaded + viewed on tap (ImageView / VideoView)
+- [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
+      extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
       the session persists; no extra setup screen

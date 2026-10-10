@@ -157,6 +157,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **自己的会话显示为「收藏夹」**且不显示状态；在线状态只用于其它用户
 - [x] **附件（图片/视频）**：输入框左侧的回形针按钮发送；接收后在气泡中显示占位，
       点击下载并查看（图片 ImageView / 视频 VideoView）
+- [x] **Blobmoji 彩色 emoji**：老系统字体引擎不支持彩色字体，
+      改为构建期抽出位图、运行时用 ImageSpan 渲染（见 `scripts/gen_emoji_pack.py`）
 - [x] **点按头像打开详情页**（用户/群组/频道，类似 Talk 的联系人页）
 - [x] **单一应用、单一启动图标**：已登录直接进会话列表，会话持久化，无额外设置页
 - [x] 登录页支持自带 API 凭据（BYOK）
