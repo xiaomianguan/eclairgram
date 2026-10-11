@@ -55,6 +55,7 @@
     <string name="ec_cat_8">Flags</string>
     <string name="ec_cat_9">Other</string>
     <string name="ec_attach_photo">Photo</string>
+    <string name="ec_attach_camera">Take photo</string>
     <string name="ec_attach_video">Video</string>
     <string name="ec_media_photo">[Photo]</string>
     <string name="ec_media_video">[Video]</string>

@@ -55,6 +55,7 @@
     <string name="ec_cat_8">旗帜</string>
     <string name="ec_cat_9">其它</string>
     <string name="ec_attach_photo">图片</string>
+    <string name="ec_attach_camera">拍照</string>
     <string name="ec_attach_video">视频</string>
     <string name="ec_media_photo">[图片]</string>
     <string name="ec_media_video">[视频]</string>
