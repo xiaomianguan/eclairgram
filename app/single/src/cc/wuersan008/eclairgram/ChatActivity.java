@@ -57,6 +57,7 @@ public class ChatActivity extends BaseActivity {
         byte[] thumbInline;   // 内联字节（photoCachedSize，可能为 null）
         String thumbKey;      // 缓存键
         int thumbW, thumbH;   // 缩略图尺寸（用于排版）
+        int thumbDc;          // 文件所在 DC（直连省一次 FILE_MIGRATE）
 
         boolean hasThumb() {
             return thumbKey != null && (thumbInline != null || thumbLocation != null);
@@ -201,8 +202,8 @@ public class ChatActivity extends BaseActivity {
                         } else {
                             thumb.setImageBitmap(null);
                             thumb.setBackgroundColor(0x22000000);
-                            ThumbCache.load(ChatActivity.this, key, m.thumbLocation, m.thumbInline,
-                                    dp(150), new ThumbCache.Listener() {
+                            ThumbCache.load(ChatActivity.this, key, m.thumbLocation, m.thumbDc,
+                                    m.thumbInline, dp(150), new ThumbCache.Listener() {
                                         public void onThumb(String k, Bitmap bmp) {
                                             if (bmp == null) return;
                                             if (key.equals(thumb.getTag())) {
@@ -218,7 +219,7 @@ public class ChatActivity extends BaseActivity {
                         // 顺便下载并解析动图（TGS），到达后切换成动画
                         if (sticker && m.location != null && !LottieSticker.isFailed("L" + m.animId)) {
                             LottieSticker.load(ChatActivity.this, "L" + m.animId, m.location,
-                                    new LottieSticker.Listener() {
+                                    m.thumbDc, new LottieSticker.Listener() {
                                         public void onLottie(String k, Lottie l) {
                                             if (l != null) mAdapter.notifyDataSetChanged();
                                         }
@@ -553,6 +554,7 @@ public class ChatActivity extends BaseActivity {
                             long pid = photo.i64("id");
                             long pah = photo.i64("access_hash");
                             byte[] pref = asBytes(photo.get("file_reference"));
+                            mm.thumbDc = photo.i32("dc_id");
                             mm.location = MtpClient.photoFileLocation(pid, pah, pref, biggestPhoto(photo));
                             // 内联缩略图：选一个较小的普通尺寸
                             String tt = photoThumbType(photo);
@@ -576,6 +578,7 @@ public class ChatActivity extends BaseActivity {
                             byte[] dref = asBytes(doc.get("file_reference"));
                             mm.location = MtpClient.documentFileLocation(did, dah, dref, "");
                             mm.animId = did;
+                            mm.thumbDc = doc.i32("dc_id");
                             // 贴纸取最大的缩略图（老系统解不了 webp），视频优先内联字节
                             Object[] th = sticker ? stickerThumb(doc) : documentThumb(doc);
                             if (th != null) {

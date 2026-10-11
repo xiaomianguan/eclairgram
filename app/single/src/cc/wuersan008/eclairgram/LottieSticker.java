@@ -59,7 +59,7 @@ public final class LottieSticker {
 
     /** 下载并解析一个 TGS；location 是贴纸文档的 InputFileLocation（空 thumb 类型）。 */
     public static void load(final Context ctx, final String key, final byte[] location,
-                            final Listener l) {
+                            final int dcId, final Listener l) {
         if (key == null || location == null) return;
         synchronized (CACHE) {
             if (CACHE.containsKey(key) || LOADING.contains(key) || FAILED.contains(key)) return;
@@ -70,7 +70,7 @@ public final class LottieSticker {
             public void run() {
                 Lottie out = null;
                 try {
-                    byte[] tgs = TelegramManager.get(app).syncDownloadLocation(location);
+                    byte[] tgs = TelegramManager.get(app).syncDownloadLocation(location, dcId);
                     if (tgs != null && tgs.length > 0) out = Lottie.parse(tgs);
                 } catch (Throwable t) {
                     // 失败：不再重试

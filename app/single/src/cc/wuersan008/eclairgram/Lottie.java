@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.RectF;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -20,7 +19,8 @@ import java.util.zip.GZIPInputStream;
  * Telegram 动图贴纸（TGS = gzip 后的 Lottie JSON）的最小渲染器。
  *
  * 只实现 Telegram 贴纸实际用到的子集：null 层 / 形状层、组(gr)、路径(sh)、
- * 填充(fl)、描边(st)、组变换(tr)、父子层、以及位置/缩放/旋转/不透明度的关键帧。
+ * 填充(fl)、描边(st)、组变换(tr)、父子层、层的可见区间(ip/op)，以及
+ * 位置/缩放/旋转/不透明度和**路径形状**的关键帧（含三次贝塞尔缓动）。
  * 不使用遮罩、图片、预合成、渐变（贴纸里没有）。
  *
  * 用法：{@code Lottie a = Lottie.parse(tgsBytes); a.render(canvas, frame);}
@@ -51,6 +51,8 @@ public final class Lottie {
                 l.type = lo.optInt("ty", 0);
                 l.ind = lo.optInt("ind", 0);
                 l.parent = lo.optInt("parent", 0);
+                l.ip = (float) lo.optDouble("ip", inFrame);
+                l.op = (float) lo.optDouble("op", outFrame);
                 l.ks = Transform.parse(lo.optJSONObject("ks"));
                 l.shapes = parseShapes(lo.optJSONArray("shapes"));
                 layers.add(l);
@@ -80,7 +82,7 @@ public final class Lottie {
         for (int i = layers.size() - 1; i >= 0; i--) {
             Layer l = layers.get(i);
             if (l.type != 3 && l.type != 4) continue;   // 只支持 null / shape
-            if (frame < 0) frame = inFrame;
+            if (frame < l.ip || frame >= l.op) continue;   // 层可见区间
             Matrix m = worldMatrix(l, frame, 0);
             drawLayer(canvas, l, m, frame);
         }
@@ -111,7 +113,6 @@ public final class Lottie {
 
     /** 递归画一组形状：组(gr) 先应用自己的 tr，再画里面的路径/填充/描边。 */
     private void drawShapes(Canvas canvas, List<Shape> shapes, Matrix parent, float frame) {
-        // 收集本层的路径与样式（Lottie 里样式作用于同一组内的所有路径）
         List<Shape> paths = new ArrayList<Shape>();
         List<Shape> fills = new ArrayList<Shape>();
         List<Shape> strokes = new ArrayList<Shape>();
@@ -121,10 +122,7 @@ public final class Lottie {
             else if (s.ty.equals("st")) strokes.add(s);
             else if (s.ty.equals("gr")) {
                 Matrix gm = new Matrix(parent);
-                if (s.tr != null) {
-                    Matrix t = s.tr.matrix(frame);
-                    gm.preConcat(t);
-                }
+                if (s.tr != null) gm.preConcat(s.tr.matrix(frame));
                 drawShapes(canvas, s.children, gm, frame);
             }
         }
@@ -172,15 +170,11 @@ public final class Lottie {
                 if (it != null) {
                     for (int k = 0; k < it.length(); k++) {
                         JSONObject c = it.optJSONObject(k);
-                        if (c != null && "tr".equals(c.optString("ty"))) {
-                            s.tr = Transform.parse(c);
-                        }
+                        if (c != null && "tr".equals(c.optString("ty"))) s.tr = Transform.parse(c);
                     }
                 }
             } else if (s.ty.equals("sh")) {
-                JSONObject ks = o.optJSONObject("ks");
-                s.path = Prop.parse(ks);
-                if (s.path != null) s.path.raw = ks;
+                s.path = PathProp.parse(o.optJSONObject("ks"));
             } else if (s.ty.equals("fl")) {
                 s.color = Prop.parse(o.optJSONObject("c"));
                 s.opacity = Prop.parse(o.optJSONObject("o"));
@@ -207,20 +201,20 @@ public final class Lottie {
     // ======================================================== 模型
     static final class Layer {
         int type, ind, parent;
+        float ip, op;
         Transform ks;
         List<Shape> shapes;
     }
 
     static final class Shape {
         String ty;
-        Prop path;                 // sh
+        PathProp path;                      // sh
         Prop color, opacity, strokeWidth;   // fl / st
-        Transform tr;              // gr
-        List<Shape> children;      // gr
+        Transform tr;                       // gr
+        List<Shape> children;               // gr
 
         Path pathAt(float frame) {
-            if (path == null) return null;
-            return path.path(frame);
+            return path == null ? null : path.path(frame);
         }
 
         int colorAt(float frame) {
@@ -267,7 +261,7 @@ public final class Lottie {
         }
     }
 
-    /** 可静态也可关键帧的属性。标量返回长度 1，向量返回长度 2/3。 */
+    /** 标量/向量属性（颜色、不透明度、线宽、变换分量）。 */
     static final class Prop {
         boolean animated;
         float[] k;
@@ -297,19 +291,15 @@ public final class Lottie {
                 p.kfs = list.toArray(new Kf[0]);
                 if (p.kfs.length == 0) { p.animated = false; p.k = new float[] {0}; }
             } else {
-                Object v = o.opt("k");
-                p.k = scalarOrArray(v);
+                p.k = scalarOrArray(o.opt("k"));
             }
             return p;
         }
 
         float[] at(float frame) {
             if (!animated || kfs == null) return k == null ? new float[] {0} : k;
-            if (frame <= kfs[0].t) return valueOf(kfs[0], 0);
-            if (frame >= kfs[kfs.length - 1].t) {
-                Kf last = kfs[kfs.length - 1];
-                return last.e != null ? last.e : valueOf(last, 0);
-            }
+            if (frame <= kfs[0].t) return valueOf(kfs[0]);
+            if (frame >= kfs[kfs.length - 1].t) return valueOf(kfs[kfs.length - 1]);
             for (int i = 0; i < kfs.length - 1; i++) {
                 Kf a = kfs[i], b = kfs[i + 1];
                 if (frame >= a.t && frame <= b.t) {
@@ -325,51 +315,148 @@ public final class Lottie {
                     return r;
                 }
             }
-            return valueOf(kfs[kfs.length - 1], 0);
+            return valueOf(kfs[kfs.length - 1]);
         }
 
-        Path path(float frame) {
-            return pathFromJson();   // 首版只支持静态路径（关键帧变换已支持）
+        private static float[] valueOf(Kf kf) {
+            return kf.s == null ? new float[] {0} : kf.s;
         }
+    }
 
-        private JSONObject raw;   // 形状属性的原始 JSON（path 用）
+    /** 路径形状属性（支持关键帧之间的顶点插值 = 变形动画）。 */
+    static final class PathProp {
+        boolean animated;
+        Sd[] kfs;
+        float[] t;
+        float[] ix, iy, ox, oy;
 
-        private Path pathFromJson() {
-            if (raw == null) return null;
-            JSONObject shape = null;
-            if (raw.optInt("a", 0) == 1) {
-                JSONArray arr = raw.optJSONArray("k");
+        static PathProp parse(JSONObject o) {
+            if (o == null) return null;
+            PathProp p = new PathProp();
+            if (o.optInt("a", 0) == 1) {
+                JSONArray arr = o.optJSONArray("k");
                 if (arr == null || arr.length() == 0) return null;
-                JSONObject first = arr.optJSONObject(0);
-                shape = first == null ? null : first.optJSONObject("s");
-                if (shape == null && first != null) shape = first;   // 有的直接是形状
+                int n = arr.length();
+                p.animated = true;
+                p.kfs = new Sd[n];
+                p.t = new float[n];
+                p.ix = new float[n];
+                p.iy = new float[n];
+                p.ox = new float[n];
+                p.oy = new float[n];
+                for (int i = 0; i < n; i++) {
+                    JSONObject ko = arr.optJSONObject(i);
+                    if (ko == null) { p.kfs[i] = new Sd(); continue; }
+                    p.t[i] = (float) ko.optDouble("t", 0);
+                    p.kfs[i] = Sd.parse(shapeOf(ko));
+                    JSONObject i2 = ko.optJSONObject("i");
+                    JSONObject o2 = ko.optJSONObject("o");
+                    if (i2 != null) { p.ix[i] = (float) i2.optDouble("x", 0); p.iy[i] = (float) i2.optDouble("y", 0); }
+                    if (o2 != null) { p.ox[i] = (float) o2.optDouble("x", 0); p.oy[i] = (float) o2.optDouble("y", 0); }
+                }
             } else {
-                shape = raw.optJSONObject("k");
+                JSONObject k = o.optJSONObject("k");
+                if (k == null) return null;
+                p.kfs = new Sd[] { Sd.parse(k) };
+                p.t = new float[] {0};
             }
-            if (shape == null) return null;
-            JSONArray i = shape.optJSONArray("i");
-            JSONArray o = shape.optJSONArray("o");
-            JSONArray v = shape.optJSONArray("v");
-            boolean closed = shape.optBoolean("c", false);
-            if (v == null || i == null || o == null) return null;
-            int n = v.length();
+            return p;
+        }
+
+        private static JSONObject shapeOf(JSONObject ko) {
+            Object so = ko.opt("s");
+            if (so instanceof JSONObject) return (JSONObject) so;
+            if (so instanceof JSONArray) {
+                JSONArray a = (JSONArray) so;
+                if (a.length() > 0) {
+                    JSONObject o = a.optJSONObject(0);
+                    if (o != null) return o;
+                }
+            }
+            return ko;
+        }
+
+        Path path(float frame) {            Sd sd;
+            if (!animated || kfs.length == 1) {
+                sd = kfs[0];
+            } else if (frame <= t[0]) {
+                sd = kfs[0];
+            } else if (frame >= t[t.length - 1]) {
+                sd = kfs[kfs.length - 1];
+            } else {
+                int i = 0;
+                while (i < t.length - 1 && !(frame >= t[i] && frame <= t[i + 1])) i++;
+                if (i >= t.length - 1) {
+                    sd = kfs[kfs.length - 1];
+                } else {
+                    float span = t[i + 1] - t[i];
+                    float f = span <= 0 ? 1f : (frame - t[i]) / span;
+                    float e = ease(f, ox[i], oy[i], ix[i + 1], iy[i + 1]);
+                    sd = Sd.lerp(kfs[i], kfs[i + 1], e);
+                }
+            }
+            return sd == null ? null : sd.toPath();
+        }
+    }
+
+    /** 一条路径的顶点/切线数据。 */
+    static final class Sd {
+        float[] vx, vy, ix, iy, ox, oy;
+        boolean closed;
+
+        static Sd parse(JSONObject s) {
+            Sd d = new Sd();
+            JSONArray v = s.optJSONArray("v");
+            JSONArray i = s.optJSONArray("i");
+            JSONArray o = s.optJSONArray("o");
+            d.closed = s.optBoolean("c", false);
+            int n = v == null ? 0 : v.length();
+            d.vx = new float[n]; d.vy = new float[n];
+            d.ix = new float[n]; d.iy = new float[n];
+            d.ox = new float[n]; d.oy = new float[n];
+            for (int k = 0; k < n; k++) {
+                JSONArray vk = v.optJSONArray(k);
+                if (vk != null) { d.vx[k] = (float) vk.optDouble(0); d.vy[k] = (float) vk.optDouble(1); }
+                JSONArray ik = i == null ? null : i.optJSONArray(k);
+                if (ik != null) { d.ix[k] = (float) ik.optDouble(0); d.iy[k] = (float) ik.optDouble(1); }
+                JSONArray ok = o == null ? null : o.optJSONArray(k);
+                if (ok != null) { d.ox[k] = (float) ok.optDouble(0); d.oy[k] = (float) ok.optDouble(1); }
+            }
+            return d;
+        }
+
+        static Sd lerp(Sd a, Sd b, float f) {
+            int n = Math.min(a.vx.length, b.vx.length);
+            if (n == 0) return a;
+            Sd d = new Sd();
+            d.closed = a.closed;
+            d.vx = new float[n]; d.vy = new float[n];
+            d.ix = new float[n]; d.iy = new float[n];
+            d.ox = new float[n]; d.oy = new float[n];
+            for (int k = 0; k < n; k++) {
+                d.vx[k] = a.vx[k] + (b.vx[k] - a.vx[k]) * f;
+                d.vy[k] = a.vy[k] + (b.vy[k] - a.vy[k]) * f;
+                d.ix[k] = a.ix[k] + (b.ix[k] - a.ix[k]) * f;
+                d.iy[k] = a.iy[k] + (b.iy[k] - a.iy[k]) * f;
+                d.ox[k] = a.ox[k] + (b.ox[k] - a.ox[k]) * f;
+                d.oy[k] = a.oy[k] + (b.oy[k] - a.oy[k]) * f;
+            }
+            return d;
+        }
+
+        Path toPath() {
+            int n = vx.length;
             if (n == 0) return null;
-            Path path = new Path();
-            path.moveTo((float) v.optJSONArray(0).optDouble(0), (float) v.optJSONArray(0).optDouble(1));
+            Path p = new Path();
+            p.moveTo(vx[0], vy[0]);
             for (int s = 0; s < n; s++) {
                 int s2 = (s + 1) % n;
                 if (s2 == 0 && !closed) break;
-                JSONArray oo = o.optJSONArray(s);
-                JSONArray ii = i.optJSONArray(s2);
-                JSONArray vv = v.optJSONArray(s2);
-                float c1x = (float) v.optJSONArray(s).optDouble(0) + (float) oo.optDouble(0);
-                float c1y = (float) v.optJSONArray(s).optDouble(1) + (float) oo.optDouble(1);
-                float c2x = (float) vv.optDouble(0) + (float) ii.optDouble(0);
-                float c2y = (float) vv.optDouble(1) + (float) ii.optDouble(1);
-                path.cubicTo(c1x, c1y, c2x, c2y, (float) vv.optDouble(0), (float) vv.optDouble(1));
+                p.cubicTo(vx[s] + ox[s], vy[s] + oy[s],
+                        vx[s2] + ix[s2], vy[s2] + iy[s2], vx[s2], vy[s2]);
             }
-            if (closed) path.close();
-            return path;
+            if (closed) p.close();
+            return p;
         }
     }
 
@@ -377,11 +464,6 @@ public final class Lottie {
         float t;
         float[] s, e;
         float ix, iy, ox, oy;
-    }
-
-    private static float[] valueOf(Kf kf, int which) {
-        float[] v = which == 1 ? kf.e : kf.s;
-        return v == null ? new float[] {0} : v;
     }
 
     private static float[] scalarOrArray(Object v) {

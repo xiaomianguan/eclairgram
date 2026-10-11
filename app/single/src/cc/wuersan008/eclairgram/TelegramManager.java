@@ -603,9 +603,14 @@ public final class TelegramManager {
 
     /** 按 InputFileLocation 下载消息里的媒体。 */
     public byte[] syncDownloadLocation(byte[] location) throws Exception {
+        return syncDownloadLocation(location, 0);
+    }
+
+    /** 同上，但已知文件所在 DC（dcId>0）时直接连过去，省掉一次 FILE_MIGRATE 往返。 */
+    public byte[] syncDownloadLocation(byte[] location, int dcId) throws Exception {
         int slot = dlSlot();
         synchronized (mDlLock[slot]) {
-            return downloadLocation(slot, 0, location);
+            return downloadLocation(slot, dcId, location);
         }
     }
 
@@ -648,8 +653,11 @@ public final class TelegramManager {
             return null;
         } catch (java.io.IOException e) {
             int target = parseMigrate(e.getMessage(), "FILE_MIGRATE_");
+            if (target > 0) {
+                // 连接本身没问题，只是文件在别的 DC：直接去那边下，不要丢弃 auth key
+                return downloadFromFileDc(slot, target, location, depth + 1);
+            }
             invalidateFileClient(slot, dc);
-            if (target > 0) return downloadFromFileDc(slot, target, location, depth + 1);
             return null;
         } catch (Throwable t) {
             invalidateFileClient(slot, dc);

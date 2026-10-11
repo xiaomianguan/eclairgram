@@ -53,6 +53,7 @@ public final class StickerPicker extends Dialog {
         byte[] fileRef;
         byte[] thumbLocation;
         String thumbKey;
+        int dcId;      // 文档所在 DC（直连省一次 FILE_MIGRATE）
         int emojiCp;   // documentAttributeSticker.alt 的第一个码点（老系统无法显示 WebP 时兜底）
     }
 
@@ -194,6 +195,7 @@ public final class StickerPicker extends Dialog {
         st.thumbLocation = MtpClient.documentFileLocation(
                 st.id, st.accessHash, st.fileRef, (String) th[1]);
         st.thumbKey = "st" + st.id + ":" + th[1];
+        st.dcId = doc.i32("dc_id");
         st.emojiCp = emojiOf(doc);
         return st;
     }
@@ -353,7 +355,7 @@ public final class StickerPicker extends Dialog {
                     iv.setImageBitmap(fallback(st));
                 } else {
                     iv.setImageBitmap(null);
-                    ThumbCache.load(getContext(), st.thumbKey, st.thumbLocation, null, dp(96),
+                    ThumbCache.load(getContext(), st.thumbKey, st.thumbLocation, st.dcId, null, dp(96),
                             new ThumbCache.Listener() {
                                 public void onThumb(String k, Bitmap bmp) {
                                     updateThumb(k, bmp);

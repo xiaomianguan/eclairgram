@@ -44,7 +44,7 @@ public final class ThumbCache {
     private static final Set<String> LOADING = new HashSet<String>();
     private static final Set<String> FAILED = new HashSet<String>();
     private static final Map<String, Integer> FAILS = new HashMap<String, Integer>();
-    private static final ExecutorService POOL = Executors.newFixedThreadPool(2);
+    private static final ExecutorService POOL = Executors.newFixedThreadPool(4);
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     private ThumbCache() {}
@@ -66,10 +66,12 @@ public final class ThumbCache {
 
     /**
      * 取缩略图：命中缓存立即回调；否则后台下载 + 解码。
+     * dcId 是文件所在 DC（来自 document/photo 的 dc_id，0 表示未知），
+     * 已知时直接连过去，省掉一次 FILE_MIGRATE 往返。
      * inline 非空时直接用内联字节（photoCachedSize），不发起网络请求。
      */
     public static void load(final Context ctx, final String key, final byte[] location,
-                            final byte[] inline, final int maxPx, final Listener l) {
+                            final int dcId, final byte[] inline, final int maxPx, final Listener l) {
         if (key == null || l == null) return;
         Bitmap cached = get(key);
         if (cached != null) {
@@ -88,7 +90,7 @@ public final class ThumbCache {
                 try {
                     byte[] data = (inline != null && inline.length > 0)
                             ? inline
-                            : TelegramManager.get(app).syncDownloadLocation(location);
+                            : TelegramManager.get(app).syncDownloadLocation(location, dcId);
                     if (data != null && data.length > 0) {
                         out = decode(data, maxPx);
                         if (out == null) undecodable = isWebp(data);
