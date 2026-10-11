@@ -82,6 +82,14 @@
             android:contentDescription="@string/ec_emoji"
             android:src="@drawable/ic_menu_emoticons" />
 
+        <ImageButton android:id="@+id/ec_sticker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/ec_btn_bg"
+            android:contentDescription="@string/ec_stickers"
+            android:src="@android:drawable/ic_menu_gallery" />
+
         <ImageButton android:id="@+id/ec_attach"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

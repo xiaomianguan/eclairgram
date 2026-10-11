@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 设置页：语言选择（可点按）与通知开关。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/ec_window_bg">
+
+    <LinearLayout android:id="@+id/ec_set_language"
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:padding="12.0dip"
+        android:background="@drawable/ec_item_bg"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="0.0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.0"
+            android:text="@string/ec_settings_language"
+            android:textColor="@color/ec_text_primary"
+            android:textAppearance="?android:textAppearanceMedium" />
+
+        <TextView android:id="@+id/ec_set_language_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/ec_text_secondary"
+            android:textAppearance="?android:textAppearanceSmall" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/ec_set_notifications_row"
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:padding="12.0dip"
+        android:background="@drawable/ec_item_bg"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true">
+
+        <CheckBox android:id="@+id/ec_set_notifications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:clickable="false" />
+
+        <TextView
+            android:layout_width="0.0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.0"
+            android:paddingLeft="6.0dip"
+            android:text="@string/ec_settings_notifications"
+            android:textColor="@color/ec_text_primary"
+            android:textAppearance="?android:textAppearanceMedium" />
+    </LinearLayout>
+</LinearLayout>

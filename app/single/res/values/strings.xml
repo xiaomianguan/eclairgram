@@ -43,6 +43,8 @@
     <string name="ec_message_hint">Message</string>
     <string name="ec_send">Send</string>
     <string name="ec_attach">Attach</string>
+    <string name="ec_stickers">Stickers</string>
+    <string name="ec_stickers_none">No stickers installed</string>
     <string name="ec_emoji">Emoji</string>
     <string name="ec_cat_0">Smileys &amp; Emotion</string>
     <string name="ec_cat_1">People &amp; Body</string>
@@ -60,6 +62,7 @@
     <string name="ec_camera_shutter">Capture</string>
     <string name="ec_attach_video">Video</string>
     <string name="ec_media_photo">[Photo]</string>
+    <string name="ec_media_sticker">Sticker</string>
     <string name="ec_media_video">[Video]</string>
     <string name="ec_media_downloading">Downloading…</string>
     <string name="ec_media_failed">Could not load media</string>
@@ -88,4 +91,15 @@
     <string name="ec_saving">Saving…</string>
     <string name="ec_online">Online</string>
     <string name="ec_offline">Offline</string>
+
+    <string name="ec_search">Search</string>
+    <string name="ec_search_hint">Search chats</string>
+    <string name="ec_search_no_results">No chats found.</string>
+    <string name="ec_settings">Settings</string>
+    <string name="ec_settings_language">Language</string>
+    <string name="ec_settings_notifications">Notifications</string>
+    <string name="ec_language_system">System default</string>
+    <string name="ec_language_english">English</string>
+    <string name="ec_language_chinese">Chinese (Simplified)</string>
+    <string name="ec_logout_confirm">Log out of Telegram? You will need to sign in again.</string>
 </resources>

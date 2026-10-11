@@ -1,6 +1,5 @@
 package cc.wuersan008.eclairgram;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
@@ -20,7 +19,7 @@ import android.widget.TextView;
  * 输入手机号 -> 请求验证码 -> 输入验证码 -> 登录 Telegram。
  * 文案全部走资源（values/ 英文，values-zh-rCN/ 简体中文），随系统语言切换。
  */
-public class MainActivity extends Activity {
+public class MainActivity extends BaseActivity {
 
     private static final String TAG = "Eclairgram";
 
@@ -47,6 +46,13 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mTg = TelegramManager.get(this);
+        // 后台预加载 emoji 索引（mmap 2.5MB 的 pack + 建索引），避免第一次
+        // 渲染列表时在主线程上卡一下。
+        new Thread(new Runnable() {
+            public void run() {
+                try { EmojiFont.codepoints(MainActivity.this); } catch (Throwable ignored) {}
+            }
+        }).start();
         // 常驻服务：退到后台后连接与更新循环继续跑，新消息才能弹通知
         try {
             startService(new Intent(this, TelegramService.class));

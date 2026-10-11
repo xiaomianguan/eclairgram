@@ -18,7 +18,10 @@ public final class DebugShot {
     private DebugShot() {}
 
     public static void capture(final Activity a, final String name) {
-        View v = a.getWindow().getDecorView();
+        save(a.getWindow().getDecorView(), a.getFilesDir(), name);
+    }
+
+    private static void save(View v, File dir, String name) {
         int w = v.getWidth();
         int h = v.getHeight();
         if (w <= 0 || h <= 0) {
@@ -28,7 +31,7 @@ public final class DebugShot {
         try {
             Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             v.draw(new Canvas(b));
-            File f = new File(a.getFilesDir(), name);
+            File f = new File(dir, name);
             FileOutputStream out = new FileOutputStream(f);
             b.compress(Bitmap.CompressFormat.PNG, 100, out);
             out.close();

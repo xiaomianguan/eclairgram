@@ -63,16 +63,24 @@ public final class Crypto {
     /**
      * PBKDF2-HMAC-SHA512（Telegram 的 2FA SRP 用 100000 次）。
      * dkLen &lt;= 64 时单块即可，无需处理多块拼接。
+     *
+     * Mac 实例在迭代间复用（同一密钥）：否则 10 万次 getInstance+init 会非常慢。
      */
     public static byte[] pbkdf2Sha512(byte[] password, byte[] salt, int iterations, int dkLen) {
         byte[] block = concat(salt, new byte[] { 0, 0, 0, 1 });
-        byte[] u = hmacSha512(password, block);
-        byte[] out = u.clone();
-        for (int i = 1; i < iterations; i++) {
-            u = hmacSha512(password, u);
-            for (int j = 0; j < out.length; j++) out[j] ^= u[j];
+        try {
+            Mac mac = Mac.getInstance("HmacSHA512");
+            mac.init(new SecretKeySpec(password, "HmacSHA512"));
+            byte[] u = mac.doFinal(block);
+            byte[] out = u.clone();
+            for (int i = 1; i < iterations; i++) {
+                u = mac.doFinal(u);
+                for (int j = 0; j < out.length; j++) out[j] ^= u[j];
+            }
+            return slice(out, 0, dkLen);
+        } catch (Exception e) {
+            throw new RuntimeException("HmacSHA512 not available", e);
         }
-        return slice(out, 0, dkLen);
     }
 
     private static byte[] digest(String alg, byte[] data, int off, int len) {
@@ -146,8 +154,9 @@ public final class Crypto {
             for (int i = 0; i < 16; i++) tmp[i] = (byte) (data[off + i] ^ iv1[i]);
             aesBlocks(c, tmp, 0, 16, enc, 0);
             for (int i = 0; i < 16; i++) out[off + i] = (byte) (enc[i] ^ iv2[i]);
-            iv1 = slice(out, off, 16);
-            iv2 = slice(data, off, 16);
+            // 用 arraycopy 就地更新链式向量，避免每 16 字节分配两个数组
+            System.arraycopy(out, off, iv1, 0, 16);
+            System.arraycopy(data, off, iv2, 0, 16);
         }
         return out;
     }
@@ -166,8 +175,8 @@ public final class Crypto {
             for (int i = 0; i < 16; i++) tmp[i] = (byte) (cipher[off + i] ^ iv2[i]);
             aesBlocks(c, tmp, 0, 16, dec, 0);
             for (int i = 0; i < 16; i++) out[off + i] = (byte) (dec[i] ^ iv1[i]);
-            iv1 = slice(cipher, off, 16);
-            iv2 = slice(out, off, 16);
+            System.arraycopy(cipher, off, iv1, 0, 16);
+            System.arraycopy(out, off, iv2, 0, 16);
         }
         return out;
     }

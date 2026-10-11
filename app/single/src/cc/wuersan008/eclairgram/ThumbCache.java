@@ -93,6 +93,9 @@ public final class ThumbCache {
                         int c = (n == null ? 0 : n.intValue()) + 1;
                         FAILS.put(key, Integer.valueOf(c));
                         if (c >= MAX_ATTEMPTS) FAILED.add(key);
+                        // 防止这两个集合在长会话里无限增长
+                        if (FAILS.size() > 256) FAILS.clear();
+                        if (FAILED.size() > 256) FAILED.clear();
                     }
                 }
                 final Bitmap fb = out;

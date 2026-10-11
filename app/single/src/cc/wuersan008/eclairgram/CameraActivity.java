@@ -1,6 +1,5 @@
 package cc.wuersan008.eclairgram;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -26,7 +25,7 @@ import java.util.List;
  * 而没有 SD 的机器就完全用不了。这里直接用 {@link Camera} API 自己预览、拍照，
  * 拍到的 JPEG 只留在内存里（不写任何用户存储），交给聊天界面直接发送。
  */
-public class CameraActivity extends Activity
+public class CameraActivity extends BaseActivity
         implements SurfaceHolder.Callback, View.OnClickListener {
 
     /** 刚拍好的 JPEG（未落盘）；由 ChatActivity 在 onActivityResult 里取走后清空。 */

@@ -25,11 +25,29 @@ public final class TlObject {
         return spec.name;
     }
 
-    public Object get(String name) {
-        for (int i = 0; i < spec.fields.length; i++) {
-            if (spec.fields[i].name.equals(name)) return values[i];
+    // 每个 Spec 的 字段名 -> 下标 缓存。原来每次取字段都线性扫描 + 字符串比较，
+    // 解析 user/message 这类字段很多的类型时开销明显。
+    private static final java.util.concurrent.ConcurrentHashMap<TlTypes.Spec,
+            java.util.HashMap<String, Integer>> INDEX =
+            new java.util.concurrent.ConcurrentHashMap<TlTypes.Spec,
+                    java.util.HashMap<String, Integer>>();
+
+    private static int indexOf(TlTypes.Spec spec, String name) {
+        java.util.HashMap<String, Integer> m = INDEX.get(spec);
+        if (m == null) {
+            m = new java.util.HashMap<String, Integer>();
+            for (int i = 0; i < spec.fields.length; i++) {
+                m.put(spec.fields[i].name, Integer.valueOf(i));
+            }
+            INDEX.put(spec, m);
         }
-        return null;
+        Integer v = m.get(name);
+        return v == null ? -1 : v.intValue();
+    }
+
+    public Object get(String name) {
+        int i = indexOf(spec, name);
+        return i < 0 ? null : values[i];
     }
 
     public String str(String name) {

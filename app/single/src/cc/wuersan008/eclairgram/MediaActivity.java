@@ -1,6 +1,5 @@
 package cc.wuersan008.eclairgram;
 
-import android.app.Activity;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.View;
@@ -18,7 +17,7 @@ import java.io.File;
  *
  * 图片用 ImageView 显示；视频用 VideoView 播放（Android 2.1 起可用）。
  */
-public class MediaActivity extends Activity {
+public class MediaActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +56,7 @@ public class MediaActivity extends Activity {
         } else {
             ImageView iv = new ImageView(this);
             iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            iv.setImageBitmap(BitmapFactory.decodeFile(path));
+            iv.setImageBitmap(decodeImage(path));
             root.addView(iv, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.FILL_PARENT,
                     LinearLayout.LayoutParams.FILL_PARENT));
@@ -68,5 +67,29 @@ public class MediaActivity extends Activity {
 
     private int dp(int v) {
         return (int) (v * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    /**
+     * 解码图片并按屏幕尺寸降采样。原图可能几千像素宽，直接整张解码在
+     * 老设备上会 OOM；这里用 inSampleSize 限制到屏幕大小、转 RGB_565。
+     */
+    private android.graphics.Bitmap decodeImage(String path) {
+        try {
+            android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            android.graphics.BitmapFactory.decodeFile(path, o);
+            int maxW = getResources().getDisplayMetrics().widthPixels;
+            int maxH = getResources().getDisplayMetrics().heightPixels;
+            int sample = 1;
+            while (o.outWidth / (sample * 2) >= maxW || o.outHeight / (sample * 2) >= maxH) {
+                sample *= 2;
+            }
+            o.inJustDecodeBounds = false;
+            o.inSampleSize = sample;
+            o.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
+            return android.graphics.BitmapFactory.decodeFile(path, o);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 }

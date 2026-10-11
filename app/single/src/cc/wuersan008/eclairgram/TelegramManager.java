@@ -397,6 +397,7 @@ public final class TelegramManager {
 
     /** 从 difference 自带的 users/chats 解析出新消息所属会话的信息，弹通知。 */
     private void handleNewMessages(TlObject diff, java.util.List<Object> msgs) {
+        if (!AppPrefs.notificationsEnabled(mApp)) return;
         if (msgs == null || msgs.isEmpty()) return;
 
         java.util.Map<Long, String> unames = new java.util.HashMap<Long, String>();
@@ -665,6 +666,28 @@ public final class TelegramManager {
         }
     }
 
+    public TlObject syncGetAllStickers() throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.getAllStickers();
+        }
+    }
+
+    public TlObject syncGetStickerSet(long setId, long accessHash) throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.getStickerSet(setId, accessHash);
+        }
+    }
+
+    public void syncSendSticker(byte[] inputPeer, long docId, long accessHash, byte[] fileRef)
+            throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            mClient.sendSticker(inputPeer, docId, accessHash, fileRef);
+        }
+    }
+
     private static final int DL_SLOTS = 3;
     private final Object[] mDlLock = new Object[DL_SLOTS];
     private final MtpClient[] mDlMain = new MtpClient[DL_SLOTS];
@@ -737,6 +760,8 @@ public final class TelegramManager {
                 .remove(fileKeyPref(dc)).commit();
     }
 
+    private static final Object HANDSHAKE_LOCK = new Object();   // 老设备 OpenSSL 大数运算不能并发
+
     /** 文件在别的 DC 时：优先复用已持久化的 auth key（省掉一次昂贵的 DH 握手），
      *  否则导出登录态、连到该 DC、握手、导入，并把新 key 存下来。
      *  只有 exportAuthorization 需要主连接（短暂持 mNet）；昂贵的 DH 握手在 slot 锁下
@@ -767,7 +792,9 @@ public final class TelegramManager {
             }
             MtpClient nc = new MtpClient(apiId(), apiHash());
             nc.connect(dc);
-            nc.doHandshake();
+            synchronized (HANDSHAKE_LOCK) {
+                nc.doHandshake();
+            }
             nc.importAuthorization(exp.id, exp.bytes);
             saveFileKey(dc, nc.state() == null ? null : nc.state().authKey());
             mDlFile.put(key, nc);
@@ -798,18 +825,31 @@ public final class TelegramManager {
     }
 
     // ============================================================ 工具
+    private static final char[] HEX = "0123456789abcdef".toCharArray();
+
     private static String toHex(byte[] b) {
-        StringBuilder sb = new StringBuilder(b.length * 2);
-        for (byte x : b) sb.append(String.format("%02x", x));
-        return sb.toString();
+        char[] c = new char[b.length * 2];
+        for (int i = 0; i < b.length; i++) {
+            int v = b[i] & 0xff;
+            c[i * 2] = HEX[v >>> 4];
+            c[i * 2 + 1] = HEX[v & 0x0f];
+        }
+        return new String(c);
     }
 
     private static byte[] fromHex(String s) {
         int n = s.length() / 2;
         byte[] b = new byte[n];
         for (int i = 0; i < n; i++) {
-            b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16);
+            b[i] = (byte) ((hexVal(s.charAt(i * 2)) << 4) | hexVal(s.charAt(i * 2 + 1)));
         }
         return b;
+    }
+
+    private static int hexVal(char c) {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return 0;
     }
 }

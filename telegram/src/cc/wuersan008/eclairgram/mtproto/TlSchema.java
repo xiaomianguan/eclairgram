@@ -77,6 +77,12 @@ public final class TlSchema {
     public static final int MESSAGES_GET_HISTORY = 0x4423e6c5;
     public static final int MESSAGES_SEND_MESSAGE = 0xfef48f62;
     public static final int USERS_GET_USERS = 0x0d91a548;
+    // ---- 贴纸 ----
+    public static final int MESSAGES_GET_ALL_STICKERS = 0xb8a0a1a8;
+    public static final int MESSAGES_GET_STICKER_SET = 0xc8a0ec74;
+    public static final int INPUT_STICKER_SET_ID = 0x9de7a269;
+    public static final int INPUT_DOCUMENT = 0x1abfb575;
+    public static final int INPUT_MEDIA_DOCUMENT = 0xa8763ab5;
 
     public static final int DIALOGS = 0x15ba6c40;
     public static final int DIALOGS_SLICE = 0x71e094f3;

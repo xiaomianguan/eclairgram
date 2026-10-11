@@ -1,6 +1,5 @@
 package cc.wuersan008.eclairgram;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -30,7 +29,7 @@ import cc.wuersan008.eclairgram.mtproto.TlObject;
  *
  * 与 Google Talk 一样：在好友列表或聊天里**点按头像**就会打开这个页面。
  */
-public class DetailsActivity extends Activity {
+public class DetailsActivity extends BaseActivity {
 
     private static final int REQ_PICK = 1;
 

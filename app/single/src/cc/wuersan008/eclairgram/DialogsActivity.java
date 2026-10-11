@@ -1,17 +1,25 @@
 package cc.wuersan008.eclairgram;
 
-import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TabHost;
@@ -33,7 +41,13 @@ import cc.wuersan008.eclairgram.mtproto.TlObject;
  * 数据来自 messages.getDialogs：每个 peerUser 会话 = 一位“好友”，
  * 最近一条消息作为状态行。
  */
-public class DialogsActivity extends Activity {
+public class DialogsActivity extends BaseActivity {
+
+    // 系统菜单（菜单键）里的条目
+    private static final int MENU_PROFILE = 1;
+    private static final int MENU_SEARCH = 2;
+    private static final int MENU_SETTINGS = 3;
+    private static final int MENU_LOGOUT = 4;
 
     static final class Row {
         byte[] peer;
@@ -71,6 +85,19 @@ public class DialogsActivity extends Activity {
     private final Set<Integer> mAddedFolders = new HashSet<Integer>();
     private boolean mFoldersLoaded = false;
 
+    private final List<Row> mAllRows = new ArrayList<Row>();   // 未过滤的完整列表
+    private View mSearchBar;
+    private EditText mSearchInput;
+    private boolean mSearchMode = false;
+
+    // 复用一个点击监听，避免每次绑定行都 new 一个匿名类
+    private final View.OnClickListener mAvatarClick = new View.OnClickListener() {
+        public void onClick(View x) {
+            Object o = x.getTag();
+            if (o instanceof Row) openDetails((Row) o);
+        }
+    };
+
     private final TelegramManager.Listener mUpd = new TelegramManager.Listener() {
         public void onUpdate() {
             reload();
@@ -89,6 +116,16 @@ public class DialogsActivity extends Activity {
         mTitle = (TextView) findViewById(R.id.ec_title);
         mContent = findViewById(R.id.ec_tabcontent);
         setupTabs();
+
+        mSearchBar = findViewById(R.id.ec_search_bar);
+        mSearchInput = (EditText) findViewById(R.id.ec_search_input);
+        mSearchInput.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+            public void onTextChanged(CharSequence s, int a, int b, int c) {
+                applyFilter(s.toString());
+            }
+            public void afterTextChanged(Editable s) {}
+        });
 
         mAdapter = new ArrayAdapter<Row>(this, 0, new ArrayList<Row>()) {
             @Override
@@ -122,12 +159,8 @@ public class DialogsActivity extends Activity {
                 } else {
                     avatar.setImageResource(R.drawable.ic_contact_picture);
                 }
-                final Row fr = r;
-                avatar.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View x) {
-                        openDetails(fr);
-                    }
-                });
+                avatar.setTag(r);
+                avatar.setOnClickListener(mAvatarClick);
                 ImageView presence = (ImageView) v.findViewById(R.id.ec_presence);
                 if (r.type == 0 && !r.isSelf) {
                     presence.setVisibility(View.VISIBLE);
@@ -188,6 +221,20 @@ public class DialogsActivity extends Activity {
         ts.setIndicator(EmojiFont.emojify(this, title, dp(16)));
         ts.setContent(R.id.ec_tabcontent);
         mTabHost.addTab(ts);
+    }
+
+    /** 消息是不是一张贴纸。 */
+    private static boolean isStickerMessage(TlObject m) {
+        TlObject media = m.obj("media");
+        if (media == null || !media.type().equals("messageMediaDocument")) return false;
+        TlObject doc = media.obj("document");
+        if (doc == null) return false;
+        java.util.List<Object> attrs = doc.list("attributes");
+        if (attrs == null) return false;
+        for (Object o : attrs) {
+            if (((TlObject) o).type().equals("documentAttributeSticker")) return true;
+        }
+        return false;
     }
 
     private static int parseFolderId(String tag) {
@@ -308,11 +355,9 @@ public class DialogsActivity extends Activity {
                     android.util.Log.i("Eclairgram", "dialogs loaded: " + rows.size());
                     mMain.post(new Runnable() {
                         public void run() {
-                            mAdapter.clear();
-                            for (Row r : rows) mAdapter.add(r);
-                            mAdapter.notifyDataSetChanged();
-                            mEmpty.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
-                            if (rows.isEmpty()) mEmpty.setText(R.string.ec_no_dialogs);
+                            mAllRows.clear();
+                            mAllRows.addAll(rows);
+                            applyFilter(mSearchMode ? mSearchInput.getText().toString() : "");
                             startAvatarFetch(rows);
                             if (mShot) {
                                 mMain.postDelayed(new Runnable() {
@@ -326,6 +371,7 @@ public class DialogsActivity extends Activity {
                 } catch (final Throwable t) {
                     mMain.post(new Runnable() {
                         public void run() {
+                            mAllRows.clear();
                             mAdapter.clear();
                             mAdapter.notifyDataSetChanged();
                             mEmpty.setVisibility(View.VISIBLE);
@@ -341,13 +387,14 @@ public class DialogsActivity extends Activity {
     }
 
     /** 后台并发下载头像（先内存/磁盘缓存，缺了才联网），下载到一个就刷新一次列表。
-     *  并发度与 TelegramManager 的下载连接池一致（3）。 */
+     *  共享一个固定线程池，避免每次 reload 都新建/销毁线程。 */
+    private static final java.util.concurrent.ExecutorService AVATAR_POOL =
+            java.util.concurrent.Executors.newFixedThreadPool(3);
+
     private void startAvatarFetch(final List<Row> rows) {
-        final java.util.concurrent.ExecutorService pool =
-                java.util.concurrent.Executors.newFixedThreadPool(3);
         for (final Row r : rows) {
             if (r.photoId == 0 || AvatarCache.has(r.photoId)) continue;
-            pool.execute(new Runnable() {
+            AVATAR_POOL.execute(new Runnable() {
                 public void run() {
                     if (!mFetchAvatars) return;
                     AvatarCache.load(DialogsActivity.this, mTg, r.peer, r.photoId, r.photoDc);
@@ -359,7 +406,142 @@ public class DialogsActivity extends Activity {
                 }
             });
         }
-        pool.shutdown();
+    }
+
+    // ============================================================ 菜单 / 搜索
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, MENU_PROFILE, 0, R.string.ec_my_profile)
+                .setIcon(android.R.drawable.ic_menu_myplaces);
+        menu.add(0, MENU_SEARCH, 1, R.string.ec_search)
+                .setIcon(android.R.drawable.ic_menu_search);
+        menu.add(0, MENU_SETTINGS, 2, R.string.ec_settings)
+                .setIcon(android.R.drawable.ic_menu_preferences);
+        menu.add(0, MENU_LOGOUT, 3, R.string.ec_sign_out)
+                .setIcon(android.R.drawable.ic_lock_power_off);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case MENU_PROFILE:
+                openMyProfile();
+                return true;
+            case MENU_SEARCH:
+                showSearch();
+                return true;
+            case MENU_SETTINGS:
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            case MENU_LOGOUT:
+                confirmLogout();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /** “我的资料”：打开自己的资料页（详情页的 self 模式）。 */
+    private void openMyProfile() {
+        Intent i = new Intent(this, DetailsActivity.class);
+        i.putExtra("self", true);
+        startActivity(i);
+    }
+
+    /** 退出登录：确认后清掉会话并回到登录页。 */
+    private void confirmLogout() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.ec_sign_out)
+                .setMessage(R.string.ec_logout_confirm)
+                .setPositiveButton(R.string.ec_sign_out, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface d, int w) {
+                        mTg.logout();
+                        Notifications.clearAll(DialogsActivity.this);
+                        Intent i = new Intent(DialogsActivity.this, MainActivity.class);
+                        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                        finish();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /** 进入搜索模式：顶部出现搜索框，输入时按会话名过滤列表。 */
+    private void showSearch() {
+        if (mSearchMode) {
+            mSearchInput.requestFocus();
+            return;
+        }
+        mSearchMode = true;
+        mSearchBar.setVisibility(View.VISIBLE);
+        mSearchInput.setText("");
+        mSearchInput.requestFocus();
+        mSearchInput.post(new Runnable() {
+            public void run() {
+                InputMethodManager imm = (InputMethodManager)
+                        getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.showSoftInput(mSearchInput, InputMethodManager.SHOW_IMPLICIT);
+                }
+            }
+        });
+    }
+
+    private void hideSearch() {
+        if (!mSearchMode) return;
+        mSearchMode = false;
+        mSearchBar.setVisibility(View.GONE);
+        InputMethodManager imm = (InputMethodManager)
+                getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(mSearchInput.getWindowToken(), 0);
+        }
+        mSearchInput.setText("");
+        applyFilter("");
+    }
+
+    /** 用搜索关键字过滤会话列表（按会话标题，忽略大小写）。 */
+    private void applyFilter(String query) {
+        String q = query == null ? "" : query.trim().toLowerCase();
+        mAdapter.clear();
+        for (Row r : mAllRows) {
+            String name = r.name == null ? "" : r.name;
+            if (q.length() == 0 || name.toLowerCase().contains(q)) {
+                mAdapter.add(r);
+            }
+        }
+        mAdapter.notifyDataSetChanged();
+        boolean empty = mAdapter.getCount() == 0;
+        mEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+        if (empty) {
+            mEmpty.setText(mSearchMode ? R.string.ec_search_no_results : R.string.ec_no_dialogs);
+        }
+    }
+
+    /** 系统搜索键（部分老机型自带）也进入搜索模式。 */
+    @Override
+    public boolean onSearchRequested() {
+        showSearch();
+        return true;
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_SEARCH) {
+            showSearch();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mSearchMode) {
+            hideSearch();
+            return;
+        }
+        super.onBackPressed();
     }
 
     private int dp(int v) {
@@ -416,7 +598,11 @@ public class DialogsActivity extends Activity {
                 TlObject m = (TlObject) o;
                 if (!m.type().equals("message")) continue;
                 String text = m.str("message");
-                if (text != null && text.length() > 0) {
+                if (text == null) text = "";
+                if (text.length() == 0 && isStickerMessage(m)) {
+                    text = getString(R.string.ec_media_sticker);
+                }
+                if (text.length() > 0) {
                     msgText.put(Integer.valueOf(m.i32("id")), text);
                 }
             }

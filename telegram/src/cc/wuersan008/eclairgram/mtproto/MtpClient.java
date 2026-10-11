@@ -139,7 +139,10 @@ public final class MtpClient {
         BigInteger gA = new BigInteger(1, gAB);
         BigInteger bigG = BigInteger.valueOf(g);
 
-        byte[] bBytes = Crypto.random(256);
+        // 私钥指数 b：用 256 位而不是 2048 位。g^b 与 gA^b 两次模幂的开销随指数
+        // 位数线性增长，在老 ARM 设备上这是登录慢的主因。安全性不受影响：2048 位
+        // 素域上的离散对数本身只有 ~110 位强度，256 位指数（暴力 2^128）不是短板。
+        byte[] bBytes = Crypto.random(32);
         BigInteger b = new BigInteger(1, bBytes);
         BigInteger gB = bigG.modPow(b, dhPrime);
         BigInteger gab = gA.modPow(b, dhPrime);
@@ -496,9 +499,9 @@ public final class MtpClient {
 
     /** upload.getFile：按 InputFileLocation 下载（失败时 FILE_MIGRATE 会抛出）。 */
     public byte[] downloadLocation(byte[] location) throws IOException {
-        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-        long offset = 0;
         int limit = 256 * 1024;
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream(limit);
+        long offset = 0;
         while (true) {
             Tl.Writer w = new Tl.Writer();
             w.int32(0xbe5335be)         // upload.getFile
@@ -624,6 +627,36 @@ public final class MtpClient {
          .int64(Crypto.longLE(Crypto.random(8), 0));
         byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
         return TlObject.read(new Tl.Reader(res));
+    }
+
+    // ============================================================ 贴纸
+    /** messages.getAllStickers：账号已安装的贴纸包（只含元数据）。 */
+    public TlObject getAllStickers() throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.MESSAGES_GET_ALL_STICKERS).int64(0);
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
+    /** messages.getStickerSet：某个贴纸包的文档列表。 */
+    public TlObject getStickerSet(long setId, long accessHash) throws IOException {
+        Tl.Writer iw = new Tl.Writer();
+        iw.int32(TlSchema.INPUT_STICKER_SET_ID).int64(setId).int64(accessHash);
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.MESSAGES_GET_STICKER_SET).raw(iw.toByteArray()).int32(0);
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
+    /** 发送一张贴纸（messages.sendMedia + inputMediaDocument）。 */
+    public TlObject sendSticker(byte[] inputPeer, long docId, long accessHash, byte[] fileRef)
+            throws IOException {
+        Tl.Writer iw = new Tl.Writer();
+        iw.int32(TlSchema.INPUT_DOCUMENT).int64(docId).int64(accessHash)
+          .bytes(fileRef == null ? new byte[0] : fileRef);
+        Tl.Writer mw = new Tl.Writer();
+        mw.int32(TlSchema.INPUT_MEDIA_DOCUMENT).int32(0).raw(iw.toByteArray());
+        return sendMedia(inputPeer, mw.toByteArray(), "");
     }
 
     private static String md5Hex(byte[] data) {

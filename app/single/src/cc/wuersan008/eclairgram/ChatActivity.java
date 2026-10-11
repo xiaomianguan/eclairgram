@@ -1,6 +1,5 @@
 package cc.wuersan008.eclairgram;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -43,9 +42,10 @@ import cc.wuersan008.eclairgram.mtproto.TlObject;
  * 历史来自 messages.getHistory，发送走 messages.sendMessage / sendMedia；
  * 支持查看图片/视频附件（点击气泡下载后打开）。
  */
-public class ChatActivity extends Activity {
+public class ChatActivity extends BaseActivity {
 
     static final class Msg {
+        int id;
         boolean out;
         String text;
         int mediaType;        // 0 无, 1 图片, 2 视频
@@ -80,6 +80,10 @@ public class ChatActivity extends Activity {
     private ListView mList;
     private EditText mInput;
     private volatile boolean mRunning = true;
+    private volatile boolean mResumed = false;
+    private volatile boolean mWake = false;   // 唤醒轮询线程立即刷新
+    private int mLastSig = 0;                 // 上次渲染的消息指纹，未变则不重绑
+    private static final long POLL_MS = 8000; // 轮询间隔（仅在界面可见时轮询）
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,14 +146,26 @@ public class ChatActivity extends Activity {
                 TextView t = (TextView) v.findViewById(R.id.ec_msg_text);
 
                 row.setGravity(m.out ? Gravity.RIGHT : Gravity.LEFT);
-                bubble.setBackgroundResource(m.out ? R.drawable.ec_bubble_out : R.drawable.ec_bubble_in);
+                final boolean sticker = m.mediaType == 3;
+                if (sticker) {
+                    bubble.setBackgroundDrawable(null);   // 贴纸不套气泡
+                } else {
+                    bubble.setBackgroundResource(m.out
+                            ? R.drawable.ec_bubble_out : R.drawable.ec_bubble_in);
+                }
 
-                t.setText(EmojiFont.emojify(ChatActivity.this, m.text, dp(20)));
-                t.setTextColor(getResources().getColor(R.color.ec_text_primary));
+                if (sticker) {
+                    t.setVisibility(View.GONE);
+                } else {
+                    t.setVisibility(View.VISIBLE);
+                    t.setText(EmojiFont.emojify(ChatActivity.this, m.text, dp(20)));
+                    t.setTextColor(getResources().getColor(R.color.ec_text_primary));
+                }
 
                 if (m.hasThumb()) {
                     thumbWrap.setVisibility(View.VISIBLE);
-                    int maxW = dp(200), maxH = dp(200);
+                    int box = sticker ? dp(140) : dp(200);
+                    int maxW = box, maxH = box;
                     int iw = m.thumbW > 0 ? m.thumbW : 4;
                     int ih = m.thumbH > 0 ? m.thumbH : 3;
                     float scale = Math.min((float) maxW / iw, (float) maxH / ih);
@@ -191,7 +207,7 @@ public class ChatActivity extends Activity {
                 // D-pad 聚焦到整条消息，中键打开原文件（无缩略图时也一样）。
                 t.setFocusable(false);
                 t.setOnClickListener(null);
-                if (m.mediaType != 0) {
+                if (m.mediaType != 0 && !sticker) {
                     bubble.setFocusable(true);
                     bubble.setClickable(true);
                     bubble.setOnClickListener(new View.OnClickListener() {
@@ -225,6 +241,12 @@ public class ChatActivity extends Activity {
                 onEmoji();
             }
         });
+        ImageButton sticker = (ImageButton) findViewById(R.id.ec_sticker);
+        sticker.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onSticker();
+            }
+        });
         mInput.addTextChangedListener(new android.text.TextWatcher() {
             public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             public void onTextChanged(CharSequence s, int a, int b, int c) {}
@@ -236,8 +258,14 @@ public class ChatActivity extends Activity {
         new Thread(new Runnable() {
             public void run() {
                 while (mRunning) {
-                    refresh();
-                    sleep(4000);
+                    if (mResumed) refresh();
+                    // 分片睡眠：暂停时不轮询，恢复时能马上唤醒刷新
+                    long waited = 0;
+                    while (mRunning && !mWake && waited < POLL_MS) {
+                        sleep(200);
+                        waited += 200;
+                    }
+                    mWake = false;
                 }
             }
         }).start();
@@ -246,12 +274,15 @@ public class ChatActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        mResumed = true;
+        mWake = true;                                   // 让轮询线程立即刷新一次
         TelegramManager.get(this).setActivePeer(mPeer);   // 正在看这个会话：别弹它的通知
         Notifications.clearAll(this);
     }
 
     @Override
     protected void onPause() {
+        mResumed = false;                               // 不可见就不轮询（省电/省流量）
         TelegramManager.get(this).setActivePeer(null);
         super.onPause();
     }
@@ -304,6 +335,24 @@ public class ChatActivity extends Activity {
                 int start = mInput.getSelectionStart();
                 if (start < 0) start = mInput.getText().length();
                 mInput.getText().insert(start, s);
+            }
+        }).show();
+    }
+
+    private void onSticker() {
+        new StickerPicker(this, new StickerPicker.Listener() {
+            public void onSticker(final long id, final long accessHash, final byte[] fileRef) {
+                new Thread(new Runnable() {
+                    public void run() {
+                        try {
+                            TelegramManager.get(ChatActivity.this)
+                                    .syncSendSticker(mPeer, id, accessHash, fileRef);
+                        } catch (final Throwable t) {
+                            toast(getString(R.string.ec_send_failed, String.valueOf(t.getMessage())));
+                        }
+                        refresh();
+                    }
+                }).start();
             }
         }).show();
     }
@@ -452,14 +501,17 @@ public class ChatActivity extends Activity {
                 }
             }
             final List<Msg> out = new ArrayList<Msg>();
+            int sig = 17;
             if (msgs != null) {
-                List<Object> ordered = new ArrayList<Object>(msgs);
-                Collections.reverse(ordered);
-                for (Object o : ordered) {
+                // 从末尾（最新）往前遍历，避免 Collections.reverse 的整表复制
+                for (int oi = msgs.size() - 1; oi >= 0; oi--) {
+                    Object o = msgs.get(oi);
                     TlObject m = (TlObject) o;
                     if (!m.type().equals("message")) continue;
                     Msg mm = new Msg();
+                    mm.id = m.i32("id");
                     mm.out = m.bool("out");
+                    sig = sig * 31 + mm.id;
                     String text = m.str("message");
                     if (text == null) text = "";
 
@@ -486,14 +538,16 @@ public class ChatActivity extends Activity {
                     } else if (media != null && media.type().equals("messageMediaDocument")) {
                         TlObject doc = media.obj("document");
                         if (doc != null && doc.type().equals("document")) {
-                            mm.mediaType = 2;
-                            mm.mediaName = getString(R.string.ec_media_video);
+                            boolean sticker = isSticker(doc);
+                            mm.mediaType = sticker ? 3 : 2;
+                            mm.mediaName = getString(sticker
+                                    ? R.string.ec_media_sticker : R.string.ec_media_video);
                             long did = doc.i64("id");
                             long dah = doc.i64("access_hash");
                             byte[] dref = asBytes(doc.get("file_reference"));
                             mm.location = MtpClient.documentFileLocation(did, dah, dref, "");
-                            // 视频缩略图：优先 photoCachedSize 的内联字节，否则下载某个 photoSize
-                            Object[] th = documentThumb(doc);
+                            // 贴纸取最大的缩略图（老系统解不了 webp），视频优先内联字节
+                            Object[] th = sticker ? stickerThumb(doc) : documentThumb(doc);
                             if (th != null) {
                                 byte[] inline = (byte[]) th[0];
                                 String tt = (String) th[1];
@@ -514,11 +568,13 @@ public class ChatActivity extends Activity {
                             }
                         }
                     }
-                    // 没有可用缩略图时，退回旧的 [图片]/[视频] 文本标记
+                    // 没有可用缩略图时，退回旧的 [图片]/[视频]/[贴纸] 文本标记
                     if (mm.mediaType != 0 && !mm.hasThumb()) {
                         String tag = mm.mediaType == 1
                                 ? getString(R.string.ec_media_photo)
-                                : getString(R.string.ec_media_video);
+                                : mm.mediaType == 3
+                                    ? getString(R.string.ec_media_sticker)
+                                    : getString(R.string.ec_media_video);
                         text = text.length() == 0 ? tag : (tag + " " + text);
                     }
                     if (text.length() == 0 && mm.mediaType == 0) continue;
@@ -536,8 +592,11 @@ public class ChatActivity extends Activity {
                     out.add(mm);
                 }
             }
+            final int fsig = sig;
             mMain.post(new Runnable() {
                 public void run() {
+                    if (fsig == mLastSig) return;   // 内容没变：不重绑整个列表
+                    mLastSig = fsig;
                     mAdapter.clear();
                     for (Msg m : out) mAdapter.add(m);
                     mAdapter.notifyDataSetChanged();
@@ -612,6 +671,54 @@ public class ChatActivity extends Activity {
             }
         }
         return new int[] { 0, 0 };
+    }
+
+    /** document 里是否带贴纸属性。 */
+    private static boolean isSticker(TlObject doc) {
+        List<Object> attrs = doc.list("attributes");
+        if (attrs == null) return false;
+        for (Object o : attrs) {
+            if (((TlObject) o).type().equals("documentAttributeSticker")) return true;
+        }
+        return false;
+    }
+
+    /** 贴纸缩略图：取最大的可下载尺寸 {内联|null, type, w, h}（老系统解不了 webp）。 */
+    private static Object[] stickerThumb(TlObject doc) {
+        List<Object> thumbs = doc.list("thumbs");
+        if (thumbs == null) return null;
+        byte[] inline = null;
+        int iw = 0, ih = 0;
+        String big = null;
+        int bigArea = 0, bw = 0, bh = 0;
+        for (Object o : thumbs) {
+            TlObject s = (TlObject) o;
+            String t = s.type();
+            int w = s.i32("w"), h = s.i32("h");
+            if (t.equals("photoCachedSize")) {
+                Object b = s.get("bytes");
+                if (inline == null && b instanceof byte[] && ((byte[]) b).length > 0) {
+                    inline = (byte[]) b;
+                    iw = w;
+                    ih = h;
+                }
+            } else if (downloadableSize(t)) {
+                int area = w * h;
+                if (area >= bigArea) {
+                    bigArea = area;
+                    big = s.str("type");
+                    bw = w;
+                    bh = h;
+                }
+            }
+        }
+        if (big != null) {
+            return new Object[] { null, big, Integer.valueOf(bw), Integer.valueOf(bh) };
+        }
+        if (inline != null) {
+            return new Object[] { inline, "cached", Integer.valueOf(iw), Integer.valueOf(ih) };
+        }
+        return null;
     }
 
     /** document 的缩略图：{内联字节|null, type|null, w, h}。 */
@@ -690,10 +797,18 @@ public class ChatActivity extends Activity {
         return null;
     }
 
+    // 每条消息都 new SimpleDateFormat 很贵（50 条 × 每次刷新）。按线程复用。
+    private static final ThreadLocal<java.text.SimpleDateFormat> TIME_FMT =
+            new ThreadLocal<java.text.SimpleDateFormat>() {
+                @Override
+                protected java.text.SimpleDateFormat initialValue() {
+                    return new java.text.SimpleDateFormat("HH:mm");
+                }
+            };
+
     private static String time(int unix) {
         if (unix <= 0) return "";
-        java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("HH:mm");
-        return f.format(new java.util.Date(unix * 1000L));
+        return TIME_FMT.get().format(new java.util.Date(unix * 1000L));
     }
 
     private static void sleep(long ms) {

@@ -46,6 +46,10 @@
             android:exported="true"
             android:screenOrientation="portrait" />
 
+        <activity android:name=".SettingsActivity"
+            android:label="@string/ec_settings"
+            android:screenOrientation="portrait" />
+
         <activity android:name=".MediaActivity"
             android:label="@string/ec_app_name"
             android:exported="true"
