@@ -66,6 +66,8 @@
         android:divider="@null"
         android:dividerHeight="0.0dip"
         android:transcriptMode="normal"
+        android:listSelector="@drawable/ec_list_selector"
+        android:drawSelectorOnTop="true"
         android:stackFromBottom="true" />
 
     <LinearLayout

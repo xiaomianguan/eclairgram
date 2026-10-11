@@ -7,4 +7,6 @@
     <color name="ec_input_bg">#ffeeeeee</color>
     <color name="ec_row_bg">#ffeeeeee</color>
     <color name="ec_self_bg">#ffdbe7f5</color>
+    <!-- D-pad 焦点/按下高亮（半透明，叠在行/气泡上仍能看清文字） -->
+    <color name="ec_focus">#66ff9800</color>
 </resources>

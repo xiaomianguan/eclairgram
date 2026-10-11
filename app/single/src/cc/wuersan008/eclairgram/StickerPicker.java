@@ -216,7 +216,7 @@ public final class StickerPicker extends Dialog {
                 iv.setLayoutParams(lp);
                 iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 iv.setPadding(dp(6), dp(6), dp(6), dp(6));
-                iv.setBackgroundColor(0x00000000);
+                iv.setBackgroundResource(R.drawable.ec_row_bg);
                 iv.setFocusable(true);
                 Bitmap b = ThumbCache.get(st.thumbKey);
                 if (b != null) {

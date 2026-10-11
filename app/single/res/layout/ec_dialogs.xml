@@ -76,7 +76,8 @@
                     android:cacheColorHint="@color/ec_window_bg"
                     android:divider="#00000000"
                     android:dividerHeight="0.0dip"
-                    android:drawSelectorOnTop="false" />
+                    android:listSelector="@drawable/ec_list_selector"
+                    android:drawSelectorOnTop="true" />
             </FrameLayout>
         </FrameLayout>
     </LinearLayout>

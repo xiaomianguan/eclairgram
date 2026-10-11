@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- D-pad 焦点/按下高亮：半透明橙色填充 + 不透明橙边，叠在任意背景上都清晰可见 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/ec_focus" />
+    <stroke android:width="2.0dip" android:color="#ffff9800" />
+</shape>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ListView 选择器：D-pad 导航时叠加在条目上（drawSelectorOnTop=true），
+     因此即使条目自带不透明气泡背景也能看到焦点高亮 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true" android:drawable="@drawable/ec_row_focus" />
+    <item android:state_pressed="true" android:drawable="@drawable/ec_row_focus" />
+    <item android:state_focused="true" android:drawable="@drawable/ec_row_focus" />
+</selector>

@@ -356,6 +356,7 @@ public class DetailsActivity extends BaseActivity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(0, dp(8), 0, dp(8));
+        row.setBackgroundResource(R.drawable.ec_row_bg);   // 聚焦/按下高亮
 
         TextView lv = new TextView(this);
         lv.setText(label);

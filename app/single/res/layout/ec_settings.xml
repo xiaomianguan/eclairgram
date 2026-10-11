@@ -11,7 +11,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:padding="12.0dip"
-        android:background="@drawable/ec_item_bg"
+        android:background="@drawable/ec_setting_bg"
         android:gravity="center_vertical"
         android:clickable="true"
         android:focusable="true">
@@ -36,7 +36,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:padding="12.0dip"
-        android:background="@drawable/ec_item_bg"
+        android:background="@drawable/ec_setting_bg"
         android:gravity="center_vertical"
         android:clickable="true"
         android:focusable="true">

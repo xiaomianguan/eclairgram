@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 设置行背景：常态沿用 Talk 气泡，聚焦/按下时高亮 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:drawable="@drawable/ec_row_focus" />
+    <item android:state_pressed="true" android:drawable="@drawable/ec_row_focus" />
+    <item android:drawable="@drawable/ec_item_bg" />
+</selector>
