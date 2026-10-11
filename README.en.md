@@ -173,9 +173,11 @@ messages) provide en-US and zh-CN as well.
       `FILE_MIGRATE` round trip); memory + disk cache so relaunches don't re-download;
       the chat list prefetches concurrently over a 3-connection pool
 - [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
-- [x] **attachments (photos/videos)**: send via the paperclip button left of the input; received
-      messages **show an inline thumbnail right in the bubble** (a smaller PhotoSize for photos, the
-      document thumb + a play icon for videos); tap it to download and view the original
+- [x] **attachments (camera/photo/video)**: the paperclip button left of the input can also
+      **take a photo and send it directly** (`ACTION_IMAGE_CAPTURE`; the full-size shot is written
+      to an app-private temp file, sent, then deleted — no SD card and nothing left in the gallery);
+      received messages **show an inline thumbnail right in the bubble** (a smaller PhotoSize for
+      photos, the document thumb + a play icon for videos); tap it to download and view the original
       (ImageView / VideoView)
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan;
