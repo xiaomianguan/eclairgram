@@ -195,19 +195,31 @@ messages) provide en-US and zh-CN as well.
 - [x] **full D-pad navigation**: chat cards, buttons, the input and media bubbles are focusable;
       long-pressing a card opens its details
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
-- [x] **My Profile**: tap the Saved Messages avatar to view and edit your photo, name and bio
+- [x] **My Profile**: tap the Saved Messages avatar (or pick it from the chat-list menu) to view and
+      edit your photo, name and bio
       (`users.getFullUser` / `account.updateProfile` / `photos.uploadProfilePhoto`)
 - [x] **pinned Saved Messages**: the chat list keeps Saved Messages/My Profile at the top with a
       distinct full-row background (mirrors Talk's self-status row
       `roster_list_self_status_background`: a solid color normally, transparent when
       pressed/selected so the system list highlight — which adapts to the Android version — shows)
 - [x] **single app, single launcher icon**: already-signed-in users go straight to the chat list;
-      the session persists; no extra setup screen
+      the session persists
 - [x] **app icon**: Eclairgram's own icon (a paper plane in a speech bubble) replaces Talk's
       launcher icon (`ic_launcher_eclairgram`, with ldpi/mdpi/hdpi/xhdpi sizes)
 - [x] **chat folders**: when the account has folders, the top bar becomes a native tab bar
       (TabWidget) to switch between them; otherwise the title bar stays
       (`messages.getDialogFilters` + `messages.getDialogs(folder_id)`)
+- [x] **chat-list system menu** (Menu key): My Profile / Search / Settings / Log out, using the
+      native Android 2.1–4.0 options menu (an icon + label grid, just like stock Talk)
+- [x] **search chats**: filters by chat title (a search field appears at the top of the list); the
+      system search key found on some older devices also opens it
+- [x] **settings page**: language (system default / English / Simplified Chinese — a restart applies
+      it) and a notifications toggle (off stops background new-message notifications)
+- [x] **performance work for old devices**: the emoji bitmap pack is **mmap'd off-heap** (no longer
+      ~2.5 MB of Java heap); avatar/emoji bitmaps use **bounded LRU caches** and are downsampled to
+      display size; the message list **polls only while visible** and skips rebinding when nothing
+      changed; the **DH private exponent is 256-bit** (login several times faster, no security loss);
+      hot paths (AES-IGE / PBKDF2 / hex) allocate far less
 - [x] login screen supports bring-your-own API key (BYOK)
 - [x] **two-step verification (2FA)**: after the code is accepted, if the account has a password the
       login screen asks for it (SRP 6a)
