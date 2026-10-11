@@ -80,6 +80,7 @@ public final class TlSchema {
     // ---- 贴纸 ----
     public static final int MESSAGES_GET_ALL_STICKERS = 0xb8a0a1a8;
     public static final int MESSAGES_GET_STICKER_SET = 0xc8a0ec74;
+    public static final int MESSAGES_GET_RECENT_STICKERS = 0x9da9403b;
     public static final int INPUT_STICKER_SET_ID = 0x9de7a269;
     public static final int INPUT_DOCUMENT = 0x1abfb575;
     public static final int INPUT_MEDIA_DOCUMENT = 0xa8763ab5;

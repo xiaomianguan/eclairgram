@@ -20,10 +20,15 @@ import cc.wuersan008.eclairgram.mtproto.MtpClient;
 import cc.wuersan008.eclairgram.mtproto.TlObject;
 
 /**
- * 贴纸选择器：拉取账号已安装的贴纸包，网格显示缩略图，点按发送。
+ * 贴纸选择器：网格显示最近/常用贴纸与已安装贴纸包，点按发送。
  *
- * 老系统字体/图片库不支持 webp，贴纸用文档自带的缩略图（JPEG）显示与下载缓存
- * 都走 {@link ThumbCache}。
+ * 加载策略（解决老设备上“打开要等很久”）：
+ *  1. 先取 {@code messages.getRecentStickers}（Telegram 记录的使用情况），
+ *     按使用时间倒序放在最前面——即“最常用的在最上面”；
+ *  2. 再逐个拉取已安装的贴纸包，**每拉完一个包就立刻显示**，不必等全部拉完；
+ *  3. 缩略图逐张下载，下载到一张就显示一张。
+ *
+ * 老系统字体/图片库不支持 webp，贴纸用文档自带的缩略图（JPEG），走 {@link ThumbCache}。
  */
 public final class StickerPicker extends Dialog {
 
@@ -32,13 +37,15 @@ public final class StickerPicker extends Dialog {
     }
 
     private static final int COLS = 4;
-    private static final int MAX_SETS = 4;   // 别一次拉太多包，老设备/网络吃不消
+    private static final int MAX_SETS = 8;   // 上限，避免一次拉太多包
 
     private final Listener listener;
     private final List<Sticker> stickers = new ArrayList<Sticker>();
     private final List<int[]> rows = new ArrayList<int[]>();
-    private ListView list;
-    private Adapter adapter;
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final int cellPx;
+    private final ListView list;
+    private final Adapter adapter;
 
     static final class Sticker {
         long id;
@@ -46,11 +53,13 @@ public final class StickerPicker extends Dialog {
         byte[] fileRef;
         byte[] thumbLocation;
         String thumbKey;
+        int emojiCp;   // documentAttributeSticker.alt 的第一个码点（老系统无法显示 WebP 时兜底）
     }
 
     public StickerPicker(Context ctx, Listener l) {
         super(ctx);
         this.listener = l;
+        this.cellPx = dp(56);
         setTitle(R.string.ec_stickers);
 
         list = new ListView(ctx);
@@ -67,13 +76,22 @@ public final class StickerPicker extends Dialog {
     private void load() {
         new Thread(new Runnable() {
             public void run() {
-                final List<Sticker> found = new ArrayList<Sticker>();
+                TelegramManager tg = TelegramManager.get(getContext());
                 String err = null;
+
+                // 1) 最近/常用贴纸：放最前面
                 try {
-                    TelegramManager tg = TelegramManager.get(getContext());
+                    List<Sticker> recent = parseRecent(tg.syncGetRecentStickers());
+                    if (!recent.isEmpty()) append(recent);
+                } catch (Throwable t) {
+                    err = String.valueOf(t.getMessage());
+                }
+
+                // 2) 已安装的贴纸包：一个一个拉，拉到一个显示一个
+                try {
                     TlObject res = tg.syncGetAllStickers();
-                    List<Object> sets = res.list("stickers");
-                    if (sets == null) sets = res.list("sets");
+                    List<Object> sets = res.list("sets");
+                    if (sets == null) sets = res.list("stickers");
                     if (sets != null) {
                         int n = 0;
                         for (Object o : sets) {
@@ -82,41 +100,22 @@ public final class StickerPicker extends Dialog {
                             long sid = s.i64("id");
                             long sah = s.i64("access_hash");
                             n++;
-                            TlObject full;
+                            List<Sticker> pack;
                             try {
-                                full = tg.syncGetStickerSet(sid, sah);
+                                pack = parseSet(tg.syncGetStickerSet(sid, sah));
                             } catch (Throwable t) {
                                 continue;
                             }
-                            List<Object> docs = full.list("documents");
-                            if (docs == null) continue;
-                            for (Object od : docs) {
-                                TlObject doc = (TlObject) od;
-                                if (!doc.type().equals("document")) continue;
-                                Object[] th = thumbOf(doc);
-                                if (th == null) continue;
-                                Sticker st = new Sticker();
-                                st.id = doc.i64("id");
-                                st.accessHash = doc.i64("access_hash");
-                                Object ref = doc.get("file_reference");
-                                st.fileRef = (ref instanceof byte[]) ? (byte[]) ref : new byte[0];
-                                st.thumbLocation = MtpClient.documentFileLocation(
-                                        st.id, st.accessHash, st.fileRef, (String) th[1]);
-                                st.thumbKey = "st" + st.id + ":" + th[1];
-                                found.add(st);
-                            }
+                            if (!pack.isEmpty()) append(pack);
                         }
                     }
                 } catch (Throwable t) {
-                    err = String.valueOf(t.getMessage());
+                    if (err == null) err = String.valueOf(t.getMessage());
                 }
+
                 final String ferr = err;
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                main.post(new Runnable() {
                     public void run() {
-                        stickers.clear();
-                        stickers.addAll(found);
-                        buildRows();
-                        adapter.notifyDataSetChanged();
                         if (stickers.isEmpty()) {
                             android.widget.Toast.makeText(getContext(),
                                     ferr == null
@@ -128,6 +127,88 @@ public final class StickerPicker extends Dialog {
                 });
             }
         }).start();
+    }
+
+    /** 后台解析出一个包后，回主线程追加显示（加载一个包就显示一个包）。 */
+    private void append(final List<Sticker> add) {
+        main.post(new Runnable() {
+            public void run() {
+                stickers.addAll(add);
+                buildRows();
+                adapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+    /** messages.recentStickers：按使用时间倒序（最常用/最新的在最前）。 */
+    private static List<Sticker> parseRecent(TlObject res) {
+        List<Sticker> out = new ArrayList<Sticker>();
+        if (res == null || !res.type().equals("messages.recentStickers")) return out;
+        final List<Object> docs = res.list("stickers");
+        final List<Object> dates = res.list("dates");
+        if (docs == null) return out;
+
+        Integer[] idx = new Integer[docs.size()];
+        for (int i = 0; i < idx.length; i++) idx[i] = Integer.valueOf(i);
+        java.util.Arrays.sort(idx, new java.util.Comparator<Integer>() {
+            public int compare(Integer a, Integer b) {
+                return dateAt(dates, b.intValue()) - dateAt(dates, a.intValue());
+            }
+        });
+        for (Integer i : idx) {
+            Sticker st = stickerFrom((TlObject) docs.get(i.intValue()));
+            if (st != null) out.add(st);
+        }
+        return out;
+    }
+
+    private static int dateAt(List<Object> dates, int i) {
+        if (dates == null || i < 0 || i >= dates.size()) return 0;
+        Object o = dates.get(i);
+        return o instanceof Number ? ((Number) o).intValue() : 0;
+    }
+
+    /** messages.stickerSet：一个包里的文档列表。 */
+    private static List<Sticker> parseSet(TlObject full) {
+        List<Sticker> out = new ArrayList<Sticker>();
+        if (full == null) return out;
+        List<Object> docs = full.list("documents");
+        if (docs == null) return out;
+        for (Object od : docs) {
+            TlObject doc = (TlObject) od;
+            if (!doc.type().equals("document")) continue;
+            Sticker st = stickerFrom(doc);
+            if (st != null) out.add(st);
+        }
+        return out;
+    }
+
+    private static Sticker stickerFrom(TlObject doc) {
+        Object[] th = thumbOf(doc);
+        if (th == null) return null;
+        Sticker st = new Sticker();
+        st.id = doc.i64("id");
+        st.accessHash = doc.i64("access_hash");
+        Object ref = doc.get("file_reference");
+        st.fileRef = (ref instanceof byte[]) ? (byte[]) ref : new byte[0];
+        st.thumbLocation = MtpClient.documentFileLocation(
+                st.id, st.accessHash, st.fileRef, (String) th[1]);
+        st.thumbKey = "st" + st.id + ":" + th[1];
+        st.emojiCp = emojiOf(doc);
+        return st;
+    }
+
+    /** 取 documentAttributeSticker.alt 里的第一个 emoji 码点。 */
+    private static int emojiOf(TlObject doc) {
+        List<Object> attrs = doc.list("attributes");
+        if (attrs == null) return 0;
+        for (Object o : attrs) {
+            TlObject a = (TlObject) o;
+            if (!a.type().equals("documentAttributeSticker")) continue;
+            String alt = a.str("alt");
+            if (alt != null && alt.length() > 0) return alt.codePointAt(0);
+        }
+        return 0;
     }
 
     private void buildRows() {
@@ -191,6 +272,40 @@ public final class StickerPicker extends Dialog {
         return (int) (v * getContext().getResources().getDisplayMetrics().density + 0.5f);
     }
 
+    /** 缩略图到货：只更新当前显示该 key 的可见单元格，避免整表重绑。 */
+    private void updateThumb(String key, Bitmap bmp) {
+        for (int i = 0; i < list.getChildCount(); i++) {
+            View rowV = list.getChildAt(i);
+            if (!(rowV instanceof LinearLayout)) continue;
+            LinearLayout ll = (LinearLayout) rowV;
+            for (int c = 0; c < ll.getChildCount(); c++) {
+                View cell = ll.getChildAt(c);
+                Object tag = cell.getTag();
+                if (tag instanceof Sticker && key.equals(((Sticker) tag).thumbKey)) {
+                    Sticker st = (Sticker) tag;
+                    ((ImageView) cell).setImageBitmap(bmp != null ? bmp : fallback(st));
+                }
+            }
+        }
+    }
+
+    /** 无法显示缩略图时的兜底：用贴纸对应的 emoji（老系统解不了 WebP）。 */
+    private Bitmap fallback(Sticker st) {
+        return st.emojiCp == 0 ? null : EmojiFont.bitmap(getContext(), st.emojiCp);
+    }
+
+    // 复用的点击监听：从 tag 取当前单元格对应的贴纸
+    private final View.OnClickListener click = new View.OnClickListener() {
+        public void onClick(View v) {
+            Object o = v.getTag();
+            if (o instanceof Sticker) {
+                Sticker st = (Sticker) o;
+                listener.onSticker(st.id, st.accessHash, st.fileRef);
+                dismiss();
+            }
+        }
+    };
+
     private final class Adapter extends BaseAdapter {
         public int getCount() {
             return rows.size();
@@ -205,37 +320,46 @@ public final class StickerPicker extends Dialog {
         }
 
         public View getView(int pos, View convertView, ViewGroup parent) {
-            LinearLayout row = new LinearLayout(getContext());
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            int cell = dp(56);
+            LinearLayout row;
+            if (convertView instanceof LinearLayout) {
+                row = (LinearLayout) convertView;      // 复用整行
+            } else {
+                row = new LinearLayout(getContext());
+                row.setOrientation(LinearLayout.HORIZONTAL);
+            }
             int[] idx = rows.get(pos);
-            for (int c = 0; c < idx.length; c++) {
-                final Sticker st = stickers.get(idx[c]);
+            int need = idx.length;
+            while (row.getChildCount() > need) {
+                row.removeViewAt(row.getChildCount() - 1);
+            }
+            while (row.getChildCount() < need) {
                 ImageView iv = new ImageView(getContext());
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(cell, cell);
-                iv.setLayoutParams(lp);
+                iv.setLayoutParams(new LinearLayout.LayoutParams(cellPx, cellPx));
                 iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 iv.setPadding(dp(6), dp(6), dp(6), dp(6));
                 iv.setBackgroundResource(R.drawable.ec_row_bg);
                 iv.setFocusable(true);
+                iv.setOnClickListener(click);
+                row.addView(iv);
+            }
+            for (int c = 0; c < need; c++) {
+                final Sticker st = stickers.get(idx[c]);
+                ImageView iv = (ImageView) row.getChildAt(c);
+                iv.setTag(st);
                 Bitmap b = ThumbCache.get(st.thumbKey);
                 if (b != null) {
                     iv.setImageBitmap(b);
+                } else if (ThumbCache.isFailed(st.thumbKey)) {
+                    iv.setImageBitmap(fallback(st));
                 } else {
+                    iv.setImageBitmap(null);
                     ThumbCache.load(getContext(), st.thumbKey, st.thumbLocation, null, dp(96),
                             new ThumbCache.Listener() {
                                 public void onThumb(String k, Bitmap bmp) {
-                                    if (bmp != null) adapter.notifyDataSetChanged();
+                                    updateThumb(k, bmp);
                                 }
                             });
                 }
-                iv.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View v) {
-                        listener.onSticker(st.id, st.accessHash, st.fileRef);
-                        dismiss();
-                    }
-                });
-                row.addView(iv);
             }
             return row;
         }

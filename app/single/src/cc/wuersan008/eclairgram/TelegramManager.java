@@ -680,6 +680,13 @@ public final class TelegramManager {
         }
     }
 
+    public TlObject syncGetRecentStickers() throws Exception {
+        synchronized (mNet) {
+            ensureConnected();
+            return mClient.getRecentStickers();
+        }
+    }
+
     public void syncSendSticker(byte[] inputPeer, long docId, long accessHash, byte[] fileRef)
             throws Exception {
         synchronized (mNet) {

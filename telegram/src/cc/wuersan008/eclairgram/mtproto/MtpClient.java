@@ -638,6 +638,16 @@ public final class MtpClient {
         return TlObject.read(new Tl.Reader(res));
     }
 
+    /** messages.getRecentStickers：最近/常用贴纸（服务端按使用记录排序）。 */
+    public TlObject getRecentStickers() throws IOException {
+        Tl.Writer w = new Tl.Writer();
+        w.int32(TlSchema.MESSAGES_GET_RECENT_STICKERS)
+         .int32(0)          // flags：不带 attached
+         .int64(0);         // hash
+        byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
+        return TlObject.read(new Tl.Reader(res));
+    }
+
     /** messages.getStickerSet：某个贴纸包的文档列表。 */
     public TlObject getStickerSet(long setId, long accessHash) throws IOException {
         Tl.Writer iw = new Tl.Writer();

@@ -22,6 +22,8 @@ import java.util.concurrent.Executors;
  * 下载/解码在后台（两条工作线程），结果按 key 缓存，回调回主线程。
  *
  * 老设备内存紧张：解码成 RGB_565 并限制缓存条数。
+ * 另外，Android 4.0 之前不能解码 WebP（贴纸缩略图就是 WebP），遇到这种数据
+ * 直接标记为失败，不再反复重试下载。
  */
 public final class ThumbCache {
 
@@ -54,6 +56,14 @@ public final class ThumbCache {
         }
     }
 
+    /** 该 key 是否已彻底失败（下载失败多次，或数据无法解码）。 */
+    public static boolean isFailed(String key) {
+        if (key == null) return false;
+        synchronized (CACHE) {
+            return FAILED.contains(key);
+        }
+    }
+
     /**
      * 取缩略图：命中缓存立即回调；否则后台下载 + 解码。
      * inline 非空时直接用内联字节（photoCachedSize），不发起网络请求。
@@ -74,21 +84,28 @@ public final class ThumbCache {
         POOL.execute(new Runnable() {
             public void run() {
                 Bitmap out = null;
+                boolean undecodable = false;
                 try {
                     byte[] data = (inline != null && inline.length > 0)
                             ? inline
                             : TelegramManager.get(app).syncDownloadLocation(location);
-                    if (data != null && data.length > 0) out = decode(data, maxPx);
+                    if (data != null && data.length > 0) {
+                        out = decode(data, maxPx);
+                        if (out == null) undecodable = isWebp(data);
+                    }
                 } catch (Throwable t) {
-                    // 失败：下次不再重试，避免每 4 秒轮询都重下
+                    // 下载失败：下面按次数重试
                 }
                 synchronized (CACHE) {
                     LOADING.remove(key);
                     if (out != null) {
                         CACHE.put(key, out);
                         FAILS.remove(key);
+                    } else if (undecodable) {
+                        // 老系统解不了 WebP：重试也没有意义，直接放弃
+                        FAILED.add(key);
                     } else {
-                        // 允许重试几次（网络/迁移可能瞬时失败），仍失败才彻底放弃
+                        // 网络/迁移可能瞬时失败，允许重试几次
                         Integer n = FAILS.get(key);
                         int c = (n == null ? 0 : n.intValue()) + 1;
                         FAILS.put(key, Integer.valueOf(c));
@@ -106,6 +123,12 @@ public final class ThumbCache {
                 });
             }
         });
+    }
+
+    private static boolean isWebp(byte[] d) {
+        return d != null && d.length >= 12
+                && d[0] == 'R' && d[1] == 'I' && d[2] == 'F' && d[3] == 'F'
+                && d[8] == 'W' && d[9] == 'E' && d[10] == 'B' && d[11] == 'P';
     }
 
     private static Bitmap decode(byte[] data, int maxPx) {
