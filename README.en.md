@@ -192,8 +192,9 @@ messages) provide en-US and zh-CN as well.
       (smileys first, symbols/flags last) with within-section order matching modern keyboards
       (categories and order come from `emoji-test.txt`; old keyboards can't type these emoji);
       fully operable with the D-pad (left/right within a row, up/down between rows, centre to pick)
-- [x] **full D-pad navigation**: chat cards, buttons, the input and media bubbles are focusable;
-      long-pressing a card opens its details
+- [x] **full D-pad navigation**: chat cards, buttons, the input, media bubbles, the settings
+      page, the menu and dialogs are all operable with the D-pad, and the focused item has a
+      clear orange highlight; long-pressing a card opens its details
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
 - [x] **My Profile**: tap the Saved Messages avatar (or pick it from the chat-list menu) to view and
       edit your photo, name and bio
