@@ -168,6 +168,10 @@ messages) provide en-US and zh-CN as well.
 - [x] **UI closer to stock Talk** (bubble roster rows, chat contact header, presence icons)
 - [x] **per-Android-version theming** (light on 2.1 / dark on 2.2+)
 - [x] **native QuickContactBadge frames** for avatars (Talk's own frame, varies per OS version)
+- [x] **avatar loading optimised**: only the small version (a few KB) is fetched; downloads go
+      straight to the file DC via `dc_id` from `userProfilePhoto`/`chatPhoto` (skipping a
+      `FILE_MIGRATE` round trip); memory + disk cache so relaunches don't re-download;
+      the chat list prefetches concurrently over a 3-connection pool
 - [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
 - [x] **attachments (photos/videos)**: send via the paperclip button left of the input; received
       messages **show an inline thumbnail right in the bubble** (a smaller PhotoSize for photos, the

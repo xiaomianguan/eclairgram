@@ -156,6 +156,9 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **更贴近原版 Talk 的界面**（气泡式好友条目、聊天联系人栏、presence 图标）
 - [x] **主题随 Android 版本自适应**（2.1 浅色 / 2.2+ 深色）
 - [x] **头像使用系统 QuickContactBadge 相框**（原版 Talk 用的就是这个，随系统版本变化）
+- [x] **头像加载优化**：只下 small 版（几 KB）；按 `userProfilePhoto`/`chatPhoto` 的
+      `dc_id` 直连文件 DC（省掉一次 `FILE_MIGRATE` 往返）；内存 + 磁盘两级缓存，
+      重启不重下；会话列表用 3 路连接池并发预取
 - [x] **自己的会话显示为「收藏夹」**且不显示状态；在线状态只用于其它用户
 - [x] **附件（图片/视频）**：输入框左侧的回形针按钮发送；接收的消息**直接在气泡里
       内联显示缩略图**（图片取较小的 PhotoSize，视频取 document 缩略图并叠加播放图标），
