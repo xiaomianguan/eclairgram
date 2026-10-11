@@ -185,7 +185,7 @@ public class DialogsActivity extends Activity {
     private void addTab(int id, String title) {
         if (!mAddedFolders.add(Integer.valueOf(id))) return;
         TabHost.TabSpec ts = mTabHost.newTabSpec("f" + id);
-        ts.setIndicator(title);
+        ts.setIndicator(EmojiFont.emojify(this, title, dp(16)));
         ts.setContent(R.id.ec_tabcontent);
         mTabHost.addTab(ts);
     }

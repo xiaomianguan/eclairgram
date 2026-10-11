@@ -96,7 +96,7 @@ public class ChatActivity extends Activity {
 
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         setContentView(R.layout.ec_chat);
-        ((TextView) findViewById(R.id.ec_chat_title)).setText(mName);
+        ((TextView) findViewById(R.id.ec_chat_title)).setText(EmojiFont.emojify(this, mName, dp(20)));
         ((TextView) findViewById(R.id.ec_chat_subtitle)).setText(
                 mType == 0 ? getString(mOnline ? R.string.ec_online : R.string.ec_offline)
                            : typeLabel(mType));

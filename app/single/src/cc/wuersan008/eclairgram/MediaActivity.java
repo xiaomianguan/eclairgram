@@ -39,7 +39,7 @@ public class MediaActivity extends Activity {
             t.setTextColor(0xffffffff);
             root.addView(t);
             setContentView(root);
-            setTitle(name);
+            setTitle(EmojiFont.emojify(this, name, dp(16)));
             return;
         }
 
@@ -63,6 +63,10 @@ public class MediaActivity extends Activity {
                     LinearLayout.LayoutParams.FILL_PARENT));
             setContentView(root);
         }
-        if (name != null) setTitle(name);
+        if (name != null) setTitle(EmojiFont.emojify(this, name, dp(16)));
+    }
+
+    private int dp(int v) {
+        return (int) (v * getResources().getDisplayMetrics().density + 0.5f);
     }
 }

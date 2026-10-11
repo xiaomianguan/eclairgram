@@ -89,8 +89,9 @@ public class DetailsActivity extends Activity {
 
     // ======================================================== 他人 / 群组 / 频道
     private void renderOther() {
-        mNameView.setText(mFallbackName == null || mFallbackName.length() == 0
-                ? getString(R.string.ec_app_name) : mFallbackName);
+        String nm = mFallbackName == null || mFallbackName.length() == 0
+                ? getString(R.string.ec_app_name) : mFallbackName;
+        mNameView.setText(EmojiFont.emojify(this, nm, dp(24)));
         mStatusView.setText(typeLabel(mType));
         Bitmap b = AvatarCache.get(mPhotoId);
         if (b != null) mAvatar.setImageBitmap(b);
@@ -163,8 +164,9 @@ public class DetailsActivity extends Activity {
 
         String name = (mFirstName + " " + mLastName).trim();
         if (name.length() == 0) name = getString(R.string.ec_my_profile);
-        mNameView.setText(name);
-        mStatusView.setText(mUsername.length() > 0 ? "@" + mUsername : getString(R.string.ec_my_profile));
+        mNameView.setText(EmojiFont.emojify(this, name, dp(24)));
+        mStatusView.setText(EmojiFont.emojify(this,
+                mUsername.length() > 0 ? "@" + mUsername : getString(R.string.ec_my_profile), dp(16)));
 
         mFields.removeAllViews();
         addEditField(mFields, getString(R.string.ec_field_name), name, new View.OnClickListener() {
@@ -221,10 +223,12 @@ public class DetailsActivity extends Activity {
         first.setHint(R.string.ec_field_first_name);
         first.setSingleLine(true);
         first.setText(mFirstName);
+        EmojiFont.applyToEditable(this, first.getText(), dp(20));
         final EditText last = new EditText(this);
         last.setHint(R.string.ec_field_last_name);
         last.setSingleLine(true);
         last.setText(mLastName);
+        EmojiFont.applyToEditable(this, last.getText(), dp(20));
         box.addView(first);
         box.addView(last);
         new AlertDialog.Builder(this)
@@ -248,6 +252,7 @@ public class DetailsActivity extends Activity {
         final EditText bio = new EditText(this);
         bio.setHint(R.string.ec_field_bio);
         bio.setText(mAbout);
+        EmojiFont.applyToEditable(this, bio.getText(), dp(20));
         bio.setMinLines(3);
         bio.setGravity(Gravity.TOP | Gravity.LEFT);
         box.addView(bio);
@@ -360,7 +365,7 @@ public class DetailsActivity extends Activity {
         row.addView(lv);
 
         TextView v = new TextView(this);
-        v.setText(value);
+        v.setText(EmojiFont.emojify(this, value, dp(16)));
         v.setTextColor(getResources().getColor(R.color.ec_text_primary));
         v.setGravity(Gravity.LEFT);
         row.addView(v);
