@@ -41,6 +41,7 @@ public class DialogsActivity extends Activity {
         String status;
         int unread;
         long photoId;
+        int photoDc;       // 头像所在的文件 DC（0 = 未知）
         int type;          // 0 user, 1 group(chat), 2 channel
         String username;
         long id;
@@ -338,29 +339,26 @@ public class DialogsActivity extends Activity {
         }).start();
     }
 
-    /** 后台逐个下载头像，下载到一个就刷新一次列表（不阻塞列表显示）。 */
+    /** 后台并发下载头像（先内存/磁盘缓存，缺了才联网），下载到一个就刷新一次列表。
+     *  并发度与 TelegramManager 的下载连接池一致（3）。 */
     private void startAvatarFetch(final List<Row> rows) {
-        new Thread(new Runnable() {
-            public void run() {
-                int n = 0;
-                for (final Row r : rows) {
-                    if (!mFetchAvatars || n >= 6) break;
-                    if (r.photoId != 0 && !AvatarCache.has(r.photoId)) {
-                        AvatarCache.load(mTg, r.peer, r.photoId);
-                        n++;
-                        mMain.post(new Runnable() {
-                            public void run() {
-                                mAdapter.notifyDataSetChanged();
-                            }
-                        });
-                        try {
-                            Thread.sleep(200);
-                        } catch (InterruptedException ignored) {
+        final java.util.concurrent.ExecutorService pool =
+                java.util.concurrent.Executors.newFixedThreadPool(3);
+        for (final Row r : rows) {
+            if (r.photoId == 0 || AvatarCache.has(r.photoId)) continue;
+            pool.execute(new Runnable() {
+                public void run() {
+                    if (!mFetchAvatars) return;
+                    AvatarCache.load(DialogsActivity.this, mTg, r.peer, r.photoId, r.photoDc);
+                    mMain.post(new Runnable() {
+                        public void run() {
+                            mAdapter.notifyDataSetChanged();
                         }
-                    }
+                    });
                 }
-            }
-        }).start();
+            });
+        }
+        pool.shutdown();
     }
 
     private int dp(int v) {
@@ -378,6 +376,7 @@ public class DialogsActivity extends Activity {
         Map<Long, String> names = new HashMap<Long, String>();
         Map<Long, Long> access = new HashMap<Long, Long>();
         Map<Long, Long> photoIds = new HashMap<Long, Long>();
+        Map<Long, Integer> photoDcs = new HashMap<Long, Integer>();
         Map<Long, String> usernames = new HashMap<Long, String>();
         Map<Long, Boolean> online = new HashMap<Long, Boolean>();
         long selfId = 0;
@@ -403,6 +402,7 @@ public class DialogsActivity extends Activity {
                 TlObject photo = u.obj("photo");
                 if (photo != null && photo.type().equals("userProfilePhoto")) {
                     photoIds.put(Long.valueOf(id), Long.valueOf(photo.i64("photo_id")));
+                    photoDcs.put(Long.valueOf(id), Integer.valueOf(photo.i32("dc_id")));
                 }
                 TlObject status = u.obj("status");
                 online.put(Long.valueOf(id), Boolean.valueOf(
@@ -424,6 +424,7 @@ public class DialogsActivity extends Activity {
         Map<Long, Long> chatAccess = new HashMap<Long, Long>();
         Map<Long, Integer> chatParts = new HashMap<Long, Integer>();
         Map<Long, Long> chatPhotos = new HashMap<Long, Long>();
+        Map<Long, Integer> chatPhotoDcs = new HashMap<Long, Integer>();
         Set<Long> megagroups = new HashSet<Long>();
         if (chats != null) {
             for (Object o : chats) {
@@ -434,6 +435,7 @@ public class DialogsActivity extends Activity {
                 TlObject cp = c.obj("photo");
                 if (cp != null && cp.type().equals("chatPhoto")) {
                     chatPhotos.put(Long.valueOf(id), Long.valueOf(cp.i64("photo_id")));
+                    chatPhotoDcs.put(Long.valueOf(id), Integer.valueOf(cp.i32("dc_id")));
                 }
                 if (c.type().equals("channel")) {
                     chatAccess.put(Long.valueOf(id), Long.valueOf(c.i64("access_hash")));
@@ -460,6 +462,8 @@ public class DialogsActivity extends Activity {
                     r.name = names.get(Long.valueOf(uid));
                     Long pid = photoIds.get(Long.valueOf(uid));
                     r.photoId = pid == null ? 0L : pid.longValue();
+                    Integer pdc = photoDcs.get(Long.valueOf(uid));
+                    r.photoDc = pdc == null ? 0 : pdc.intValue();
                     r.type = 0;
                     r.id = uid;
                     r.username = usernames.get(Long.valueOf(uid));
@@ -477,6 +481,8 @@ public class DialogsActivity extends Activity {
                     r.id = cid;
                     Long cp = chatPhotos.get(Long.valueOf(cid));
                     r.photoId = cp == null ? 0L : cp.longValue();
+                    Integer pdc = chatPhotoDcs.get(Long.valueOf(cid));
+                    r.photoDc = pdc == null ? 0 : pdc.intValue();
                 } else if (t.equals("peerChannel")) {
                     long cid = peer.i64("channel_id");
                     Long ah = chatAccess.get(Long.valueOf(cid));
@@ -489,6 +495,8 @@ public class DialogsActivity extends Activity {
                     r.participants = pc == null ? 0 : pc.intValue();
                     Long cp = chatPhotos.get(Long.valueOf(cid));
                     r.photoId = cp == null ? 0L : cp.longValue();
+                    Integer pdc2 = chatPhotoDcs.get(Long.valueOf(cid));
+                    r.photoDc = pdc2 == null ? 0 : pdc2.intValue();
                 } else {
                     continue;
                 }

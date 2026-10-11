@@ -150,14 +150,16 @@ public class DetailsActivity extends Activity {
         mPhone = user == null ? "" : nz(user.str("phone"));
         mAbout = full == null ? "" : nz(full.str("about"));
         long pid = 0;
+        int pdc = 0;
         if (user != null) {
             TlObject photo = user.obj("photo");
             if (photo != null && photo.type().equals("userProfilePhoto")) {
                 pid = photo.i64("photo_id");
+                pdc = photo.i32("dc_id");
             }
         }
         mPhotoId = pid;
-        loadAvatar(pid);
+        loadAvatar(pid, pdc);
 
         String name = (mFirstName + " " + mLastName).trim();
         if (name.length() == 0) name = getString(R.string.ec_my_profile);
@@ -185,7 +187,7 @@ public class DetailsActivity extends Activity {
                 });
     }
 
-    private void loadAvatar(final long photoId) {
+    private void loadAvatar(final long photoId, final int dcId) {
         if (photoId == 0) {
             mAvatar.setImageResource(R.drawable.ic_contact_picture);
             return;
@@ -198,8 +200,9 @@ public class DetailsActivity extends Activity {
         mAvatar.setImageResource(R.drawable.ic_contact_picture);
         new Thread(new Runnable() {
             public void run() {
-                final Bitmap nb = AvatarCache.load(TelegramManager.get(DetailsActivity.this),
-                        MtpClient.inputPeerSelf(), photoId);
+                final Bitmap nb = AvatarCache.load(DetailsActivity.this,
+                        TelegramManager.get(DetailsActivity.this),
+                        MtpClient.inputPeerSelf(), photoId, dcId);
                 if (nb != null) {
                     mMain.post(new Runnable() {
                         public void run() { mAvatar.setImageBitmap(nb); }

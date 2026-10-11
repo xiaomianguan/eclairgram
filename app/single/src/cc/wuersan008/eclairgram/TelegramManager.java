@@ -49,12 +49,12 @@ public final class TelegramManager {
     // 所以“有 key”不等于“已登录”，否则请求验证码后就会被当成已登录。
     private boolean mAuthorized;
     private final Object mNet = new Object();
-    // 文件下载（头像/媒体）走独立的锁与连接：老设备上跨 DC 建连要跑一次 DH 握手
-    // （秒级），绝不能让它阻塞交互请求（会话列表 / 历史消息 / 发送）。
-    private final Object mFile = new Object();
+    // 文件下载（头像/媒体）走独立的连接池（见 mDlLock/mDlMain/mDlFile）：老设备上跨 DC
+    // 建连要跑一次 DH 握手（秒级），绝不能让它阻塞交互请求，也要能并发下载多个头像。
 
     private TelegramManager(Context ctx) {
         mApp = ctx.getApplicationContext();
+        for (int i = 0; i < DL_SLOTS; i++) mDlLock[i] = new Object();
         load();
     }
 
@@ -433,53 +433,65 @@ public final class TelegramManager {
         }
     }
 
-    public byte[] syncDownloadPeerPhoto(byte[] inputPeer, long photoId) throws Exception {
-        synchronized (mFile) {
-            return downloadWithMigrate(MtpClient.peerPhotoLocation(inputPeer, photoId));
+    public byte[] syncDownloadPeerPhoto(byte[] inputPeer, long photoId, int dcId) throws Exception {
+        int slot = dlSlot();
+        synchronized (mDlLock[slot]) {
+            return downloadLocation(slot, dcId, MtpClient.peerPhotoLocation(inputPeer, photoId));
         }
     }
 
     /** 按 InputFileLocation 下载消息里的媒体。 */
     public byte[] syncDownloadLocation(byte[] location) throws Exception {
-        synchronized (mFile) {
-            return downloadWithMigrate(location);
+        int slot = dlSlot();
+        synchronized (mDlLock[slot]) {
+            return downloadLocation(slot, 0, location);
         }
     }
 
-    /** 下载一个 InputFileLocation：先在主 DC 的专属连接上试，FILE_MIGRATE 时切到文件 DC。 */
-    private byte[] downloadWithMigrate(byte[] location) throws Exception {
-        MtpClient dc = fileDownloadClient();
+    /** 取一个下载 slot（轮流使用，允许并发下载）。 */
+    private int dlSlot() {
+        int s = mDlNext.getAndIncrement() % DL_SLOTS;
+        return s < 0 ? -s : s;
+    }
+
+    /** 下载一个 InputFileLocation。dcId>0 时直接连该文件 DC（省一次 FILE_MIGRATE 往返）；
+     *  否则先在主 DC 的专属连接上试，再按 FILE_MIGRATE 迁移。 */
+    private byte[] downloadLocation(int slot, int dcId, byte[] location) throws Exception {
+        if (dcId > 0 && dcId != mDc) {
+            return downloadFromFileDc(slot, dcId, location, 0);
+        }
+        MtpClient dc = fileDownloadClient(slot);
         if (dc == null) return null;
         try {
             return dc.downloadLocation(location);
         } catch (java.io.IOException e) {
             int target = parseMigrate(e.getMessage(), "FILE_MIGRATE_");
             if (target <= 0) return null;
-            return downloadFromFileDc(target, location, 0);
+            return downloadFromFileDc(slot, target, location, 0);
         }
     }
 
     /** 在文件 DC 上下载；若用的是持久化 key 且失败，则丢弃该 key 重建后再试一次。 */
-    private byte[] downloadFromFileDc(int dc, byte[] location, int depth) throws Exception {
+    private byte[] downloadFromFileDc(int slot, int dc, byte[] location, int depth) throws Exception {
         if (depth > 2) return null;
-        MtpClient fc = fileClient(dc);
+        MtpClient fc = fileClient(slot, dc);
         if (fc == null) return null;
-        boolean reused = mReusedFileDcs.contains(Integer.valueOf(dc));
+        boolean reused = mDlReused.containsKey(slot + ":" + dc);
         try {
             byte[] r = fc.downloadLocation(location);
             if (r != null) return r;
             if (reused) {
-                invalidateFileClient(dc);
-                return downloadFromFileDc(dc, location, depth + 1);
+                invalidateFileClient(slot, dc);
+                return downloadFromFileDc(slot, dc, location, depth + 1);
             }
             return null;
         } catch (java.io.IOException e) {
             int target = parseMigrate(e.getMessage(), "FILE_MIGRATE_");
-            invalidateFileClient(dc);
-            if (target > 0) return downloadFromFileDc(target, location, depth + 1);
+            invalidateFileClient(slot, dc);
+            if (target > 0) return downloadFromFileDc(slot, target, location, depth + 1);
             return null;
         } catch (Throwable t) {
-            invalidateFileClient(dc);
+            invalidateFileClient(slot, dc);
             return null;
         }
     }
@@ -493,19 +505,24 @@ public final class TelegramManager {
         }
     }
 
-    private final java.util.Map<Integer, MtpClient> mFileClients =
-            new java.util.HashMap<Integer, MtpClient>();
-    private final java.util.Set<Integer> mReusedFileDcs = new java.util.HashSet<Integer>();
-    private MtpClient mFileMain;   // 主 DC 上专供文件下载的连接
+    private static final int DL_SLOTS = 3;
+    private final Object[] mDlLock = new Object[DL_SLOTS];
+    private final MtpClient[] mDlMain = new MtpClient[DL_SLOTS];
+    private final java.util.concurrent.ConcurrentHashMap<String, MtpClient> mDlFile =
+            new java.util.concurrent.ConcurrentHashMap<String, MtpClient>();
+    private final java.util.concurrent.ConcurrentHashMap<String, Boolean> mDlReused =
+            new java.util.concurrent.ConcurrentHashMap<String, Boolean>();
+    private final java.util.concurrent.atomic.AtomicInteger mDlNext =
+            new java.util.concurrent.atomic.AtomicInteger();
 
-    /** 主 DC 上专供文件下载的连接，避免与交互 RPC 抢 mNet 锁。 */
-    private MtpClient fileDownloadClient() {
-        if (mFileMain != null && mFileMain.isConnected()) return mFileMain;
+    /** 主 DC 上专供文件下载的连接（每个 slot 一条，可并发下载）。 */
+    private MtpClient fileDownloadClient(int slot) {
+        if (mDlMain[slot] != null && mDlMain[slot].isConnected()) return mDlMain[slot];
         if (mAuthKey == null) return null;
         try {
             MtpClient c = new MtpClient(apiId(), apiHash());
             c.connectWithAuthKey(mDc, mAuthKey);
-            mFileMain = c;
+            mDlMain[slot] = c;
             return c;
         } catch (Throwable t) {
             Log.w(TAG, "file download client failed: " + t);
@@ -530,40 +547,43 @@ public final class TelegramManager {
     }
 
     private void closeAuxClients() {
-        if (mFileMain != null) {
-            mFileMain.close();
-            mFileMain = null;
+        for (int i = 0; i < DL_SLOTS; i++) {
+            if (mDlMain[i] != null) {
+                mDlMain[i].close();
+                mDlMain[i] = null;
+            }
         }
-        for (MtpClient c : mFileClients.values()) {
+        for (MtpClient c : mDlFile.values()) {
             try {
                 c.close();
             } catch (Throwable ignored) {
             }
         }
-        mFileClients.clear();
-        mReusedFileDcs.clear();
+        mDlFile.clear();
+        mDlReused.clear();
     }
 
-    /** 丢弃某个文件 DC 的连接与持久化 key（用于 key 失效后重建）。 */
-    private void invalidateFileClient(int dc) {
-        MtpClient c = mFileClients.remove(Integer.valueOf(dc));
+    /** 丢弃某个 slot 的文件 DC 连接与持久化 key（用于 key 失效后重建）。 */
+    private void invalidateFileClient(int slot, int dc) {
+        MtpClient c = mDlFile.remove(slot + ":" + dc);
         if (c != null) {
             try {
                 c.close();
             } catch (Throwable ignored) {
             }
         }
-        mReusedFileDcs.remove(Integer.valueOf(dc));
+        mDlReused.remove(slot + ":" + dc);
         mApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .remove(fileKeyPref(dc)).commit();
     }
 
     /** 文件在别的 DC 时：优先复用已持久化的 auth key（省掉一次昂贵的 DH 握手），
      *  否则导出登录态、连到该 DC、握手、导入，并把新 key 存下来。
-     *  只有 exportAuthorization 需要主连接（短暂持 mNet）；随后昂贵的 DH 握手
-     *  在 mFile 锁下进行，不会阻塞界面请求。 */
-    private MtpClient fileClient(int dc) {
-        MtpClient c = mFileClients.get(Integer.valueOf(dc));
+     *  只有 exportAuthorization 需要主连接（短暂持 mNet）；昂贵的 DH 握手在 slot 锁下
+     *  进行，不会阻塞界面请求。 */
+    private MtpClient fileClient(int slot, int dc) {
+        String key = slot + ":" + dc;
+        MtpClient c = mDlFile.get(key);
         if (c != null && c.isConnected()) return c;
 
         byte[] saved = loadFileKey(dc);
@@ -571,9 +591,8 @@ public final class TelegramManager {
             try {
                 MtpClient rc = new MtpClient(apiId(), apiHash());
                 rc.connectWithAuthKey(dc, saved);
-                mFileClients.put(Integer.valueOf(dc), rc);
-                mReusedFileDcs.add(Integer.valueOf(dc));   // 若下载失败会重建
-                Log.i(TAG, "reused file auth DC" + dc);
+                mDlFile.put(key, rc);
+                mDlReused.put(key, Boolean.TRUE);   // 若下载失败会重建
                 return rc;
             } catch (Throwable t) {
                 Log.w(TAG, "saved file auth DC" + dc + " unusable: " + t);
@@ -586,16 +605,13 @@ public final class TelegramManager {
                 ensureConnected();
                 exp = mClient.exportAuthorization(dc);
             }
-            Log.i(TAG, "exported auth DC" + dc + " id=" + exp.id + " len=" + exp.bytes.length);
             MtpClient nc = new MtpClient(apiId(), apiHash());
             nc.connect(dc);
             nc.doHandshake();
-            Log.i(TAG, "handshake DC" + dc + " ok");
             nc.importAuthorization(exp.id, exp.bytes);
-            Log.i(TAG, "imported auth DC" + dc + " ok");
             saveFileKey(dc, nc.state() == null ? null : nc.state().authKey());
-            mFileClients.put(Integer.valueOf(dc), nc);
-            mReusedFileDcs.remove(Integer.valueOf(dc));
+            mDlFile.put(key, nc);
+            mDlReused.remove(key);
             return nc;
         } catch (Throwable t) {
             Log.w(TAG, "file client DC" + dc + " failed: " + t);
