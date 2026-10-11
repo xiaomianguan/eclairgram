@@ -28,9 +28,12 @@
             android:textSize="16.0sp"
             android:singleLine="true" />
 
+        <!-- fillViewport：标签少（总宽不足一屏）时把 TabWidget 撑到整屏宽，
+             标签是 LinearLayout 的等权子项，于是均分铺满；标签多时维持自然宽度可横向滚动。 -->
         <HorizontalScrollView android:id="@+id/ec_tabscroll"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:fillViewport="true"
             android:scrollbars="none"
             android:visibility="gone">
 
