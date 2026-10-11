@@ -31,7 +31,7 @@ public final class ThumbCache {
         void onThumb(String key, Bitmap bitmap);
     }
 
-    private static final int MAX_ENTRIES = 24;
+    private static final int MAX_ENTRIES = 16;
 
     private static final Map<String, Bitmap> CACHE =
             new LinkedHashMap<String, Bitmap>(16, 0.75f, true) {

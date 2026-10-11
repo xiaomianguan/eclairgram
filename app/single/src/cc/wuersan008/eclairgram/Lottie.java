@@ -23,6 +23,10 @@ import java.util.zip.GZIPInputStream;
  * 位置/缩放/旋转/不透明度和**路径形状**的关键帧（含三次贝塞尔缓动）。
  * 不使用遮罩、图片、预合成、渐变（贴纸里没有）。
  *
+ * 老设备堆很小（16MB），而渲染是每帧都跑的，因此这里**尽量不做临时分配**：
+ * 属性值写进各 Prop 自己的暂存数组、路径顶点插值写进复用的 Sd、Path 复用、
+ * 变换交给 Canvas（不再每帧 new Path）、矩阵用按深度复用的池。
+ *
  * 用法：{@code Lottie a = Lottie.parse(tgsBytes); a.render(canvas, frame);}
  */
 public final class Lottie {
@@ -35,6 +39,18 @@ public final class Lottie {
 
     private final List<Layer> layers = new ArrayList<Layer>();
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    // 按递归深度复用的矩阵（渲染是单线程，逐帧复用即可）
+    private static final int MAX_DEPTH = 24;
+    private final Matrix[] poolA = newMatrixPool();
+    private final Matrix[] poolB = newMatrixPool();
+    private final Matrix tmpMatrix = new Matrix();
+
+    private static Matrix[] newMatrixPool() {
+        Matrix[] p = new Matrix[MAX_DEPTH];
+        for (int i = 0; i < p.length; i++) p[i] = new Matrix();
+        return p;
+    }
 
     private Lottie(JSONObject o) throws Exception {
         width = o.optInt("w", 512);
@@ -78,6 +94,9 @@ public final class Lottie {
 
     /** 把第 frame 帧画到 canvas（canvas 坐标已按贴纸显示尺寸缩放好）。 */
     public void render(Canvas canvas, float frame) {
+        if (canvas == null) return;
+        if (frame < inFrame) frame = inFrame;
+        if (frame >= outFrame) frame = outFrame - 1;
         // Lottie 里 layers[0] 在最上层：从后往前画
         for (int i = layers.size() - 1; i >= 0; i--) {
             Layer l = layers.get(i);
@@ -89,12 +108,16 @@ public final class Lottie {
     }
 
     private Matrix worldMatrix(Layer l, float frame, int depth) {
-        Matrix local = l.ks == null ? new Matrix() : l.ks.matrix(frame);
-        if (l.parent == 0 || depth > 16) return local;
+        if (depth >= MAX_DEPTH) return poolA[0];
+        Matrix local = poolA[depth];
+        if (l.ks != null) l.ks.apply(local, frame);
+        else local.reset();
+        if (l.parent == 0) return local;
         Layer p = findByInd(l.parent);
         if (p == null) return local;
         Matrix pm = worldMatrix(p, frame, depth + 1);
-        Matrix out = new Matrix(pm);
+        Matrix out = poolB[depth];
+        out.set(pm);
         out.preConcat(local);      // out = parent * local
         return out;
     }
@@ -108,45 +131,50 @@ public final class Lottie {
 
     private void drawLayer(Canvas canvas, Layer l, Matrix base, float frame) {
         if (l.shapes == null) return;
-        drawShapes(canvas, l.shapes, base, frame);
+        canvas.save();
+        canvas.concat(base);
+        drawShapes(canvas, l.shapes, frame);
+        canvas.restore();
     }
 
-    /** 递归画一组形状：组(gr) 先应用自己的 tr，再画里面的路径/填充/描边。 */
-    private void drawShapes(Canvas canvas, List<Shape> shapes, Matrix parent, float frame) {
-        List<Shape> paths = new ArrayList<Shape>();
-        List<Shape> fills = new ArrayList<Shape>();
-        List<Shape> strokes = new ArrayList<Shape>();
-        for (Shape s : shapes) {
-            if (s.ty.equals("sh")) paths.add(s);
-            else if (s.ty.equals("fl")) fills.add(s);
-            else if (s.ty.equals("st")) strokes.add(s);
-            else if (s.ty.equals("gr")) {
-                Matrix gm = new Matrix(parent);
-                if (s.tr != null) gm.preConcat(s.tr.matrix(frame));
-                drawShapes(canvas, s.children, gm, frame);
-            }
-        }
-        if (paths.isEmpty()) return;
-        for (Shape p : paths) {
-            Path path = p.pathAt(frame);
+    /** 递归画一组形状（canvas 已带好当前变换，不再对路径做 CPU 变换）。 */
+    private void drawShapes(Canvas canvas, List<Shape> shapes, float frame) {
+        int n = shapes.size();
+        for (int i = 0; i < n; i++) {
+            Shape p = shapes.get(i);
+            if (!"sh".equals(p.ty) || p.path == null) continue;
+            Path path = p.path.path(frame, p.scratchPath);
             if (path == null) continue;
-            Path t = new Path(path);
-            t.transform(parent);
-            for (Shape f : fills) {
+            for (int j = 0; j < n; j++) {
+                Shape f = shapes.get(j);
+                if (!"fl".equals(f.ty)) continue;
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(f.colorAt(frame));
                 paint.setAlpha(applyOpacity(paint.getAlpha(), f.opacityAt(frame)));
-                canvas.drawPath(t, paint);
+                canvas.drawPath(path, paint);
             }
-            for (Shape st : strokes) {
+            for (int j = 0; j < n; j++) {
+                Shape st = shapes.get(j);
+                if (!"st".equals(st.ty)) continue;
                 paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(Math.max(1f, st.strokeWidthAt(frame)));
+                paint.setStrokeWidth(Math.max(0.5f, st.strokeWidthAt(frame)));
                 paint.setColor(st.colorAt(frame));
                 paint.setAlpha(applyOpacity(paint.getAlpha(), st.opacityAt(frame)));
                 paint.setStrokeCap(Paint.Cap.ROUND);
                 paint.setStrokeJoin(Paint.Join.ROUND);
-                canvas.drawPath(t, paint);
+                canvas.drawPath(path, paint);
             }
+        }
+        for (int i = 0; i < n; i++) {
+            Shape g = shapes.get(i);
+            if (!"gr".equals(g.ty)) continue;
+            canvas.save();
+            if (g.tr != null) {
+                g.tr.apply(tmpMatrix, frame);
+                canvas.concat(tmpMatrix);
+            }
+            drawShapes(canvas, g.children, frame);
+            canvas.restore();
         }
     }
 
@@ -212,10 +240,7 @@ public final class Lottie {
         Prop color, opacity, strokeWidth;   // fl / st
         Transform tr;                       // gr
         List<Shape> children;               // gr
-
-        Path pathAt(float frame) {
-            return path == null ? null : path.path(frame);
-        }
+        final Path scratchPath = new Path();   // 复用的路径（单线程渲染）
 
         int colorAt(float frame) {
             if (color == null) return 0xffffffff;
@@ -247,25 +272,30 @@ public final class Lottie {
             return t;
         }
 
-        Matrix matrix(float frame) {
-            float[] pv = p == null ? new float[] {0, 0} : p.at(frame);
-            float[] av = a == null ? new float[] {0, 0} : a.at(frame);
-            float[] sv = s == null ? new float[] {100, 100} : s.at(frame);
+        /** 把变换写进 m（不分配）。 */
+        void apply(Matrix m, float frame) {
+            float[] pv = p == null ? DEF_POS : p.at(frame);
+            float[] av = a == null ? DEF_ZERO : a.at(frame);
+            float[] sv = s == null ? DEF_SCALE : s.at(frame);
             float rv = r == null ? 0 : r.at(frame)[0];
-            Matrix m = new Matrix();
-            m.postTranslate(-av[0], -av[1]);
+            m.reset();
+            m.postTranslate(-av[0], av.length > 1 ? -av[1] : 0);
             m.postScale(sv[0] / 100f, sv.length > 1 ? sv[1] / 100f : sv[0] / 100f);
             m.postRotate(rv);
             m.postTranslate(pv[0], pv.length > 1 ? pv[1] : 0);
-            return m;
         }
     }
 
-    /** 标量/向量属性（颜色、不透明度、线宽、变换分量）。 */
+    private static final float[] DEF_POS = {0, 0};
+    private static final float[] DEF_ZERO = {0, 0};
+    private static final float[] DEF_SCALE = {100, 100};
+
+    /** 标量/向量属性（颜色、不透明度、线宽、变换分量）。值写进复用的暂存数组。 */
     static final class Prop {
         boolean animated;
         float[] k;
         Kf[] kfs;
+        private float[] out = new float[4];
 
         static Prop parse(JSONObject o) {
             if (o == null) return null;
@@ -273,7 +303,7 @@ public final class Lottie {
             if (o.optInt("a", 0) == 1) {
                 p.animated = true;
                 JSONArray arr = o.optJSONArray("k");
-                if (arr == null) { p.animated = false; p.k = new float[] {0}; return p; }
+                if (arr == null) { p.animated = false; p.k = DEF_ZERO; return p; }
                 List<Kf> list = new ArrayList<Kf>();
                 for (int i = 0; i < arr.length(); i++) {
                     JSONObject ko = arr.optJSONObject(i);
@@ -289,7 +319,7 @@ public final class Lottie {
                     list.add(kf);
                 }
                 p.kfs = list.toArray(new Kf[0]);
-                if (p.kfs.length == 0) { p.animated = false; p.k = new float[] {0}; }
+                if (p.kfs.length == 0) { p.animated = false; p.k = DEF_ZERO; }
             } else {
                 p.k = scalarOrArray(o.opt("k"));
             }
@@ -297,38 +327,42 @@ public final class Lottie {
         }
 
         float[] at(float frame) {
-            if (!animated || kfs == null) return k == null ? new float[] {0} : k;
-            if (frame <= kfs[0].t) return valueOf(kfs[0]);
-            if (frame >= kfs[kfs.length - 1].t) return valueOf(kfs[kfs.length - 1]);
+            if (!animated || kfs == null) return k == null ? DEF_ZERO : k;
+            Kf a = null, b = null;
+            if (frame <= kfs[0].t) return fill(kfs[0], 0);
+            if (frame >= kfs[kfs.length - 1].t) return fill(kfs[kfs.length - 1], 0);
             for (int i = 0; i < kfs.length - 1; i++) {
-                Kf a = kfs[i], b = kfs[i + 1];
-                if (frame >= a.t && frame <= b.t) {
-                    float span = b.t - a.t;
-                    float f = span <= 0 ? 1f : (frame - a.t) / span;
-                    float eased = ease(f, a.ox, a.oy, b.ix, b.iy);
-                    float[] va = a.e != null ? a.e : a.s;
-                    float[] vb = b.s;
-                    if (va == null || vb == null) return va != null ? va : new float[] {0};
-                    int n = Math.min(va.length, vb.length);
-                    float[] r = new float[n];
-                    for (int j = 0; j < n; j++) r[j] = va[j] + (vb[j] - va[j]) * eased;
-                    return r;
-                }
+                if (frame >= kfs[i].t && frame <= kfs[i + 1].t) { a = kfs[i]; b = kfs[i + 1]; break; }
             }
-            return valueOf(kfs[kfs.length - 1]);
+            if (a == null || b == null) return fill(kfs[kfs.length - 1], 0);
+            float span = b.t - a.t;
+            float f = span <= 0 ? 1f : (frame - a.t) / span;
+            float eased = ease(f, a.ox, a.oy, b.ix, b.iy);
+            float[] va = a.e != null ? a.e : a.s;
+            float[] vb = b.s;
+            if (va == null || vb == null) return va != null ? va : DEF_ZERO;
+            int n = Math.min(va.length, vb.length);
+            if (out.length < n) out = new float[n];
+            for (int j = 0; j < n; j++) out[j] = va[j] + (vb[j] - va[j]) * eased;
+            return out;
         }
 
-        private static float[] valueOf(Kf kf) {
-            return kf.s == null ? new float[] {0} : kf.s;
+        private float[] fill(Kf kf, int which) {
+            float[] v = which == 1 ? kf.e : kf.s;
+            if (v == null) return DEF_ZERO;
+            if (out.length < v.length) out = new float[v.length];
+            System.arraycopy(v, 0, out, 0, v.length);
+            return out;
         }
     }
 
-    /** 路径形状属性（支持关键帧之间的顶点插值 = 变形动画）。 */
+    /** 路径形状属性（关键帧之间做顶点插值 = 变形动画）。顶点写进复用的 Sd。 */
     static final class PathProp {
         boolean animated;
         Sd[] kfs;
         float[] t;
         float[] ix, iy, ox, oy;
+        private final Sd scratch = new Sd();
 
         static PathProp parse(JSONObject o) {
             if (o == null) return null;
@@ -340,10 +374,8 @@ public final class Lottie {
                 p.animated = true;
                 p.kfs = new Sd[n];
                 p.t = new float[n];
-                p.ix = new float[n];
-                p.iy = new float[n];
-                p.ox = new float[n];
-                p.oy = new float[n];
+                p.ix = new float[n]; p.iy = new float[n];
+                p.ox = new float[n]; p.oy = new float[n];
                 for (int i = 0; i < n; i++) {
                     JSONObject ko = arr.optJSONObject(i);
                     if (ko == null) { p.kfs[i] = new Sd(); continue; }
@@ -376,30 +408,38 @@ public final class Lottie {
             return ko;
         }
 
-        Path path(float frame) {            Sd sd;
-            if (!animated || kfs.length == 1) {
-                sd = kfs[0];
-            } else if (frame <= t[0]) {
-                sd = kfs[0];
-            } else if (frame >= t[t.length - 1]) {
-                sd = kfs[kfs.length - 1];
-            } else {
-                int i = 0;
-                while (i < t.length - 1 && !(frame >= t[i] && frame <= t[i + 1])) i++;
-                if (i >= t.length - 1) {
-                    sd = kfs[kfs.length - 1];
-                } else {
-                    float span = t[i + 1] - t[i];
-                    float f = span <= 0 ? 1f : (frame - t[i]) / span;
-                    float e = ease(f, ox[i], oy[i], ix[i + 1], iy[i + 1]);
-                    sd = Sd.lerp(kfs[i], kfs[i + 1], e);
-                }
+        /** 把第 frame 帧的路径写进 out 并返回（不分配）。 */
+        Path path(float frame, Path out) {
+            Sd sd = pick(frame);
+            if (sd == null || sd.vx == null || sd.vx.length == 0) return null;
+            out.rewind();
+            int n = sd.vx.length;
+            out.moveTo(sd.vx[0], sd.vy[0]);
+            for (int s = 0; s < n; s++) {
+                int s2 = (s + 1) % n;
+                if (s2 == 0 && !sd.closed) break;
+                out.cubicTo(sd.vx[s] + sd.ox[s], sd.vy[s] + sd.oy[s],
+                        sd.vx[s2] + sd.ix[s2], sd.vy[s2] + sd.iy[s2], sd.vx[s2], sd.vy[s2]);
             }
-            return sd == null ? null : sd.toPath();
+            if (sd.closed) out.close();
+            return out;
+        }
+
+        private Sd pick(float frame) {
+            if (!animated || kfs.length == 1) return kfs[0];
+            if (frame <= t[0]) return kfs[0];
+            if (frame >= t[t.length - 1]) return kfs[kfs.length - 1];
+            int i = 0;
+            while (i < t.length - 1 && !(frame >= t[i] && frame <= t[i + 1])) i++;
+            if (i >= t.length - 1) return kfs[kfs.length - 1];
+            float span = t[i + 1] - t[i];
+            float f = span <= 0 ? 1f : (frame - t[i]) / span;
+            float e = ease(f, ox[i], oy[i], ix[i + 1], iy[i + 1]);
+            return scratch.lerpInto(kfs[i], kfs[i + 1], e);
         }
     }
 
-    /** 一条路径的顶点/切线数据。 */
+    /** 一条路径的顶点/切线数据（可复用）。 */
     static final class Sd {
         float[] vx, vy, ix, iy, ox, oy;
         boolean closed;
@@ -411,9 +451,7 @@ public final class Lottie {
             JSONArray o = s.optJSONArray("o");
             d.closed = s.optBoolean("c", false);
             int n = v == null ? 0 : v.length();
-            d.vx = new float[n]; d.vy = new float[n];
-            d.ix = new float[n]; d.iy = new float[n];
-            d.ox = new float[n]; d.oy = new float[n];
+            d.ensure(n);
             for (int k = 0; k < n; k++) {
                 JSONArray vk = v.optJSONArray(k);
                 if (vk != null) { d.vx[k] = (float) vk.optDouble(0); d.vy[k] = (float) vk.optDouble(1); }
@@ -425,38 +463,28 @@ public final class Lottie {
             return d;
         }
 
-        static Sd lerp(Sd a, Sd b, float f) {
-            int n = Math.min(a.vx.length, b.vx.length);
-            if (n == 0) return a;
-            Sd d = new Sd();
-            d.closed = a.closed;
-            d.vx = new float[n]; d.vy = new float[n];
-            d.ix = new float[n]; d.iy = new float[n];
-            d.ox = new float[n]; d.oy = new float[n];
-            for (int k = 0; k < n; k++) {
-                d.vx[k] = a.vx[k] + (b.vx[k] - a.vx[k]) * f;
-                d.vy[k] = a.vy[k] + (b.vy[k] - a.vy[k]) * f;
-                d.ix[k] = a.ix[k] + (b.ix[k] - a.ix[k]) * f;
-                d.iy[k] = a.iy[k] + (b.iy[k] - a.iy[k]) * f;
-                d.ox[k] = a.ox[k] + (b.ox[k] - a.ox[k]) * f;
-                d.oy[k] = a.oy[k] + (b.oy[k] - a.oy[k]) * f;
+        void ensure(int n) {
+            if (vx == null || vx.length < n) {
+                vx = new float[n]; vy = new float[n];
+                ix = new float[n]; iy = new float[n];
+                ox = new float[n]; oy = new float[n];
             }
-            return d;
         }
 
-        Path toPath() {
-            int n = vx.length;
-            if (n == 0) return null;
-            Path p = new Path();
-            p.moveTo(vx[0], vy[0]);
-            for (int s = 0; s < n; s++) {
-                int s2 = (s + 1) % n;
-                if (s2 == 0 && !closed) break;
-                p.cubicTo(vx[s] + ox[s], vy[s] + oy[s],
-                        vx[s2] + ix[s2], vy[s2] + iy[s2], vx[s2], vy[s2]);
+        Sd lerpInto(Sd a, Sd b, float f) {
+            int n = Math.min(a.vx.length, b.vx.length);
+            if (n == 0) { closed = a.closed; return this; }
+            ensure(n);
+            for (int k = 0; k < n; k++) {
+                vx[k] = a.vx[k] + (b.vx[k] - a.vx[k]) * f;
+                vy[k] = a.vy[k] + (b.vy[k] - a.vy[k]) * f;
+                ix[k] = a.ix[k] + (b.ix[k] - a.ix[k]) * f;
+                iy[k] = a.iy[k] + (b.iy[k] - a.iy[k]) * f;
+                ox[k] = a.ox[k] + (b.ox[k] - a.ox[k]) * f;
+                oy[k] = a.oy[k] + (b.oy[k] - a.oy[k]) * f;
             }
-            if (closed) p.close();
-            return p;
+            closed = a.closed;
+            return this;
         }
     }
 
@@ -468,8 +496,11 @@ public final class Lottie {
 
     private static float[] scalarOrArray(Object v) {
         if (v instanceof Number) return new float[] {((Number) v).floatValue()};
-        if (v instanceof JSONArray) return numArray((JSONArray) v);
-        return new float[] {0};
+        if (v instanceof JSONArray) {
+            float[] r = numArray((JSONArray) v);
+            return r == null ? DEF_ZERO : r;
+        }
+        return DEF_ZERO;
     }
 
     private static float[] numArray(JSONArray a) {

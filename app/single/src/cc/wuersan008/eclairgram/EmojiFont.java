@@ -51,7 +51,7 @@ public final class EmojiFont {
     private static byte[] sCat;
     private static int[] sOrder;             // pack 顺序（供表情选择器）
 
-    private static final int BMP_MAX = 48;
+    private static final int BMP_MAX = 32;
     private static final Map<Integer, Bitmap> CACHE =
             new LinkedHashMap<Integer, Bitmap>(16, 0.75f, true) {
                 @Override
@@ -60,7 +60,7 @@ public final class EmojiFont {
                 }
             };
 
-    private static final int DRAW_MAX = 96;
+    private static final int DRAW_MAX = 64;
     private static final Map<Long, Drawable> DRAWABLES =
             new LinkedHashMap<Long, Drawable>(16, 0.75f, true) {
                 @Override

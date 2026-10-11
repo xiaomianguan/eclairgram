@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public final class AvatarCache {
 
-    private static final int MAX_ENTRIES = 64;
+    private static final int MAX_ENTRIES = 32;
     private static final int MAX_PX = 128;     // 头像最大显示 ~72px，128 足够清晰
 
     private static final Map<Long, Bitmap> CACHE =

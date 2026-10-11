@@ -21,8 +21,9 @@ public final class AnimatedStickerView extends View {
     private final Handler handler = new Handler();
     private final Runnable tick = new Runnable() {
         public void run() {
+            if (!running) return;
             invalidate();
-            if (running) handler.postDelayed(this, 33);   // ~30fps，老设备够用
+            if (running) handler.postDelayed(this, 66);   // ~15fps，老设备够用且省内存
         }
     };
 
@@ -55,16 +56,22 @@ public final class AnimatedStickerView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         if (lottie == null) return;
-        float dur = lottie.durationMs();
-        float frame = lottie.inFrame;
-        if (dur > 0) {
-            long el = SystemClock.uptimeMillis() - startMs;
-            frame += (el % (long) dur) * lottie.frameRate / 1000f;
+        try {
+            float dur = lottie.durationMs();
+            float frame = lottie.inFrame;
+            if (dur > 0) {
+                long el = SystemClock.uptimeMillis() - startMs;
+                frame += (el % (long) dur) * lottie.frameRate / 1000f;
+            }
+            canvas.save();
+            canvas.scale(getWidth() / (float) lottie.width, getHeight() / (float) lottie.height);
+            lottie.render(canvas, frame);
+            canvas.restore();
+        } catch (Throwable t) {
+            // 渲染出错（含 OOM）：停下来并清空，别把界面拖垮
+            stop();
+            lottie = null;
         }
-        canvas.save();
-        canvas.scale(getWidth() / (float) lottie.width, getHeight() / (float) lottie.height);
-        lottie.render(canvas, frame);
-        canvas.restore();
     }
 
     @Override

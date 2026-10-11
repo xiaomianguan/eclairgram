@@ -26,6 +26,7 @@ public final class MtpClient {
     private int dcId;
 
     private final List<byte[]> updates = new ArrayList<byte[]>();
+    private static final int MAX_UPDATES = 64;   // 没人消费时不要无限增长
     private boolean debug;
 
     public MtpClient(int apiId, String apiHash) {
@@ -316,7 +317,7 @@ public final class MtpClient {
                 return null;
             default:
                 log("ignore message 0x" + Integer.toHexString(ctor));
-                updates.add(body);
+                if (updates.size() < MAX_UPDATES) updates.add(body);
                 return null;
         }
     }

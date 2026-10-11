@@ -371,7 +371,18 @@ public final class TelegramManager {
                 resetClient();
                 sleepQuiet(3000);
             }
+            maybeGc();
             sleepQuiet(4000);
+        }
+    }
+
+    /** 老设备堆很小（16MB）：堆已提交得接近上限时主动回收一次，避免分配时直接 OOM 崩溃。 */
+    private void maybeGc() {
+        try {
+            Runtime rt = Runtime.getRuntime();
+            long max = rt.maxMemory();
+            if (max > 0 && rt.totalMemory() > max * 3 / 4) System.gc();
+        } catch (Throwable ignored) {
         }
     }
 

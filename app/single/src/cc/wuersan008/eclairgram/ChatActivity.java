@@ -139,6 +139,7 @@ public class ChatActivity extends BaseActivity {
                     v = LayoutInflater.from(ChatActivity.this)
                             .inflate(R.layout.ec_message_item, parent, false);
                 }
+                try {
                 final Msg m = getItem(position);
                 LinearLayout row = (LinearLayout) v.findViewById(R.id.ec_msg_row);
                 LinearLayout bubble = (LinearLayout) v.findViewById(R.id.ec_msg_bubble);
@@ -249,6 +250,9 @@ public class ChatActivity extends BaseActivity {
                     bubble.setFocusable(false);
                     bubble.setClickable(false);
                     bubble.setOnClickListener(null);
+                }
+                } catch (Throwable t) {
+                    // 单条消息渲染出错（含 OOM）不要连累整个列表
                 }
                 return v;
             }
@@ -512,8 +516,18 @@ public class ChatActivity extends BaseActivity {
     // ============================================================ 刷新
     private void refresh() {
         try {
-            TlObject hist = TelegramManager.get(this).syncGetHistory(mPeer, 50);
+            TlObject hist = TelegramManager.get(this).syncGetHistory(mPeer, 30);
             List<Object> msgs = hist.list("messages");
+            // 先用消息 id 算指纹：没变就不重建列表（省下大量临时对象）
+            int sig = 17;
+            if (msgs != null) {
+                for (Object o : msgs) {
+                    TlObject m = (TlObject) o;
+                    if (m.type().equals("message")) sig = sig * 31 + m.i32("id");
+                }
+            }
+            if (sig == mLastSig) return;
+            mLastSig = sig;
             java.util.Map<Long, String> unames = new java.util.HashMap<Long, String>();
             List<Object> users = hist.list("users");
             if (users != null) {
@@ -531,7 +545,6 @@ public class ChatActivity extends BaseActivity {
                 }
             }
             final List<Msg> out = new ArrayList<Msg>();
-            int sig = 17;
             if (msgs != null) {
                 // 从末尾（最新）往前遍历，避免 Collections.reverse 的整表复制
                 for (int oi = msgs.size() - 1; oi >= 0; oi--) {
@@ -541,7 +554,6 @@ public class ChatActivity extends BaseActivity {
                     Msg mm = new Msg();
                     mm.id = m.i32("id");
                     mm.out = m.bool("out");
-                    sig = sig * 31 + mm.id;
                     String text = m.str("message");
                     if (text == null) text = "";
 
@@ -625,11 +637,8 @@ public class ChatActivity extends BaseActivity {
                     out.add(mm);
                 }
             }
-            final int fsig = sig;
             mMain.post(new Runnable() {
                 public void run() {
-                    if (fsig == mLastSig) return;   // 内容没变：不重绑整个列表
-                    mLastSig = fsig;
                     mAdapter.clear();
                     for (Msg m : out) mAdapter.add(m);
                     mAdapter.notifyDataSetChanged();

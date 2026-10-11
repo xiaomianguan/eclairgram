@@ -14,8 +14,9 @@ import java.util.concurrent.Executors;
 /**
  * 动图贴纸（TGS）的下载与解析缓存。
  *
- * 贴纸文档本身就是 gzip 后的 Lottie JSON（几 KB），下载后交给 {@link Lottie} 解析，
- * 结果按 key 缓存（有界 LRU）。解析在后台线程，回调回主线程。
+ * 贴纸文档本身就是 gzip 后的 Lottie JSON（几 KB）。解析出的模型比较大，
+ * 因此分开缓存：**原始字节**缓存得多一些（便宜），**解析后的模型**只留很少几个
+ * （老设备堆只有 16MB）。解析在后台线程，回调回主线程。
  */
 public final class LottieSticker {
 
@@ -23,12 +24,21 @@ public final class LottieSticker {
         void onLottie(String key, Lottie lottie);
     }
 
-    private static final int MAX = 12;
+    private static final int MAX_MODELS = 8;     // 解析后的模型（每个都不小）
+    private static final int MAX_BYTES = 16;     // 原始 TGS 字节（几 KB 一个）
+
     private static final Map<String, Lottie> CACHE =
-            new LinkedHashMap<String, Lottie>(16, 0.75f, true) {
+            new LinkedHashMap<String, Lottie>(4, 0.75f, true) {
                 @Override
                 protected boolean removeEldestEntry(Map.Entry<String, Lottie> e) {
-                    return size() > MAX;
+                    return size() > MAX_MODELS;
+                }
+            };
+    private static final Map<String, byte[]> BYTES =
+            new LinkedHashMap<String, byte[]>(8, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, byte[]> e) {
+                    return size() > MAX_BYTES;
                 }
             };
     private static final Set<String> LOADING = new HashSet<String>();
@@ -57,12 +67,21 @@ public final class LottieSticker {
         }
     }
 
-    /** 下载并解析一个 TGS；location 是贴纸文档的 InputFileLocation（空 thumb 类型）。 */
+    /**
+     * 取一个动图贴纸（可能来自模型缓存 / 字节缓存 / 网络）。
+     * location 是贴纸文档的 InputFileLocation（空 thumb 类型），dcId 是文件所在 DC。
+     */
     public static void load(final Context ctx, final String key, final byte[] location,
                             final int dcId, final Listener l) {
-        if (key == null || location == null) return;
+        if (key == null || l == null) return;
         synchronized (CACHE) {
-            if (CACHE.containsKey(key) || LOADING.contains(key) || FAILED.contains(key)) return;
+            Lottie cached = CACHE.get(key);
+            if (cached != null) {
+                l.onLottie(key, cached);
+                return;
+            }
+            if (FAILED.contains(key) || LOADING.contains(key)) return;
+            if (location == null && !BYTES.containsKey(key)) return;
             LOADING.add(key);
         }
         final Context app = ctx.getApplicationContext();
@@ -70,10 +89,26 @@ public final class LottieSticker {
             public void run() {
                 Lottie out = null;
                 try {
-                    byte[] tgs = TelegramManager.get(app).syncDownloadLocation(location, dcId);
-                    if (tgs != null && tgs.length > 0) out = Lottie.parse(tgs);
+                    byte[] tgs = null;
+                    synchronized (CACHE) {
+                        tgs = BYTES.get(key);
+                    }
+                    if (tgs == null) {
+                        tgs = TelegramManager.get(app).syncDownloadLocation(location, dcId);
+                        if (tgs != null && tgs.length > 0) {
+                            synchronized (CACHE) {
+                                BYTES.put(key, tgs);
+                            }
+                        }
+                    }
+                    if (tgs != null && tgs.length > 0) {
+                        out = Lottie.parse(tgs);
+                        // org.json 会为这份 JSON 建一整棵树（几百 KB~上 MB 的临时对象），
+                        // 在老设备上足以把堆顶到上限；解析完立刻回收，别等它把堆撑满。
+                        System.gc();
+                    }
                 } catch (Throwable t) {
-                    // 失败：不再重试
+                    // 含 OutOfMemoryError：当作失败，别再重试
                 }
                 synchronized (CACHE) {
                     LOADING.remove(key);
