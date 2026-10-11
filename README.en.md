@@ -185,8 +185,9 @@ messages) provide en-US and zh-CN as well.
 - [x] **stickers**: incoming `documentAttributeSticker` messages are rendered; sending uses an
       in-app sticker picker. The picker shows **recently/frequently used stickers first**
       (`messages.getRecentStickers`) and then **loads installed sets one by one** (each appears as
-      soon as it arrives), streaming thumbnails per cell; on pre-4.0 devices that can't decode WebP
-      sticker thumbnails it falls back to the sticker's emoji
+      soon as it arrives), streaming thumbnails per cell; a **bundled libwebp decoder**
+      (`native/build_libwebp.sh`, armeabi) decodes the WebP thumbnails, so stickers display even on
+      pre-4.0 devices whose system has no WebP support (animated stickers show their static frame)
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan;
       **applied app-wide** — message text, list names/status, chat title, details & My Profile

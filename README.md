@@ -170,7 +170,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **贴纸**：接收时识别 `documentAttributeSticker` 并渲染；发送走应用内贴纸选择器。
       选择器先显示**最近/常用贴纸**（`messages.getRecentStickers`，最常用的排在最前），
       再**逐个加载**已安装的贴纸包（拉到一个就显示一个，不必等全部拉完），缩略图逐张下载；
-      Android 4.0 之前无法解码 WebP 贴纸缩略图，此时退回显示贴纸对应的 emoji
+      **APK 内置了 libwebp 解码器**（`native/build_libwebp.sh`，armeabi），
+      因此 Android 4.0 之前系统不支持 WebP 也能显示贴纸缩略图（动图贴纸显示静态预览帧）
 - [x] **Blobmoji 彩色 emoji**：老系统字体引擎不支持彩色字体，
       改为构建期抽出位图、运行时用 ImageSpan 渲染（见 `scripts/gen_emoji_pack.py`）；
       **全应用范围生效**：消息内容、会话列表名字/状态、聊天标题、详情页与「我的资料」
