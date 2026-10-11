@@ -399,7 +399,10 @@ public final class MtpClient {
         return getDialogs(limit, 0);
     }
 
-    /** messages.getDialogs：folderId=0 表示“全部”，其余为会话文件夹（folder_id 字段）。 */
+    /**
+     * messages.getDialogs：folder_id 只用于“归档”（API peer folder，仅支持 0/1），
+     * 自定义会话文件夹没有对应的服务端接口，必须由客户端按 dialogFilter 的条件自己筛选。
+     */
     public TlObject getDialogs(int limit, int folderId) throws IOException {
         int flags = folderId != 0 ? (1 << 1) : 0;
         Tl.Writer w = new Tl.Writer();

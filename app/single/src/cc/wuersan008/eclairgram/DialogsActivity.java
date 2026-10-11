@@ -62,12 +62,27 @@ public class DialogsActivity extends BaseActivity {
         int participants;
         boolean online;
         boolean isSelf;
+        // 会话文件夹筛选所需的标记
+        boolean isContact;   // 联系人（用户）
+        boolean isBot;       // 机器人（用户）
+        boolean isMuted;     // 已静音
+        boolean isRead;      // 已读（无未读）
     }
 
-    /** 会话文件夹（Telegram dialog filter）。id=0 是“全部”。 */
-    static final class Folder {
-        int id;
+    /**
+     * 会话文件夹（Telegram dialog filter）。id=0 是“全部”。
+     *
+     * 注意：messages.getDialogs 的 folder_id 只用于“归档”（peer folder，仅 0/1），
+     * 自定义文件夹必须由客户端按这里的条件自己筛选，服务端没有按文件夹取会话的接口。
+     */
+    static final class Filter {
+        int id;                       // 过滤器 id（只用来区分标签）
         String title;
+        boolean contacts, nonContacts, groups, broadcasts, bots;
+        boolean excludeMuted, excludeRead, excludeArchived;
+        final Set<Long> pinned = new HashSet<Long>();
+        final Set<Long> include = new HashSet<Long>();
+        final Set<Long> exclude = new HashSet<Long>();
     }
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -81,9 +96,11 @@ public class DialogsActivity extends BaseActivity {
     private volatile boolean mLoading = false;
     private boolean mShot;
     private volatile boolean mFetchAvatars = true;
-    private int mFolderId = 0;                       // 当前文件夹
+    private int mFolderId = 0;                       // 当前文件夹（Filter.id）
     private final Set<Integer> mAddedFolders = new HashSet<Integer>();
     private boolean mFoldersLoaded = false;
+    private volatile List<Filter> mFilterList;       // 文件夹缓存（含筛选条件）
+    private final Object mFilterLock = new Object();
 
     private final List<Row> mAllRows = new ArrayList<Row>();   // 未过滤的完整列表
     private View mSearchBar;
@@ -245,37 +262,100 @@ public class DialogsActivity extends BaseActivity {
         }
     }
 
-    /** 拉取账号的会话文件夹；有自定义文件夹时把标题栏换成标签栏。 */
+    /**
+     * 拉取账号的会话文件夹（含筛选条件），结果缓存。可在后台线程调用。
+     *
+     * messages.getDialogs 的 folder_id 只支持归档（peer folder，0/1），自定义文件夹
+     * 得由客户端按这些条件自己筛，所以这里把条件也一起解析出来。
+     */
+    private List<Filter> filters() {
+        List<Filter> cached = mFilterList;
+        if (cached != null) return cached;
+        synchronized (mFilterLock) {
+            cached = mFilterList;
+            if (cached != null) return cached;
+            List<Filter> out = new ArrayList<Filter>();
+            try {
+                TlObject res = mTg.syncGetDialogFilters();
+                List<Object> filters = res.list("filters");
+                if (filters != null) {
+                    for (Object o : filters) {
+                        TlObject f = (TlObject) o;
+                        String t = f.type();
+                        Filter fo = new Filter();
+                        if (t.equals("dialogFilterDefault")) {
+                            fo.id = 0;
+                            fo.title = getString(R.string.ec_folder_all);
+                        } else if (t.equals("dialogFilter")
+                                || t.equals("dialogFilterChatlist")) {
+                            fo.id = f.i32("id");
+                            fo.title = filterTitle(f);
+                            fo.contacts = f.bool("contacts");
+                            fo.nonContacts = f.bool("non_contacts");
+                            fo.groups = f.bool("groups");
+                            fo.broadcasts = f.bool("broadcasts");
+                            fo.bots = f.bool("bots");
+                            fo.excludeMuted = f.bool("exclude_muted");
+                            fo.excludeRead = f.bool("exclude_read");
+                            fo.excludeArchived = f.bool("exclude_archived");
+                            addPeers(fo.pinned, f.list("pinned_peers"));
+                            addPeers(fo.include, f.list("include_peers"));
+                            addPeers(fo.exclude, f.list("exclude_peers"));
+                        } else {
+                            continue;
+                        }
+                        out.add(fo);
+                    }
+                }
+            } catch (Throwable t) {
+                // 取不到文件夹就当作没有，退回标题栏
+            }
+            mFilterList = out;
+            return out;
+        }
+    }
+
+    /** 把 InputPeer 列表里的原始 id 收进集合（按 id 匹配会话）。 */
+    private static void addPeers(Set<Long> dst, List<Object> peers) {
+        if (peers == null) return;
+        for (Object o : peers) {
+            TlObject p = (TlObject) o;
+            long id = p.get("user_id") != null ? p.i64("user_id")
+                    : p.get("channel_id") != null ? p.i64("channel_id")
+                    : p.get("chat_id") != null ? p.i64("chat_id") : 0L;
+            if (id != 0) dst.add(Long.valueOf(id));
+        }
+    }
+
+    /** 某条会话是否属于某个文件夹（客户端筛选）。 */
+    private static boolean matches(Filter f, Row r) {
+        if (r.isSelf) return false;   // “收藏夹”只出现在“全部”里
+        Long pid = Long.valueOf(r.id);
+        if (f.exclude.contains(pid)) return false;
+        if (f.pinned.contains(pid) || f.include.contains(pid)) return true;
+        boolean cat;
+        if (r.type == 0) {
+            if (r.isBot) cat = f.bots;
+            else if (r.isContact) cat = f.contacts;
+            else cat = f.nonContacts;
+        } else if (r.type == 1) {
+            cat = f.groups;
+        } else {
+            cat = f.broadcasts;
+        }
+        if (!cat) return false;
+        if (f.excludeMuted && r.isMuted) return false;
+        if (f.excludeRead && r.isRead) return false;
+        return true;
+    }
+
+    /** 拉取文件夹后建立标签栏（有自定义文件夹时把标题栏换成标签栏）。 */
     private void loadFolders() {
         if (mFoldersLoaded) return;
         mFoldersLoaded = true;
         new Thread(new Runnable() {
             public void run() {
-                final List<Folder> folders = new ArrayList<Folder>();
-                try {
-                    TlObject res = mTg.syncGetDialogFilters();
-                    List<Object> filters = res.list("filters");
-                    if (filters != null) {
-                        for (Object o : filters) {
-                            TlObject f = (TlObject) o;
-                            String t = f.type();
-                            Folder fo = new Folder();
-                            if (t.equals("dialogFilterDefault")) {
-                                fo.id = 0;
-                                fo.title = getString(R.string.ec_folder_all);
-                            } else if (t.equals("dialogFilter")
-                                    || t.equals("dialogFilterChatlist")) {
-                                fo.id = f.i32("id");
-                                fo.title = filterTitle(f);
-                            } else {
-                                continue;
-                            }
-                            folders.add(fo);
-                        }
-                    }
-                } catch (Throwable t) {
-                    // 取不到文件夹就当作没有，退回标题栏
-                }
+                final List<Filter> folders = filters();
                 mMain.post(new Runnable() {
                     public void run() {
                         applyFolders(folders);
@@ -285,9 +365,9 @@ public class DialogsActivity extends BaseActivity {
         }).start();
     }
 
-    private void applyFolders(List<Folder> folders) {
+    private void applyFolders(List<Filter> folders) {
         int custom = 0;
-        for (Folder f : folders) {
+        for (Filter f : folders) {
             if (f.id == 0 || mAddedFolders.contains(Integer.valueOf(f.id))) continue;
             addTab(f.id, f.title);
             custom++;
@@ -352,7 +432,8 @@ public class DialogsActivity extends BaseActivity {
             public void run() {
                 try {
                     final List<Row> rows = load(mFolderId);
-                    android.util.Log.i("Eclairgram", "dialogs loaded: " + rows.size());
+                    android.util.Log.i("Eclairgram", "dialogs loaded: " + rows.size()
+                            + " folder=" + mFolderId);
                     mMain.post(new Runnable() {
                         public void run() {
                             mAllRows.clear();
@@ -550,7 +631,9 @@ public class DialogsActivity extends BaseActivity {
     }
 
     private List<Row> load(int folderId) throws Exception {
-        TlObject d = TelegramManager.get(this).syncGetDialogs(40, folderId);
+        // 始终取“全部”：getDialogs 的 folder_id 只支持归档(1)，
+        // 自定义文件夹在本地按 Filter 的条件筛选（见 matches()）。
+        TlObject d = TelegramManager.get(this).syncGetDialogs(40, 0);
         List<Object> users = d.list("users");
         List<Object> messages = d.list("messages");
         List<Object> dialogs = d.list("dialogs");
@@ -562,6 +645,8 @@ public class DialogsActivity extends BaseActivity {
         Map<Long, Integer> photoDcs = new HashMap<Long, Integer>();
         Map<Long, String> usernames = new HashMap<Long, String>();
         Map<Long, Boolean> online = new HashMap<Long, Boolean>();
+        Set<Long> contacts = new HashSet<Long>();
+        Set<Long> bots = new HashSet<Long>();
         long selfId = 0;
         if (users != null) {
             for (Object o : users) {
@@ -590,6 +675,10 @@ public class DialogsActivity extends BaseActivity {
                 TlObject status = u.obj("status");
                 online.put(Long.valueOf(id), Boolean.valueOf(
                         status != null && status.type().equals("userStatusOnline")));
+                if (u.bool("contact") || u.bool("mutual_contact")) {
+                    contacts.add(Long.valueOf(id));
+                }
+                if (u.bool("bot")) bots.add(Long.valueOf(id));
             }
         }
         Map<Integer, String> msgText = new HashMap<Integer, String>();
@@ -634,6 +723,13 @@ public class DialogsActivity extends BaseActivity {
                 }
             }
         }
+        Filter filter = null;
+        if (folderId != 0) {
+            for (Filter f : filters()) {
+                if (f.id == folderId) { filter = f; break; }
+            }
+        }
+        long now = System.currentTimeMillis() / 1000L;
         List<Row> rows = new ArrayList<Row>();
         if (dialogs != null) {
             for (Object o : dialogs) {
@@ -690,7 +786,14 @@ public class DialogsActivity extends BaseActivity {
                 if (r.name == null || r.name.trim().length() == 0) r.name = "Chat";
                 r.status = msgText.get(Integer.valueOf(dg.i32("top_message")));
                 r.unread = dg.i32("unread_count");
-                rows.add(r);
+                // 文件夹筛选所需的标记
+                r.isContact = contacts.contains(Long.valueOf(r.id));
+                r.isBot = bots.contains(Long.valueOf(r.id));
+                TlObject ns = dg.obj("notify_settings");
+                r.isMuted = ns != null && ns.i32("mute_until") > now;
+                r.isRead = dg.i32("unread_count") == 0
+                        && dg.i32("unread_mentions_count") == 0;
+                if (filter == null || matches(filter, r)) rows.add(r);
             }
         }
         // 把“收藏夹/我的资料”置顶（原版 Telegram 也把 Saved Messages 固定在顶部）
