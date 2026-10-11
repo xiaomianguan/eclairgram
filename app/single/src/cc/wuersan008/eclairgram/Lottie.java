@@ -107,6 +107,7 @@ public final class Lottie {
                 else if (name.equals("parent")) l.parent = (int) j.number();
                 else if (name.equals("ip")) l.ip = (float) j.number();
                 else if (name.equals("op")) l.op = (float) j.number();
+                else if (name.equals("st")) l.st = (float) j.number();
                 else if (name.equals("ks")) l.ks = Transform.parse(j);
                 else if (name.equals("shapes")) l.shapes = parseShapes(j);
                 else j.skipValue();
@@ -452,8 +453,9 @@ public final class Lottie {
         while (j.hasNext()) {
             j.enterArray();
             float x = (float) j.number();
-            float y = (float) j.number();
-            while (j.hasNext()) j.number();   // 忽略 z
+            float y = 0;
+            if (j.hasNext()) y = (float) j.number();   // hasNext 会吃掉 x、y 之间的逗号
+            while (j.hasNext()) j.number();            // 忽略 z
             if (n + 2 > buf.length) {
                 float[] nb = new float[buf.length * 2];
                 System.arraycopy(buf, 0, nb, 0, n);
@@ -542,8 +544,10 @@ public final class Lottie {
             Layer l = layers.get(i);
             if (l.type != 3 && l.type != 4) continue;
             if (frame < l.ip || frame >= l.op) continue;
-            Matrix m = worldMatrix(l, frame, 0);
-            drawLayer(canvas, l, m, frame);
+            // 层的关键帧时间是「层内时间」：相对层的起始时间 st
+            float lf = frame - l.st;
+            Matrix m = worldMatrix(l, lf, 0);
+            drawLayer(canvas, l, m, lf);
         }
     }
 
@@ -639,7 +643,7 @@ public final class Lottie {
     // ======================================================== 模型
     static final class Layer {
         int type, ind, parent;
-        float ip, op;
+        float ip, op, st;
         Transform ks;
         List<Shape> shapes;
     }
