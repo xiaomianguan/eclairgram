@@ -14,6 +14,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application android:label="@string/ec_app_name"
         android:icon="@drawable/ic_launcher_eclairgram">
@@ -33,6 +35,10 @@
 
         <activity android:name=".ChatActivity"
             android:label="@string/ec_app_name"
+            android:screenOrientation="portrait" />
+
+        <activity android:name=".CameraActivity"
+            android:label="@string/ec_attach_camera"
             android:screenOrientation="portrait" />
 
         <activity android:name=".DetailsActivity"

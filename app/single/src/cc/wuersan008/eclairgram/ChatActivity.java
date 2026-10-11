@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.MediaStore;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,7 +28,6 @@ import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -66,8 +64,6 @@ public class ChatActivity extends Activity {
 
     private static final int REQ_PICK = 1;
     private static final int REQ_CAMERA = 2;
-    private static final String CAM_FILE = "cam_capture.jpg";
-    private File mCameraFile;
 
     private byte[] mPeer;
     private String mName;
@@ -324,21 +320,13 @@ public class ChatActivity extends Activity {
     }
 
     /**
-     * 用系统相机拍一张并直接发送。相机把原图写到应用私有目录里的一个临时文件
-     * （用 openFileOutput 的 WORLD_READABLE|WRITABLE 建出来，好让相机进程能写入，
-     * 因此不需要 SD 卡，也不进用户相册），发送后立即删除。
-     * 若相机只回了缩略图（没有写文件），就用缩略图。
+     * 用应用内相机（{@link CameraActivity}）拍一张并直接发送。拍到的 JPEG 只在
+     * 内存里传递，不写任何用户存储，因此不依赖 SD 卡。
      */
     private void takePhoto() {
         try {
-            File f = getFileStreamPath(CAM_FILE);
-            FileOutputStream fos = openFileOutput(CAM_FILE,
-                    MODE_WORLD_READABLE | MODE_WORLD_WRITEABLE);
-            fos.close();
-            mCameraFile = f;
-            Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            i.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
-            startActivityForResult(i, REQ_CAMERA);
+            CameraActivity.sLastJpeg = null;
+            startActivityForResult(new Intent(this, CameraActivity.class), REQ_CAMERA);
         } catch (Throwable t) {
             toast(String.valueOf(t.getMessage()));
         }
@@ -349,31 +337,14 @@ public class ChatActivity extends Activity {
         super.onActivityResult(req, res, data);
 
         if (req == REQ_CAMERA) {
-            final File f = mCameraFile;
-            mCameraFile = null;
-            if (res != RESULT_OK) {
-                if (f != null) f.delete();
-                return;
-            }
-            final Bitmap thumb = (data != null && data.getExtras() != null
-                    && data.getExtras().get("data") instanceof Bitmap)
-                    ? (Bitmap) data.getExtras().get("data") : null;
+            final byte[] jpeg = CameraActivity.sLastJpeg;
+            CameraActivity.sLastJpeg = null;
+            if (res != RESULT_OK || jpeg == null || jpeg.length == 0) return;
             new Thread(new Runnable() {
                 public void run() {
                     try {
-                        byte[] bytes = null;
-                        if (f != null && f.exists() && f.length() > 0) {
-                            bytes = readFile(f);
-                        } else if (thumb != null) {
-                            ByteArrayOutputStream bo = new ByteArrayOutputStream();
-                            thumb.compress(Bitmap.CompressFormat.JPEG, 90, bo);
-                            bytes = bo.toByteArray();
-                        }
-                        if (f != null) f.delete();   // 不长期留在存储里
-                        if (bytes != null && bytes.length > 0) {
-                            TelegramManager.get(ChatActivity.this)
-                                    .syncSendPhoto(mPeer, bytes, "photo.jpg", "");
-                        }
+                        TelegramManager.get(ChatActivity.this)
+                                .syncSendPhoto(mPeer, jpeg, "photo.jpg", "");
                     } catch (final Throwable t) {
                         toast(getString(R.string.ec_send_failed, String.valueOf(t.getMessage())));
                     }
@@ -401,16 +372,6 @@ public class ChatActivity extends Activity {
 
     private byte[] readAll(Uri uri) throws Exception {
         InputStream in = getContentResolver().openInputStream(uri);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buf = new byte[16384];
-        int n;
-        while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-        in.close();
-        return out.toByteArray();
-    }
-
-    private byte[] readFile(File f) throws Exception {
-        FileInputStream in = new FileInputStream(f);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buf = new byte[16384];
         int n;
