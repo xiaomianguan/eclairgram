@@ -167,6 +167,10 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
       只在内存里旋正后直接发送，不写任何用户存储；接收的消息**直接在气泡里
       内联显示缩略图**（图片取较小的 PhotoSize，视频取 document 缩略图并叠加播放图标），
       点按缩略图下载并查看原文件（图片 ImageView / 视频 VideoView）
+- [x] **贴纸**：接收时识别 `documentAttributeSticker` 并渲染；发送走应用内贴纸选择器。
+      选择器先显示**最近/常用贴纸**（`messages.getRecentStickers`，最常用的排在最前），
+      再**逐个加载**已安装的贴纸包（拉到一个就显示一个，不必等全部拉完），缩略图逐张下载；
+      Android 4.0 之前无法解码 WebP 贴纸缩略图，此时退回显示贴纸对应的 emoji
 - [x] **Blobmoji 彩色 emoji**：老系统字体引擎不支持彩色字体，
       改为构建期抽出位图、运行时用 ImageSpan 渲染（见 `scripts/gen_emoji_pack.py`）；
       **全应用范围生效**：消息内容、会话列表名字/状态、聊天标题、详情页与「我的资料」

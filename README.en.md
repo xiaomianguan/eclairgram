@@ -182,6 +182,11 @@ messages) provide en-US and zh-CN as well.
       memory and sent, writing nothing to user storage; received messages **show an inline thumbnail
       right in the bubble** (a smaller PhotoSize for photos, the document thumb + a play icon for
       videos); tap it to download and view the original (ImageView / VideoView)
+- [x] **stickers**: incoming `documentAttributeSticker` messages are rendered; sending uses an
+      in-app sticker picker. The picker shows **recently/frequently used stickers first**
+      (`messages.getRecentStickers`) and then **loads installed sets one by one** (each appears as
+      soon as it arrives), streaming thumbnails per cell; on pre-4.0 devices that can't decode WebP
+      sticker thumbnails it falls back to the sticker's emoji
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan;
       **applied app-wide** — message text, list names/status, chat title, details & My Profile
