@@ -221,7 +221,7 @@ public class DialogsActivity extends BaseActivity {
     private void setupTabs() {
         mTabHost = (TabHost) findViewById(android.R.id.tabhost);
         mTabHost.setup();
-        addTab(0, getString(R.string.ec_folder_all));
+        addTab(0, getString(R.string.ec_folder_all), android.R.drawable.sym_action_chat);
         mTabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
             public void onTabChanged(String tag) {
                 int id = parseFolderId(tag);
@@ -232,10 +232,12 @@ public class DialogsActivity extends BaseActivity {
         });
     }
 
-    private void addTab(int id, String title) {
+    /** 加一个标签：用系统默认的标签样式（大图标在上、文字在下、选中态用 ROM 自己的背景）。 */
+    private void addTab(int id, String title, int iconRes) {
         if (!mAddedFolders.add(Integer.valueOf(id))) return;
         TabHost.TabSpec ts = mTabHost.newTabSpec("f" + id);
-        ts.setIndicator(EmojiFont.emojify(this, title, dp(16)));
+        ts.setIndicator(EmojiFont.emojify(this, title, dp(16)),
+                getResources().getDrawable(iconRes));
         ts.setContent(R.id.ec_tabcontent);
         mTabHost.addTab(ts);
     }
@@ -369,7 +371,7 @@ public class DialogsActivity extends BaseActivity {
         int custom = 0;
         for (Filter f : folders) {
             if (f.id == 0 || mAddedFolders.contains(Integer.valueOf(f.id))) continue;
-            addTab(f.id, f.title);
+            addTab(f.id, f.title, android.R.drawable.ic_menu_sort_by_size);
             custom++;
         }
         if (custom > 0) {
