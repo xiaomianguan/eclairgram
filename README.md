@@ -164,7 +164,9 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
       内联显示缩略图**（图片取较小的 PhotoSize，视频取 document 缩略图并叠加播放图标），
       点按缩略图下载并查看原文件（图片 ImageView / 视频 VideoView）
 - [x] **Blobmoji 彩色 emoji**：老系统字体引擎不支持彩色字体，
-      改为构建期抽出位图、运行时用 ImageSpan 渲染（见 `scripts/gen_emoji_pack.py`）
+      改为构建期抽出位图、运行时用 ImageSpan 渲染（见 `scripts/gen_emoji_pack.py`）；
+      **全应用范围生效**：消息内容、会话列表名字/状态、聊天标题、详情页与「我的资料」
+      （含编辑框）、文件夹标签、媒体标题，名字里的 emoji 不再显示成方框
 - [x] **聊天界面跟随列表主题**（2.1 浅色 / 2.2+ 深色），气泡与文字一并自适应
 - [x] **自定义 Blobmoji emoji 选择器**：按 Unicode 官方分类分节（表情在前、符号/旗帜在后），
       组内顺序与现代键盘一致（分类与顺序取自 `emoji-test.txt`，老系统键盘无法输入这些 emoji）；

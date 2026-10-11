@@ -178,7 +178,10 @@ messages) provide en-US and zh-CN as well.
       document thumb + a play icon for videos); tap it to download and view the original
       (ImageView / VideoView)
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
-      extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan
+      extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan;
+      **applied app-wide** — message text, list names/status, chat title, details & My Profile
+      (including the edit fields), folder tabs and the media title, so emoji in names no longer
+      show as missing-glyph boxes
 - [x] **chat UI follows the list theme** (light on 2.1 / dark on 2.2+); bubbles and text adapt too
 - [x] **custom Blobmoji emoji picker**: sectioned by the official Unicode categories
       (smileys first, symbols/flags last) with within-section order matching modern keyboards
