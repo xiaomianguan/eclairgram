@@ -165,6 +165,9 @@ messages) provide en-US and zh-CN as well.
 - [x] **groups and channels** (peerUser / peerChat / peerChannel can all be opened and messaged;
       supergroups `megagroup`/`gigagroup` show as "Group", only broadcast channels show as "Channel")
 - [x] **live updates** (`updates.getDifference`; the chat list refreshes automatically)
+- [x] **new-message notifications**: the connection stays alive in the background (a resident
+      `TelegramService`); new messages post a system notification (chat name + text, with
+      sound/vibration) that opens the chat when tapped; the chat you're viewing is skipped
 - [x] **UI closer to stock Talk** (bubble roster rows, chat contact header, presence icons)
 - [x] **per-Android-version theming** (light on 2.1 / dark on 2.2+)
 - [x] **native QuickContactBadge frames** for avatars (Talk's own frame, varies per OS version)

@@ -153,6 +153,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **群组与频道**（peerUser / peerChat / peerChannel 均可打开与发送；
       超级群 `megagroup`/`gigagroup` 显示为「群组」，只有广播频道才显示为「频道」）
 - [x] **实时更新**（`updates.getDifference`，会话列表自动刷新）
+- [x] **新消息通知**：应用退到后台也保持连接（常驻 `TelegramService`），新消息弹系统通知
+      （会话名 + 文本，带声音/震动），点按打开对应会话；正在查看的会话不弹
 - [x] **更贴近原版 Talk 的界面**（气泡式好友条目、聊天联系人栏、presence 图标）
 - [x] **主题随 Android 版本自适应**（2.1 浅色 / 2.2+ 深色）
 - [x] **头像使用系统 QuickContactBadge 相框**（原版 Talk 用的就是这个，随系统版本变化）
