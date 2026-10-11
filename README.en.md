@@ -187,7 +187,8 @@ messages) provide en-US and zh-CN as well.
       (`messages.getRecentStickers`) and then **loads installed sets one by one** (each appears as
       soon as it arrives), streaming thumbnails per cell; a **bundled libwebp decoder**
       (`native/build_libwebp.sh`, armeabi) decodes the WebP thumbnails, so stickers display even on
-      pre-4.0 devices whose system has no WebP support (animated stickers show their static frame)
+      pre-4.0 devices with no system WebP support; **animated stickers (TGS = gzipped Lottie JSON)
+      are played by a small built-in Lottie renderer** (`Lottie.java` / `AnimatedStickerView.java`)
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan;
       **applied app-wide** — message text, list names/status, chat title, details & My Profile
