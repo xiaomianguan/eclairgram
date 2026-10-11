@@ -236,10 +236,29 @@ public class DialogsActivity extends BaseActivity {
     private void addTab(int id, String title, int iconRes) {
         if (!mAddedFolders.add(Integer.valueOf(id))) return;
         TabHost.TabSpec ts = mTabHost.newTabSpec("f" + id);
-        ts.setIndicator(EmojiFont.emojify(this, title, dp(16)),
-                getResources().getDrawable(iconRes));
+        ts.setIndicator(EmojiFont.emojify(this, title, dp(16)), tabIcon(iconRes));
         ts.setContent(R.id.ec_tabcontent);
         mTabHost.addTab(ts);
+    }
+
+    /**
+     * 系统内置图标尺寸不一：sym_action_chat 是 32x32，ic_menu_* 是 48x48，
+     * 直接放进去“全部”会比文件夹图标小一圈。这里把图标统一重绘到 32dp
+     * （仍是系统自带的图标，只是缩放成一致的大小）。
+     */
+    private android.graphics.drawable.Drawable tabIcon(int resId) {
+        android.graphics.drawable.Drawable d = getResources().getDrawable(resId);
+        int size = dp(32);
+        try {
+            android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(
+                    size, size, android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas c = new android.graphics.Canvas(bmp);
+            d.setBounds(0, 0, size, size);
+            d.draw(c);
+            return new android.graphics.drawable.BitmapDrawable(bmp);
+        } catch (Throwable t) {
+            return d;   // 出错就退回原图，别让标签栏挂掉
+        }
     }
 
     /** 消息是不是一张贴纸。 */
