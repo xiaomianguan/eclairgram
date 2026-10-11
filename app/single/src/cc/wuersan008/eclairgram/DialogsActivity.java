@@ -490,26 +490,26 @@ public class DialogsActivity extends BaseActivity {
         }).start();
     }
 
-    /** 后台并发下载头像（先内存/磁盘缓存，缺了才联网），下载到一个就刷新一次列表。
-     *  共享一个固定线程池，避免每次 reload 都新建/销毁线程。 */
-    private static final java.util.concurrent.ExecutorService AVATAR_POOL =
-            java.util.concurrent.Executors.newFixedThreadPool(3);
-
     private void startAvatarFetch(final List<Row> rows) {
-        for (final Row r : rows) {
-            if (r.photoId == 0 || AvatarCache.has(r.photoId)) continue;
-            AVATAR_POOL.execute(new Runnable() {
-                public void run() {
+        // 老设备扛不住一次性排几百个下载：头像按列表顺序一张一张取，
+        // 一张下载+解码完再取下一张（列表滚动时也不至于卡住）。
+        new Thread(new Runnable() {
+            public void run() {
+                for (final Row r : rows) {
                     if (!mFetchAvatars) return;
-                    AvatarCache.load(DialogsActivity.this, mTg, r.peer, r.photoId, r.photoDc);
+                    if (r.photoId == 0 || AvatarCache.has(r.photoId)) continue;
+                    try {
+                        AvatarCache.load(DialogsActivity.this, mTg, r.peer, r.photoId, r.photoDc);
+                    } catch (Throwable ignored) {
+                    }
                     mMain.post(new Runnable() {
                         public void run() {
                             mAdapter.notifyDataSetChanged();
                         }
                     });
                 }
-            });
-        }
+            }
+        }).start();
     }
 
     // ============================================================ 菜单 / 搜索
