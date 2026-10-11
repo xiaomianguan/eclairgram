@@ -65,8 +65,13 @@ public final class AnimatedStickerView extends View {
                 long el = SystemClock.uptimeMillis() - startMs;
                 frame += (el % (long) dur) * lottie.frameRate / 1000f;
             }
+            // 等比缩放并居中，绝不做非等比拉伸（否则贴纸会被压扁）
+            float s = Math.min(w / (float) lottie.width, h / (float) lottie.height);
+            float dx = (w - lottie.width * s) / 2f;
+            float dy = (h - lottie.height * s) / 2f;
             canvas.save();
-            canvas.scale(w / (float) lottie.width, h / (float) lottie.height);
+            canvas.translate(dx, dy);
+            canvas.scale(s, s);
             lottie.render(canvas, frame);
             canvas.restore();
         } catch (Throwable t) {

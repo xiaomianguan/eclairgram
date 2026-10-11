@@ -179,11 +179,16 @@ public class ChatActivity extends BaseActivity {
 
                     Lottie lo = sticker ? LottieSticker.get("L" + m.animId) : null;
                     if (lo != null) {
-                        // 动图贴纸：用内置 Lottie 渲染器播放
+                        // 视图按动图自身的宽高比排版（绝不拉伸），交给 View 等比缩放
+                        int lw = lo.width > 0 ? lo.width : 1;
+                        int lh = lo.height > 0 ? lo.height : 1;
+                        float ls = Math.min(box / (float) lw, box / (float) lh);
+                        int aw = Math.max(dp(48), (int) (lw * ls));
+                        int ah = Math.max(dp(48), (int) (lh * ls));
                         thumb.setVisibility(View.GONE);
                         play.setVisibility(View.GONE);
                         anim.setVisibility(View.VISIBLE);
-                        anim.setLayoutParams(lp);
+                        anim.setLayoutParams(new FrameLayout.LayoutParams(aw, ah));
                         anim.setLottie(lo);
                         anim.start();
                     } else {
