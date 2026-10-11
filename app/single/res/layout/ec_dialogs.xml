@@ -28,10 +28,16 @@
             android:textSize="16.0sp"
             android:singleLine="true" />
 
-        <TabWidget android:id="@android:id/tabs"
+        <HorizontalScrollView android:id="@+id/ec_tabscroll"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone" />
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <TabWidget android:id="@android:id/tabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </HorizontalScrollView>
 
         <!-- 搜索模式（菜单/系统搜索键触发）时显示的搜索框 -->
         <LinearLayout android:id="@+id/ec_search_bar"

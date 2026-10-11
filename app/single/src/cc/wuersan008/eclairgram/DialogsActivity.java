@@ -91,6 +91,7 @@ public class DialogsActivity extends BaseActivity {
     private TextView mEmpty;
     private TextView mTitle;
     private TabHost mTabHost;
+    private View mTabScroll;   // 包住标签栏的横向滚动容器
     private View mContent;
     private TelegramManager mTg;
     private volatile boolean mLoading = false;
@@ -220,6 +221,7 @@ public class DialogsActivity extends BaseActivity {
     /** 建立 TabHost：先放一个“全部”标签让内容可见；有文件夹时再加标签并显示标签栏。 */
     private void setupTabs() {
         mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabScroll = findViewById(R.id.ec_tabscroll);
         mTabHost.setup();
         addTab(0, getString(R.string.ec_folder_all), android.R.drawable.sym_action_chat);
         mTabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
@@ -394,7 +396,7 @@ public class DialogsActivity extends BaseActivity {
             custom++;
         }
         if (custom > 0) {
-            mTabHost.getTabWidget().setVisibility(View.VISIBLE);
+            mTabScroll.setVisibility(View.VISIBLE);
             mTitle.setVisibility(View.GONE);
         }
         // 所有标签共用同一份内容视图；addTab 会把它的可见性置为 GONE，这里恢复显示
@@ -651,14 +653,67 @@ public class DialogsActivity extends BaseActivity {
         return (int) (v * d + 0.5f);
     }
 
+    /** 在消息列表里找 top_message 的日期（分页 offset_date 用）。 */
+    private static int dateOf(List<Object> messages, int msgId) {
+        if (messages == null) return 0;
+        for (Object o : messages) {
+            TlObject m = (TlObject) o;
+            if (m.type().equals("message") && m.i32("id") == msgId) return m.i32("date");
+        }
+        return 0;
+    }
+
+    /** 由会话的 peer 构造 InputPeer 字节（分页 offset_peer 用）。 */
+    private static byte[] peerOf(TlObject peer, TlObject page) {
+        if (peer == null) return null;
+        String t = peer.type();
+        if (t.equals("peerUser")) {
+            long id = peer.i64("user_id");
+            return MtpClient.inputPeerUser(id, accessOf(page, "users", id));
+        } else if (t.equals("peerChat")) {
+            return MtpClient.inputPeerChat(peer.i64("chat_id"));
+        } else if (t.equals("peerChannel")) {
+            long id = peer.i64("channel_id");
+            return MtpClient.inputPeerChannel(id, accessOf(page, "chats", id));
+        }
+        return null;
+    }
+
+    private static long accessOf(TlObject page, String listName, long id) {
+        List<Object> items = page.list(listName);
+        if (items == null) return 0;
+        for (Object o : items) {
+            TlObject it = (TlObject) o;
+            if (it.i64("id") == id) return it.i64("access_hash");
+        }
+        return 0;
+    }
+
     private List<Row> load(int folderId) throws Exception {
         // 始终取“全部”：getDialogs 的 folder_id 只支持归档(1)，
         // 自定义文件夹在本地按 Filter 的条件筛选（见 matches()）。
-        TlObject d = TelegramManager.get(this).syncGetDialogs(40, 0);
-        List<Object> users = d.list("users");
-        List<Object> messages = d.list("messages");
-        List<Object> dialogs = d.list("dialogs");
-        List<Object> chats = d.list("chats");
+        // 分页拉取整个会话列表：只取第一页的话，文件夹/搜索只能看到最近的一批会话。
+        List<Object> users = new ArrayList<Object>();
+        List<Object> messages = new ArrayList<Object>();
+        List<Object> dialogs = new ArrayList<Object>();
+        List<Object> chats = new ArrayList<Object>();
+        int offsetDate = 0, offsetId = 0;
+        byte[] offsetPeer = null;
+        for (int page = 0; page < 100; page++) {
+            TlObject d = TelegramManager.get(this)
+                    .syncGetDialogs(100, 0, offsetDate, offsetId, offsetPeer);
+            List<Object> pd = d.list("dialogs");
+            if (pd == null || pd.isEmpty()) break;
+            if (d.list("users") != null) users.addAll(d.list("users"));
+            if (d.list("messages") != null) messages.addAll(d.list("messages"));
+            if (d.list("chats") != null) chats.addAll(d.list("chats"));
+            dialogs.addAll(pd);
+            if (pd.size() < 100) break;                 // 最后一页
+            TlObject last = (TlObject) pd.get(pd.size() - 1);
+            offsetId = last.i32("top_message");
+            offsetDate = dateOf(d.list("messages"), offsetId);
+            offsetPeer = peerOf(last.obj("peer"), d);
+        }
 
         Map<Long, String> names = new HashMap<Long, String>();
         Map<Long, Long> access = new HashMap<Long, Long>();

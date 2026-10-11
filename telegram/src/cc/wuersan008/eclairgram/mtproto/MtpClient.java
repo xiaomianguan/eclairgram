@@ -404,15 +404,25 @@ public final class MtpClient {
      * 自定义会话文件夹没有对应的服务端接口，必须由客户端按 dialogFilter 的条件自己筛选。
      */
     public TlObject getDialogs(int limit, int folderId) throws IOException {
+        return getDialogs(limit, folderId, 0, 0, null);
+    }
+
+    /**
+     * messages.getDialogs 分页版：offsetPeer 为 null 表示第一页（inputPeerEmpty）。
+     * 下一页传入上一页最后一个会话的 peer / top_message / 该消息的日期。
+     */
+    public TlObject getDialogs(int limit, int folderId, int offsetDate, int offsetId,
+                               byte[] offsetPeer) throws IOException {
         int flags = folderId != 0 ? (1 << 1) : 0;
         Tl.Writer w = new Tl.Writer();
         w.int32(TlSchema.MESSAGES_GET_DIALOGS)
          .int32(flags);                  // flags：bit1 = 有 folder_id
         if (folderId != 0) w.int32(folderId);
-        w.int32(0)                       // offset_date
-         .int32(0)                       // offset_id
-         .int32(TlSchema.INPUT_PEER_EMPTY)
-         .int32(limit)
+        w.int32(offsetDate)              // offset_date
+         .int32(offsetId);               // offset_id
+        if (offsetPeer == null) w.int32(TlSchema.INPUT_PEER_EMPTY);
+        else w.raw(offsetPeer);          // offset_peer
+        w.int32(limit)
          .int64(0);                      // hash
         byte[] res = (byte[]) rpc(wrapped(w.toByteArray()));
         return TlObject.read(new Tl.Reader(res));
