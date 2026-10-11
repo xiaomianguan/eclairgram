@@ -24,7 +24,7 @@ public final class LottieSticker {
         void onLottie(String key, Lottie lottie);
     }
 
-    private static final int MAX_MODELS = 8;     // 解析后的模型（每个都不小）
+    private static final int MAX_MODELS = 4;     // 解析后的模型（每个都不小）
     private static final int MAX_BYTES = 16;     // 原始 TGS 字节（几 KB 一个）
 
     private static final Map<String, Lottie> CACHE =
@@ -102,10 +102,13 @@ public final class LottieSticker {
                         }
                     }
                     if (tgs != null && tgs.length > 0) {
+                        // org.json 会为整份 JSON 建一棵临时对象树（几百 KB~上 MB）。
+                        // 老设备堆很小，解析前先看堆：太满就先回收，避免建树时 OOM。
+                        Runtime rt = Runtime.getRuntime();
+                        long max = rt.maxMemory();
+                        if (max > 0 && rt.totalMemory() > max / 2) System.gc();
                         out = Lottie.parse(tgs);
-                        // org.json 会为这份 JSON 建一整棵树（几百 KB~上 MB 的临时对象），
-                        // 在老设备上足以把堆顶到上限；解析完立刻回收，别等它把堆撑满。
-                        System.gc();
+                        System.gc();   // 解析完立刻回收那棵树
                     }
                 } catch (Throwable t) {
                     // 含 OutOfMemoryError：当作失败，别再重试

@@ -381,7 +381,7 @@ public final class TelegramManager {
         try {
             Runtime rt = Runtime.getRuntime();
             long max = rt.maxMemory();
-            if (max > 0 && rt.totalMemory() > max * 3 / 4) System.gc();
+            if (max > 0 && rt.totalMemory() > max * 2 / 3) System.gc();
         } catch (Throwable ignored) {
         }
     }
@@ -648,7 +648,8 @@ public final class TelegramManager {
         }
     }
 
-    /** 在文件 DC 上下载；若用的是持久化 key 且失败，则丢弃该 key 重建后再试一次。 */
+    /** 在文件 DC 上下载。只在确认是 auth 问题时才丢弃持久化的 key，
+     *  避免网络抖动导致反复重新握手（那会在老设备上又慢又容易失败）。 */
     private byte[] downloadFromFileDc(int slot, int dc, byte[] location, int depth) throws Exception {
         if (depth > 2) return null;
         MtpClient fc = fileClient(slot, dc);
@@ -658,22 +659,41 @@ public final class TelegramManager {
             byte[] r = fc.downloadLocation(location);
             if (r != null) return r;
             if (reused) {
-                invalidateFileClient(slot, dc);
+                dropFileClient(slot, dc);   // 连接可能已坏：重连（保留 key）
                 return downloadFromFileDc(slot, dc, location, depth + 1);
             }
             return null;
         } catch (java.io.IOException e) {
-            int target = parseMigrate(e.getMessage(), "FILE_MIGRATE_");
+            String msg = String.valueOf(e.getMessage());
+            int target = parseMigrate(msg, "FILE_MIGRATE_");
             if (target > 0) {
-                // 连接本身没问题，只是文件在别的 DC：直接去那边下，不要丢弃 auth key
+                // 连接本身没问题，只是文件在别的 DC：直接去那边下
                 return downloadFromFileDc(slot, target, location, depth + 1);
             }
-            invalidateFileClient(slot, dc);
+            if (msg.contains("AUTH_KEY") || msg.contains("AUTH_BYTES")) {
+                invalidateFileKey(dc);      // key 真的失效了才丢弃
+            }
+            dropFileClient(slot, dc);
             return null;
         } catch (Throwable t) {
-            invalidateFileClient(slot, dc);
+            dropFileClient(slot, dc);
             return null;
         }
+    }
+
+    /** 丢掉某个 slot 的文件 DC 连接（保留持久化的 auth key，下次重连复用）。 */
+    private void dropFileClient(int slot, int dc) {
+        MtpClient c = mDlFile.remove(slot + ":" + dc);
+        if (c != null) {
+            try { c.close(); } catch (Throwable ignored) {}
+        }
+        mDlReused.remove(slot + ":" + dc);
+    }
+
+    /** 删除某个 DC 的持久化 auth key。 */
+    private void invalidateFileKey(int dc) {
+        mApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .remove(fileKeyPref(dc)).commit();
     }
 
     /** 上传并发送一张图片。 */
@@ -772,20 +792,6 @@ public final class TelegramManager {
         mDlReused.clear();
     }
 
-    /** 丢弃某个 slot 的文件 DC 连接与持久化 key（用于 key 失效后重建）。 */
-    private void invalidateFileClient(int slot, int dc) {
-        MtpClient c = mDlFile.remove(slot + ":" + dc);
-        if (c != null) {
-            try {
-                c.close();
-            } catch (Throwable ignored) {
-            }
-        }
-        mDlReused.remove(slot + ":" + dc);
-        mApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-                .remove(fileKeyPref(dc)).commit();
-    }
-
     private static final Object HANDSHAKE_LOCK = new Object();   // 老设备 OpenSSL 大数运算不能并发
 
     /** 文件在别的 DC 时：优先复用已持久化的 auth key（省掉一次昂贵的 DH 握手），
@@ -810,26 +816,33 @@ public final class TelegramManager {
             }
         }
 
-        try {
-            MtpClient.AuthExport exp;
-            synchronized (mNet) {
-                ensureConnected();
-                exp = mClient.exportAuthorization(dc);
+        // 导出登录态 -> 连到该 DC -> 握手 -> 导入。多个下载 slot 同时导出/导入会让
+        // 服务端判定 AUTH_BYTES_INVALID，所以整段串行化；偶尔失败就重试。
+        synchronized (HANDSHAKE_LOCK) {
+            MtpClient again = mDlFile.get(key);
+            if (again != null && again.isConnected()) return again;
+            for (int attempt = 0; attempt < 3; attempt++) {
+                try {
+                    MtpClient.AuthExport exp;
+                    synchronized (mNet) {
+                        ensureConnected();
+                        exp = mClient.exportAuthorization(dc);
+                    }
+                    MtpClient nc = new MtpClient(apiId(), apiHash());
+                    nc.connect(dc);
+                    nc.doHandshake();
+                    nc.importAuthorization(exp.id, exp.bytes);
+                    saveFileKey(dc, nc.state() == null ? null : nc.state().authKey());
+                    mDlFile.put(key, nc);
+                    mDlReused.remove(key);
+                    return nc;
+                } catch (Throwable t) {
+                    Log.w(TAG, "file client DC" + dc + " failed (try " + (attempt + 1) + "): " + t);
+                    sleepQuiet(400);
+                }
             }
-            MtpClient nc = new MtpClient(apiId(), apiHash());
-            nc.connect(dc);
-            synchronized (HANDSHAKE_LOCK) {
-                nc.doHandshake();
-            }
-            nc.importAuthorization(exp.id, exp.bytes);
-            saveFileKey(dc, nc.state() == null ? null : nc.state().authKey());
-            mDlFile.put(key, nc);
-            mDlReused.remove(key);
-            return nc;
-        } catch (Throwable t) {
-            Log.w(TAG, "file client DC" + dc + " failed: " + t);
-            return null;
         }
+        return null;
     }
 
     private static int parseMigrate(String msg, String prefix) {

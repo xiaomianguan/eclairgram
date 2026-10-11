@@ -131,10 +131,22 @@ public final class Lottie {
 
     private void drawLayer(Canvas canvas, Layer l, Matrix base, float frame) {
         if (l.shapes == null) return;
+        if (!finite(base)) return;      // 变换矩阵若含 NaN/Inf，交给 Skia 会直接崩
         canvas.save();
         canvas.concat(base);
         drawShapes(canvas, l.shapes, frame);
         canvas.restore();
+    }
+
+    private final float[] mvals = new float[9];
+
+    private boolean finite(Matrix m) {
+        m.getValues(mvals);
+        for (int i = 0; i < 9; i++) {
+            float v = mvals[i];
+            if (Float.isNaN(v) || Float.isInfinite(v)) return false;
+        }
+        return true;
     }
 
     /** 递归画一组形状（canvas 已带好当前变换，不再对路径做 CPU 变换）。 */
@@ -156,8 +168,11 @@ public final class Lottie {
             for (int j = 0; j < n; j++) {
                 Shape st = shapes.get(j);
                 if (!"st".equals(st.ty)) continue;
+                float sw = st.strokeWidthAt(frame);
+                if (Float.isNaN(sw) || sw <= 0f) sw = 1f;
+                if (sw > 200f) sw = 200f;
                 paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(Math.max(0.5f, st.strokeWidthAt(frame)));
+                paint.setStrokeWidth(sw);
                 paint.setColor(st.colorAt(frame));
                 paint.setAlpha(applyOpacity(paint.getAlpha(), st.opacityAt(frame)));
                 paint.setStrokeCap(Paint.Cap.ROUND);
@@ -412,6 +427,7 @@ public final class Lottie {
         Path path(float frame, Path out) {
             Sd sd = pick(frame);
             if (sd == null || sd.vx == null || sd.vx.length == 0) return null;
+            if (!sd.finite()) return null;   // 顶点含 NaN/Inf 时别交给 Skia（会崩）
             out.rewind();
             int n = sd.vx.length;
             out.moveTo(sd.vx[0], sd.vy[0]);
@@ -471,6 +487,19 @@ public final class Lottie {
             }
         }
 
+        boolean finite() {
+            int n = vx == null ? 0 : vx.length;
+            for (int i = 0; i < n; i++) {
+                if (bad(vx[i]) || bad(vy[i]) || bad(ix[i]) || bad(iy[i])
+                        || bad(ox[i]) || bad(oy[i])) return false;
+            }
+            return true;
+        }
+
+        private static boolean bad(float v) {
+            return Float.isNaN(v) || Float.isInfinite(v);
+        }
+
         Sd lerpInto(Sd a, Sd b, float f) {
             int n = Math.min(a.vx.length, b.vx.length);
             if (n == 0) { closed = a.closed; return this; }
@@ -516,6 +545,7 @@ public final class Lottie {
     /** 三次贝塞尔缓动：给定进度 x，求 y。 */
     private static float ease(float x, float x1, float y1, float x2, float y2) {
         if (x1 == y1 && x2 == y2) return x;   // 线性
+        if (Float.isNaN(x1) || Float.isNaN(y1) || Float.isNaN(x2) || Float.isNaN(y2)) return x;
         float t = x;
         for (int i = 0; i < 6; i++) {
             float xt = bezier(t, x1, x2) - x;
@@ -523,9 +553,11 @@ public final class Lottie {
             float d = bezierDeriv(t, x1, x2);
             if (Math.abs(d) < 1e-6) break;
             t -= xt / d;
+            if (Float.isNaN(t) || Float.isInfinite(t)) return x;
             t = Math.max(0, Math.min(1, t));
         }
-        return bezier(t, y1, y2);
+        float r = bezier(t, y1, y2);
+        return (Float.isNaN(r) || Float.isInfinite(r)) ? x : r;
     }
 
     private static float bezier(float t, float p1, float p2) {

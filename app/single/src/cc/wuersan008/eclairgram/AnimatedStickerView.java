@@ -56,6 +56,8 @@ public final class AnimatedStickerView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         if (lottie == null) return;
+        int w = getWidth(), h = getHeight();
+        if (w <= 0 || h <= 0 || lottie.width <= 0 || lottie.height <= 0) return;
         try {
             float dur = lottie.durationMs();
             float frame = lottie.inFrame;
@@ -64,7 +66,7 @@ public final class AnimatedStickerView extends View {
                 frame += (el % (long) dur) * lottie.frameRate / 1000f;
             }
             canvas.save();
-            canvas.scale(getWidth() / (float) lottie.width, getHeight() / (float) lottie.height);
+            canvas.scale(w / (float) lottie.width, h / (float) lottie.height);
             lottie.render(canvas, frame);
             canvas.restore();
         } catch (Throwable t) {
