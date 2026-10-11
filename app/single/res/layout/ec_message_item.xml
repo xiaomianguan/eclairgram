@@ -34,6 +34,12 @@
                 android:layout_gravity="center"
                 android:src="@android:drawable/ic_media_play"
                 android:visibility="gone" />
+
+            <!-- 动图贴纸：用内置 Lottie 渲染器播放 -->
+            <cc.wuersan008.eclairgram.AnimatedStickerView android:id="@+id/ec_msg_anim"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
         </FrameLayout>
 
         <TextView android:id="@+id/ec_msg_text"

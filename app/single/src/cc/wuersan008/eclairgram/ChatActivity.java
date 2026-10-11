@@ -48,9 +48,10 @@ public class ChatActivity extends BaseActivity {
         int id;
         boolean out;
         String text;
-        int mediaType;        // 0 无, 1 图片, 2 视频
+        int mediaType;        // 0 无, 1 图片, 2 视频, 3 贴纸
         byte[] location;      // 原文件的 InputFileLocation（可下载）
         String mediaName;
+        long animId;          // 贴纸文档 id（动图贴纸缓存 key）
         // 内联缩略图
         byte[] thumbLocation; // 缩略图的 InputFileLocation（可下载，可能为 null）
         byte[] thumbInline;   // 内联字节（photoCachedSize，可能为 null）
@@ -143,6 +144,7 @@ public class ChatActivity extends BaseActivity {
                 final FrameLayout thumbWrap = (FrameLayout) v.findViewById(R.id.ec_msg_thumbwrap);
                 final ImageView thumb = (ImageView) v.findViewById(R.id.ec_msg_thumb);
                 ImageView play = (ImageView) v.findViewById(R.id.ec_msg_play);
+                final AnimatedStickerView anim = (AnimatedStickerView) v.findViewById(R.id.ec_msg_anim);
                 TextView t = (TextView) v.findViewById(R.id.ec_msg_text);
 
                 row.setGravity(m.out ? Gravity.RIGHT : Gravity.LEFT);
@@ -171,36 +173,63 @@ public class ChatActivity extends BaseActivity {
                     float scale = Math.min((float) maxW / iw, (float) maxH / ih);
                     int dw = Math.max(dp(48), (int) (iw * scale));
                     int dh = Math.max(dp(48), (int) (ih * scale));
-                    thumb.setLayoutParams(new FrameLayout.LayoutParams(dw, dh));
-                    play.setVisibility(m.mediaType == 2 ? View.VISIBLE : View.GONE);
-                    play.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+                    FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dw, dh);
 
-                    final String key = m.thumbKey;
-                    thumb.setTag(key);
-                    Bitmap b = ThumbCache.get(key);
-                    if (b != null) {
-                        thumb.setImageBitmap(b);
-                        thumb.setBackgroundColor(0);
+                    Lottie lo = sticker ? LottieSticker.get("L" + m.animId) : null;
+                    if (lo != null) {
+                        // 动图贴纸：用内置 Lottie 渲染器播放
+                        thumb.setVisibility(View.GONE);
+                        play.setVisibility(View.GONE);
+                        anim.setVisibility(View.VISIBLE);
+                        anim.setLayoutParams(lp);
+                        anim.setLottie(lo);
+                        anim.start();
                     } else {
-                        thumb.setImageBitmap(null);
-                        thumb.setBackgroundColor(0x22000000);
-                        ThumbCache.load(ChatActivity.this, key, m.thumbLocation, m.thumbInline,
-                                dp(150), new ThumbCache.Listener() {
-                                    public void onThumb(String k, Bitmap bmp) {
-                                        if (bmp == null) return;
-                                        if (key.equals(thumb.getTag())) {
-                                            thumb.setImageBitmap(bmp);
-                                            thumb.setBackgroundColor(0);
-                                        } else {
-                                            // 视图已被复用：刷新一次让缓存里的缩略图立刻出现
-                                            mAdapter.notifyDataSetChanged();
+                        anim.setVisibility(View.GONE);
+                        anim.stop();
+                        thumb.setVisibility(View.VISIBLE);
+                        thumb.setLayoutParams(lp);
+                        play.setVisibility(m.mediaType == 2 ? View.VISIBLE : View.GONE);
+                        play.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+
+                        final String key = m.thumbKey;
+                        thumb.setTag(key);
+                        Bitmap b = ThumbCache.get(key);
+                        if (b != null) {
+                            thumb.setImageBitmap(b);
+                            thumb.setBackgroundColor(0);
+                        } else {
+                            thumb.setImageBitmap(null);
+                            thumb.setBackgroundColor(0x22000000);
+                            ThumbCache.load(ChatActivity.this, key, m.thumbLocation, m.thumbInline,
+                                    dp(150), new ThumbCache.Listener() {
+                                        public void onThumb(String k, Bitmap bmp) {
+                                            if (bmp == null) return;
+                                            if (key.equals(thumb.getTag())) {
+                                                thumb.setImageBitmap(bmp);
+                                                thumb.setBackgroundColor(0);
+                                            } else {
+                                                // 视图已被复用：刷新一次让缓存里的缩略图立刻出现
+                                                mAdapter.notifyDataSetChanged();
+                                            }
                                         }
-                                    }
-                                });
+                                    });
+                        }
+                        // 顺便下载并解析动图（TGS），到达后切换成动画
+                        if (sticker && m.location != null && !LottieSticker.isFailed("L" + m.animId)) {
+                            LottieSticker.load(ChatActivity.this, "L" + m.animId, m.location,
+                                    new LottieSticker.Listener() {
+                                        public void onLottie(String k, Lottie l) {
+                                            if (l != null) mAdapter.notifyDataSetChanged();
+                                        }
+                                    });
+                        }
                     }
                 } else {
                     thumbWrap.setVisibility(View.GONE);
                     thumb.setTag(null);
+                    anim.setVisibility(View.GONE);
+                    anim.stop();
                 }
 
                 // 媒体气泡整体可聚焦/可点按：气泡背景自带 state_focused 蓝边，
@@ -546,6 +575,7 @@ public class ChatActivity extends BaseActivity {
                             long dah = doc.i64("access_hash");
                             byte[] dref = asBytes(doc.get("file_reference"));
                             mm.location = MtpClient.documentFileLocation(did, dah, dref, "");
+                            mm.animId = did;
                             // 贴纸取最大的缩略图（老系统解不了 webp），视频优先内联字节
                             Object[] th = sticker ? stickerThumb(doc) : documentThumb(doc);
                             if (th != null) {
