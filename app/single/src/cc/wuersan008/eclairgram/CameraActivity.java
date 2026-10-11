@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -33,6 +34,7 @@ public class CameraActivity extends Activity
 
     private Camera mCamera;
     private SurfaceView mPreview;
+    private SeekBar mZoom;
     private boolean mReady;
     private boolean mTaken;
     private int mRotation = 90;
@@ -51,6 +53,24 @@ public class CameraActivity extends Activity
         mPreview.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);   // 2.x 必需
         root.addView(mPreview, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.FILL_PARENT, 0, 1.0f));
+
+        // 变焦：只在相机支持时显示；方向键左右可调
+        mZoom = new SeekBar(this);
+        mZoom.setVisibility(View.GONE);
+        mZoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
+                if (fromUser) applyZoom(progress);
+            }
+
+            public void onStartTrackingTouch(SeekBar sb) {
+            }
+
+            public void onStopTrackingTouch(SeekBar sb) {
+            }
+        });
+        root.addView(mZoom, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.FILL_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
 
         Button shutter = new Button(this);
         shutter.setText(R.string.ec_camera_shutter);
@@ -73,6 +93,13 @@ public class CameraActivity extends Activity
             mRotation = sensorOrientation();
             p.setRotation(mRotation);          // 写进 EXIF（双保险）
             mCamera.setParameters(p);
+            if (zoomSupported(p)) {
+                mZoom.setMax(maxZoom(p));
+                mZoom.setProgress(0);
+                mZoom.setVisibility(View.VISIBLE);
+            } else {
+                mZoom.setVisibility(View.GONE);
+            }
             setDisplayOrientation(mRotation);
             mCamera.setPreviewDisplay(h);
             mCamera.startPreview();
@@ -118,12 +145,71 @@ public class CameraActivity extends Activity
     }
 
     @Override
-    public boolean onKeyDown(int code, KeyEvent e) {
-        if (code == KeyEvent.KEYCODE_CAMERA || code == KeyEvent.KEYCODE_DPAD_CENTER) {
-            take();
-            return true;
+    public boolean dispatchKeyEvent(KeyEvent e) {
+        if (e.getAction() == KeyEvent.ACTION_DOWN) {
+            int code = e.getKeyCode();
+            if (code == KeyEvent.KEYCODE_CAMERA || code == KeyEvent.KEYCODE_DPAD_CENTER) {
+                take();
+                return true;
+            }
+            if (code == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                nudgeZoom(+1);
+                return true;
+            }
+            if (code == KeyEvent.KEYCODE_DPAD_LEFT) {
+                nudgeZoom(-1);
+                return true;
+            }
         }
-        return super.onKeyDown(code, e);
+        return super.dispatchKeyEvent(e);
+    }
+
+    /** 方向键左右微调变焦（同时更新滑块）。 */
+    private void nudgeZoom(int delta) {
+        if (mZoom.getVisibility() != View.VISIBLE) return;
+        int z = mZoom.getProgress() + delta;
+        if (z < 0) z = 0;
+        if (z > mZoom.getMax()) z = mZoom.getMax();
+        mZoom.setProgress(z);
+        applyZoom(z);
+    }
+
+    /** 应用变焦（0 = 不变焦）。变焦相关 API 是 API 8+，这里用反射调用。 */
+    private void applyZoom(int zoom) {
+        if (mCamera == null) return;
+        try {
+            Camera.Parameters p = mCamera.getParameters();
+            if (!zoomSupported(p)) return;
+            int max = maxZoom(p);
+            if (zoom < 0) zoom = 0;
+            if (zoom > max) zoom = max;
+            setZoom(p, zoom);
+            mCamera.setParameters(p);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static boolean zoomSupported(Camera.Parameters p) {
+        try {
+            return ((Boolean) Camera.Parameters.class.getMethod("isZoomSupported")
+                    .invoke(p)).booleanValue();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static int maxZoom(Camera.Parameters p) {
+        try {
+            return ((Integer) Camera.Parameters.class.getMethod("getMaxZoom")
+                    .invoke(p)).intValue();
+        } catch (Throwable t) {
+            return 0;
+        }
+    }
+
+    private static void setZoom(Camera.Parameters p, int zoom) throws Exception {
+        Camera.Parameters.class.getMethod("setZoom", int.class)
+                .invoke(p, Integer.valueOf(zoom));
     }
 
     private void take() {
