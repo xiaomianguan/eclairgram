@@ -68,6 +68,9 @@ public final class StickerPicker extends Dialog {
         list.setDividerHeight(0);
         list.setCacheColorHint(0);
         list.setSelector(new ColorDrawable(0x00000000));
+        // 让 D-pad 焦点能进入网格里的单元格：每个贴纸格是 focusable 的 ImageView，
+        // 不打开这个开关时 ListView 只让整行获得焦点，按确定键不会触发发送。
+        list.setItemsCanFocus(true);
         adapter = new Adapter();
         list.setAdapter(adapter);
         setContentView(list);
