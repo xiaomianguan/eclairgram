@@ -176,6 +176,22 @@ def main():
     run([f'{BT}/d8', '--lib', AJAR, '--min-api', '7', '--output', dexdir,
          '@' + classlist], env=javac_env())
     run([f'{BT}/aapt', 'add', base, 'classes.dex'], cwd=dexdir)
+
+    # 打包原生库（libwebp 解码器：老系统的贴纸缩略图是 WebP，见 native/build_libwebp.sh）
+    libsrc = f'{WS}/app/single/libs'
+    if os.path.isdir(libsrc):
+        libstage = f'{WORK}/lib'
+        shutil.rmtree(libstage, ignore_errors=True)
+        for abi in sorted(os.listdir(libsrc)):
+            srcdir = os.path.join(libsrc, abi)
+            if not os.path.isdir(srcdir):
+                continue
+            os.makedirs(os.path.join(libstage, abi))
+            for so in sorted(os.listdir(srcdir)):
+                shutil.copy2(os.path.join(srcdir, so), os.path.join(libstage, abi, so))
+                run([f'{BT}/aapt', 'add', base, f'lib/{abi}/{so}'], cwd=WORK)
+        print('   已打包原生库 lib/')
+
     aligned = f'{WORK}/aligned.apk'
     run([f'{BT}/zipalign', '-f', '4', base, aligned])
     out = f'{WS}/dist/eclairgram.apk'

@@ -132,6 +132,13 @@ public final class ThumbCache {
     }
 
     private static Bitmap decode(byte[] data, int maxPx) {
+        // WebP（贴纸缩略图）在 Android 4.0 之前 BitmapFactory 解不了，
+        // 用随 APK 打包的 libwebp 解（见 WebpNative / native/build_libwebp.sh）。
+        if (isWebp(data)) {
+            Bitmap b = WebpNative.decode(data);
+            if (b != null) return scaleDown(b, maxPx);
+            // libwebp 不可用（非 ARM 设备等）：继续走 BitmapFactory（4.0+ 支持 WebP）
+        }
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inJustDecodeBounds = true;
         BitmapFactory.decodeByteArray(data, 0, data.length, o);
@@ -142,5 +149,17 @@ public final class ThumbCache {
         o.inSampleSize = sample;
         o.inPreferredConfig = Bitmap.Config.RGB_565;
         return BitmapFactory.decodeByteArray(data, 0, data.length, o);
+    }
+
+    private static Bitmap scaleDown(Bitmap b, int maxPx) {
+        if (b == null || maxPx <= 0) return b;
+        int longest = Math.max(b.getWidth(), b.getHeight());
+        if (longest <= maxPx) return b;
+        float s = (float) maxPx / longest;
+        int w = Math.max(1, (int) (b.getWidth() * s));
+        int h = Math.max(1, (int) (b.getHeight() * s));
+        Bitmap scaled = Bitmap.createScaledBitmap(b, w, h, true);
+        if (scaled != b) b.recycle();
+        return scaled;
     }
 }
