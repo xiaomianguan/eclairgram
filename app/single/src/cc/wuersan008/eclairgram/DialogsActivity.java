@@ -273,6 +273,7 @@ public class DialogsActivity extends Activity {
     protected void onResume() {
         super.onResume();
         mFetchAvatars = true;
+        Notifications.clearAll(this);
         mTg.addListener(mUpd);
         reload();
     }

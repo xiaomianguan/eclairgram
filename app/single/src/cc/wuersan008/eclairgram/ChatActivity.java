@@ -244,6 +244,19 @@ public class ChatActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        TelegramManager.get(this).setActivePeer(mPeer);   // 正在看这个会话：别弹它的通知
+        Notifications.clearAll(this);
+    }
+
+    @Override
+    protected void onPause() {
+        TelegramManager.get(this).setActivePeer(null);
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
         mRunning = false;
         super.onDestroy();

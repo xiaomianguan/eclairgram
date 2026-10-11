@@ -50,5 +50,7 @@
             android:label="@string/ec_app_name"
             android:exported="true"
             android:screenOrientation="portrait" />
+
+        <service android:name=".TelegramService" />
     </application>
 </manifest>

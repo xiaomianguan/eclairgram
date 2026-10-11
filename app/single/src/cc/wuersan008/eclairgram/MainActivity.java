@@ -47,6 +47,11 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mTg = TelegramManager.get(this);
+        // 常驻服务：退到后台后连接与更新循环继续跑，新消息才能弹通知
+        try {
+            startService(new Intent(this, TelegramService.class));
+        } catch (Throwable ignored) {
+        }
         // 会话持久化：已登录就直接进入会话列表，不再显示任何设置页。
         if (mTg.isSignedIn()) {
             Intent i = new Intent(this, DialogsActivity.class);

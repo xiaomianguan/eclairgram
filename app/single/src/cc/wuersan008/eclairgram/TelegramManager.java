@@ -316,10 +316,17 @@ public final class TelegramManager {
         }).start();
     }
 
+    /** 确保更新循环在跑（供常驻服务调用，让应用退到后台后仍能收新消息并弹通知）。 */
+    public void keepUpdating() {
+        if (isSignedIn() && !mUpdatesRunning) startUpdates();
+    }
+
     private void updateLoop() {
         while (true) {
             try {
                 boolean changed = false;
+                TlObject diffForNotify = null;
+                java.util.List<Object> msgsForNotify = null;
                 synchronized (mNet) {
                     ensureConnected();
                     if (!mUpdatesInit) {
@@ -340,11 +347,21 @@ public final class TelegramManager {
                             mDate = st.i32("date");
                         }
                         java.util.List<Object> nm = diff.list("new_messages");
-                        if (nm != null && !nm.isEmpty()) changed = true;
+                        if (nm != null && !nm.isEmpty()) {
+                            changed = true;
+                            diffForNotify = diff;
+                            msgsForNotify = nm;
+                        }
                     } else if (t.equals("updates.differenceEmpty")) {
                         mDate = diff.i32("date");
                     } else if (t.equals("updates.differenceTooLong")) {
                         mUpdatesInit = false;
+                    }
+                }
+                if (diffForNotify != null) {
+                    try {
+                        handleNewMessages(diffForNotify, msgsForNotify);
+                    } catch (Throwable ignored) {
                     }
                 }
                 if (changed) notifyListeners();
@@ -355,6 +372,149 @@ public final class TelegramManager {
                 sleepQuiet(3000);
             }
             sleepQuiet(4000);
+        }
+    }
+
+    // ============================================================ 新消息通知
+    private volatile byte[] mActivePeer;
+
+    /** 正在查看的会话（{@link ChatActivity} 设置），用来避免给当前会话弹通知。 */
+    public void setActivePeer(byte[] peer) {
+        mActivePeer = peer;
+    }
+
+    private static String nameOf(TlObject u) {
+        String n = u.str("first_name");
+        if (n == null) n = "";
+        String ln = u.str("last_name");
+        if (ln != null && ln.length() > 0) n = n.length() > 0 ? n + " " + ln : ln;
+        if (n.length() == 0) {
+            String un = u.str("username");
+            n = un == null ? "" : ("@" + un);
+        }
+        return n;
+    }
+
+    /** 从 difference 自带的 users/chats 解析出新消息所属会话的信息，弹通知。 */
+    private void handleNewMessages(TlObject diff, java.util.List<Object> msgs) {
+        if (msgs == null || msgs.isEmpty()) return;
+
+        java.util.Map<Long, String> unames = new java.util.HashMap<Long, String>();
+        java.util.Map<Long, Long> uaccess = new java.util.HashMap<Long, Long>();
+        java.util.Map<Long, Long> uphotos = new java.util.HashMap<Long, Long>();
+        java.util.Map<Long, String> uuser = new java.util.HashMap<Long, String>();
+        long selfId = 0;
+        java.util.List<Object> users = diff.list("users");
+        if (users != null) {
+            for (Object o : users) {
+                TlObject u = (TlObject) o;
+                long uid = u.i64("id");
+                if (u.bool("self")) selfId = uid;
+                unames.put(Long.valueOf(uid), nameOf(u));
+                uaccess.put(Long.valueOf(uid), Long.valueOf(u.i64("access_hash")));
+                String un = u.str("username");
+                if (un != null && un.length() > 0) uuser.put(Long.valueOf(uid), un);
+                TlObject ph = u.obj("photo");
+                if (ph != null && ph.type().equals("userProfilePhoto")) {
+                    uphotos.put(Long.valueOf(uid), Long.valueOf(ph.i64("photo_id")));
+                }
+            }
+        }
+
+        java.util.Map<Long, String> cnames = new java.util.HashMap<Long, String>();
+        java.util.Map<Long, Long> caccess = new java.util.HashMap<Long, Long>();
+        java.util.Map<Long, Long> cphotos = new java.util.HashMap<Long, Long>();
+        java.util.Map<Long, Integer> cparts = new java.util.HashMap<Long, Integer>();
+        java.util.List<Object> chats = diff.list("chats");
+        if (chats != null) {
+            for (Object o : chats) {
+                TlObject c = (TlObject) o;
+                long cid = c.i64("id");
+                cnames.put(Long.valueOf(cid), c.str("title"));
+                TlObject cp = c.obj("photo");
+                if (cp != null && cp.type().equals("chatPhoto")) {
+                    cphotos.put(Long.valueOf(cid), Long.valueOf(cp.i64("photo_id")));
+                }
+                if (c.type().equals("channel")) {
+                    caccess.put(Long.valueOf(cid), Long.valueOf(c.i64("access_hash")));
+                    cparts.put(Long.valueOf(cid), Integer.valueOf(c.i32("participants_count")));
+                }
+            }
+        }
+
+        for (Object o : msgs) {
+            TlObject m = (TlObject) o;
+            if (!m.type().equals("message")) continue;
+            if (m.bool("out")) continue;                 // 自己发的不用通知
+            TlObject peer = m.obj("peer_id");
+            if (peer == null) continue;
+
+            byte[] peerBytes;
+            String title;
+            String username = null;
+            long photoId = 0;
+            long peerId;
+            int type;
+            int participants = 0;
+
+            String t = peer.type();
+            if (t.equals("peerUser")) {
+                long uid = peer.i64("user_id");
+                if (uid == selfId) continue;             // “收藏夹”不通知
+                Long ah = uaccess.get(Long.valueOf(uid));
+                peerBytes = MtpClient.inputPeerUser(uid, ah == null ? 0L : ah.longValue());
+                title = unames.get(Long.valueOf(uid));
+                username = uuser.get(Long.valueOf(uid));
+                Long pid = uphotos.get(Long.valueOf(uid));
+                photoId = pid == null ? 0L : pid.longValue();
+                peerId = uid;
+                type = 0;
+            } else if (t.equals("peerChat")) {
+                long cid = peer.i64("chat_id");
+                peerBytes = MtpClient.inputPeerChat(cid);
+                title = cnames.get(Long.valueOf(cid));
+                Long pid = cphotos.get(Long.valueOf(cid));
+                photoId = pid == null ? 0L : pid.longValue();
+                peerId = cid;
+                type = 1;
+            } else if (t.equals("peerChannel")) {
+                long cid = peer.i64("channel_id");
+                Long ah = caccess.get(Long.valueOf(cid));
+                peerBytes = MtpClient.inputPeerChannel(cid, ah == null ? 0L : ah.longValue());
+                title = cnames.get(Long.valueOf(cid));
+                Long pid = cphotos.get(Long.valueOf(cid));
+                photoId = pid == null ? 0L : pid.longValue();
+                Integer pc = cparts.get(Long.valueOf(cid));
+                participants = pc == null ? 0 : pc.intValue();
+                peerId = cid;
+                type = 2;
+            } else {
+                continue;
+            }
+
+            if (title == null || title.length() == 0) title = mApp.getString(R.string.ec_app_name);
+
+            String text = m.str("message");
+            if (text == null || text.length() == 0) {
+                TlObject media = m.obj("media");
+                String mt = media == null ? "" : media.type();
+                text = mt.equals("messageMediaPhoto")
+                        ? mApp.getString(R.string.ec_media_photo)
+                        : mt.equals("messageMediaDocument")
+                            ? mApp.getString(R.string.ec_media_video)
+                            : mApp.getString(R.string.ec_notif_new);
+            } else if (type == 1 || type == 2) {
+                // 群组/频道里带上发送者名字
+                TlObject from = m.obj("from_id");
+                if (from != null && from.type().equals("peerUser")) {
+                    String sn = unames.get(Long.valueOf(from.i64("user_id")));
+                    if (sn != null && sn.length() > 0) text = sn + ": " + text;
+                }
+            }
+
+            if (mActivePeer != null && java.util.Arrays.equals(mActivePeer, peerBytes)) continue;
+            Notifications.message(mApp, peerBytes, title, text, photoId, type, username,
+                    peerId, participants);
         }
     }
 
