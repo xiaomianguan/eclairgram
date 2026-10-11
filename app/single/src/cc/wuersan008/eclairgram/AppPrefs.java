@@ -8,7 +8,7 @@ import android.content.res.Resources;
 import java.util.Locale;
 
 /**
- * 应用自己的界面偏好（与 Telegram 会话数据分开存放）：语言、通知开关。
+ * 应用自己的界面偏好（与 Telegram 会话数据分开存放）：语言、通知开关、动图贴纸开关。
  *
  * Android 2.1–4.0 没有“单个应用的语言”概念（per-app locale 要到 API 17），
  * 只能改进程级的资源语言配置（{@link #applyLocale}），所以每个界面在创建时都要调用一次。
@@ -18,6 +18,7 @@ public final class AppPrefs {
     private static final String PREFS = "eclairgram_ui";
     private static final String KEY_LANG = "language";        // "" = 跟随系统
     private static final String KEY_NOTIFS = "notifications"; // 默认开
+    private static final String KEY_ANIM = "animated_stickers"; // 默认开
 
     private AppPrefs() {}
 
@@ -66,5 +67,18 @@ public final class AppPrefs {
 
     public static void setNotificationsEnabled(Context c, boolean on) {
         sp(c).edit().putBoolean(KEY_NOTIFS, on).commit();
+    }
+
+    // ============================================================ 动图贴纸
+    /**
+     * 是否渲染动图贴纸（TGS/Lottie）。关掉后贴纸只显示静态帧（缩略图），
+     * 在低内存设备上能省下不少 CPU/内存。
+     */
+    public static boolean animatedStickersEnabled(Context c) {
+        return sp(c).getBoolean(KEY_ANIM, true);
+    }
+
+    public static void setAnimatedStickersEnabled(Context c, boolean on) {
+        sp(c).edit().putBoolean(KEY_ANIM, on).commit();
     }
 }

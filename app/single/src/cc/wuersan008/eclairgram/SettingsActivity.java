@@ -10,7 +10,7 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 
 /**
- * 设置页（从会话列表的菜单进入）：语言选择 + 通知开关。
+ * 设置页（从会话列表的菜单进入）：语言选择 + 通知开关 + 动图贴纸开关。
  *
  * 语言改变后重启到会话列表，让所有界面用新语言重建（老系统没有 recreate()）。
  */
@@ -44,6 +44,19 @@ public class SettingsActivity extends BaseActivity {
         findViewById(R.id.ec_set_notifications_row).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 notifs.setChecked(!notifs.isChecked());
+            }
+        });
+
+        final CheckBox anim = (CheckBox) findViewById(R.id.ec_set_anim);
+        anim.setChecked(AppPrefs.animatedStickersEnabled(this));
+        anim.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton b, boolean on) {
+                AppPrefs.setAnimatedStickersEnabled(SettingsActivity.this, on);
+            }
+        });
+        findViewById(R.id.ec_set_anim_row).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                anim.setChecked(!anim.isChecked());
             }
         });
 

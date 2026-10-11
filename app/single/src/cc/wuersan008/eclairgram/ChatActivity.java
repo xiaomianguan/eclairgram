@@ -85,6 +85,7 @@ public class ChatActivity extends BaseActivity {
     private volatile boolean mResumed = false;
     private volatile boolean mWake = false;   // 唤醒轮询线程立即刷新
     private int mLastSig = 0;                 // 上次渲染的消息指纹，未变则不重绑
+    private boolean mAnimOn = true;           // 是否渲染动图贴纸（设置里可关）
     private static final long POLL_MS = 8000; // 轮询间隔（仅在界面可见时轮询）
 
     @Override
@@ -100,6 +101,7 @@ public class ChatActivity extends BaseActivity {
         mParticipants = getIntent().getIntExtra("participants", 0);
         mOnline = getIntent().getBooleanExtra("online", false);
         mSelf = getIntent().getBooleanExtra("self", false);
+        mAnimOn = AppPrefs.animatedStickersEnabled(this);
 
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         setContentView(R.layout.ec_chat);
@@ -177,7 +179,7 @@ public class ChatActivity extends BaseActivity {
                     int dh = Math.max(dp(48), (int) (ih * scale));
                     FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dw, dh);
 
-                    Lottie lo = sticker ? LottieSticker.get("L" + m.animId) : null;
+                    Lottie lo = (sticker && mAnimOn) ? LottieSticker.get("L" + m.animId) : null;
                     if (lo != null) {
                         // 视图按动图自身的宽高比排版（绝不拉伸），交给 View 等比缩放
                         int lw = lo.width > 0 ? lo.width : 1;
@@ -223,7 +225,7 @@ public class ChatActivity extends BaseActivity {
                                     });
                         }
                         // 顺便下载并解析动图（TGS），到达后切换成动画
-                        if (sticker && m.location != null && !LottieSticker.isFailed("L" + m.animId)) {
+                        if (sticker && mAnimOn && m.location != null && !LottieSticker.isFailed("L" + m.animId)) {
                             LottieSticker.load(ChatActivity.this, "L" + m.animId, m.location,
                                     m.thumbDc, new LottieSticker.Listener() {
                                         public void onLottie(String k, Lottie l) {
@@ -315,6 +317,11 @@ public class ChatActivity extends BaseActivity {
         super.onResume();
         mResumed = true;
         mWake = true;                                   // 让轮询线程立即刷新一次
+        boolean animOn = AppPrefs.animatedStickersEnabled(this);
+        if (animOn != mAnimOn) {                        // 设置里改过动图开关：强制重绑列表
+            mAnimOn = animOn;
+            mLastSig = 0;
+        }
         TelegramManager.get(this).setActivePeer(mPeer);   // 正在看这个会话：别弹它的通知
         Notifications.clearAll(this);
     }
