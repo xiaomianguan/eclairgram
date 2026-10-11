@@ -175,10 +175,10 @@ messages) provide en-US and zh-CN as well.
 - [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
 - [x] **attachments (camera/photo/video)**: the paperclip button left of the input can also
       **take a photo and send it directly** — via an in-app camera (`Camera` API, *not* the
-      system camera, so no SD card is needed); the captured JPEG is rotated upright in memory and
-      sent, writing nothing to user storage; received messages **show an inline thumbnail right in
-      the bubble** (a smaller PhotoSize for photos, the document thumb + a play icon for videos);
-      tap it to download and view the original (ImageView / VideoView)
+      system camera, so no SD card is needed, with zoom); the captured JPEG is rotated upright in
+      memory and sent, writing nothing to user storage; received messages **show an inline thumbnail
+      right in the bubble** (a smaller PhotoSize for photos, the document thumb + a play icon for
+      videos); tap it to download and view the original (ImageView / VideoView)
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan;
       **applied app-wide** — message text, list names/status, chat title, details & My Profile
