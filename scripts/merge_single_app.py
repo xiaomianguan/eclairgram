@@ -103,8 +103,9 @@ def stage_res():
 def write_build_secrets(outdir):
     os.makedirs(outdir, exist_ok=True)
     api_id, api_hash = '0', 'PLACEHOLDER'
+    production = os.environ.get('PRODUCTION', '0') == '1'
     sec = f'{WS}/local/secrets.properties'
-    if os.path.exists(sec):
+    if not production and os.path.exists(sec):
         for line in open(sec, encoding='utf-8'):
             line = line.strip()
             if line.startswith('tg.api_id'):
@@ -118,8 +119,11 @@ def write_build_secrets(outdir):
         fh.write('    public static final int API_ID = %s;\n' % api_id)
         fh.write('    public static final String API_HASH = "%s";\n' % api_hash)
         fh.write('    private BuildSecrets() {}\n}\n')
-    print('   已注入 api_id/api_hash（来自 local/secrets.properties）'
-          if os.path.exists(sec) else '   ! 未找到 local/secrets.properties，使用占位值（BYOK）')
+    if production:
+        print('   生产版：不带 api_id/api_hash（BYOK，用户自带）')
+    else:
+        print('   已注入 api_id/api_hash（来自 local/secrets.properties）'
+              if os.path.exists(sec) else '   ! 未找到 local/secrets.properties，使用占位值（BYOK）')
 
 
 def main():
@@ -194,11 +198,26 @@ def main():
 
     aligned = f'{WORK}/aligned.apk'
     run([f'{BT}/zipalign', '-f', '4', base, aligned])
-    out = f'{WS}/dist/eclairgram.apk'
-    run([f'{BT}/apksigner', 'sign',
-         '--key', f'{WS}/keys/testkey.pk8', '--cert', f'{WS}/keys/testkey.x509.pem',
-         '--min-sdk-version', '7', '--v1-signing-enabled', 'true',
-         '--v2-signing-enabled', 'false', '--out', out, aligned], env=javac_env())
+    production = os.environ.get('PRODUCTION', '0') == '1'
+    out = (f'{WS}/dist/eclairgram-release.apk' if production
+           else f'{WS}/dist/eclairgram.apk')
+    sign_ks = os.environ.get('SIGN_KS')
+    if sign_ks:
+        # 正式签名：keystore 路径/别名走环境变量，口令用 apksigner 的 env: 语法，
+        # 绝不写进命令行或仓库（避免口令出现在进程参数/日志里）。
+        sign = [f'{BT}/apksigner', 'sign',
+                '--ks', sign_ks,
+                '--ks-key-alias', os.environ.get('SIGN_ALIAS', 'key0'),
+                '--ks-pass', 'env:SIGN_KS_PASS',
+                '--key-pass', 'env:SIGN_KEY_PASS',
+                '--min-sdk-version', '7', '--v1-signing-enabled', 'true',
+                '--v2-signing-enabled', 'false', '--out', out, aligned]
+    else:
+        sign = [f'{BT}/apksigner', 'sign',
+                '--key', f'{WS}/keys/testkey.pk8', '--cert', f'{WS}/keys/testkey.x509.pem',
+                '--min-sdk-version', '7', '--v1-signing-enabled', 'true',
+                '--v2-signing-enabled', 'false', '--out', out, aligned]
+    run(sign, env=javac_env())
     print('  产物：', out, os.path.getsize(out), 'bytes')
 
 
