@@ -310,6 +310,13 @@ public class ChatActivity extends BaseActivity {
                 }
             }
         }).start();
+
+        // 打开会话就聚焦输入框：D-pad 用户可直接开始打字，不必先在一堆媒体气泡间穿行。
+        // 同时抑制软键盘自动弹出（点一下输入框仍可唤出），免得一进会话就被键盘挡住消息。
+        getWindow().setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
+                | android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        mInput.requestFocus();
     }
 
     @Override
