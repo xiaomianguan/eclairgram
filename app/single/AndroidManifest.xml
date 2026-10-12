@@ -8,7 +8,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cc.wuersan008.eclairgram"
     android:versionCode="1"
-    android:versionName="0.3">
+    android:versionName="v1.0.0-alpha">
 
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="7" />
 

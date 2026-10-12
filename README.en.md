@@ -2,6 +2,8 @@
 
 [简体中文](README.md) | **[English (US)](README.en.md)**
 
+> Current version: **`v1.0.0-alpha`** (first public preview; `versionCode 1`)
+
 Eclairgram keeps the **Google Talk (Android 2.1 stock Talk) UI** exactly as it was and
 swaps the network layer underneath for **Telegram's native MTProto protocol**, producing a
 Telegram client that runs on **Android 2.1 (Eclair, API 7) through Android 4.0 (ICS, API 14)**.
@@ -123,6 +125,22 @@ tg.api_hash=<your api_hash>
 Without that file `BuildSecrets` uses placeholders and the app asks the user to enter
 them on the login screen.
 
+### Building a release (production APK)
+
+```bash
+# production: no api_id/api_hash at all (BYOK), signed with the release keystore
+PRODUCTION=1 \
+SIGN_KS=/path/to/release.keystore SIGN_ALIAS=key0 \
+SIGN_KS_PASS=... SIGN_KEY_PASS=... \
+python3 scripts/merge_single_app.py
+# output: dist/eclairgram-release.apk (non-debuggable, release-signed)
+```
+
+`PRODUCTION=1` **ignores** `local/secrets.properties` and forces placeholder credentials, so a
+published APK never contains anyone's API key. The signing passwords are read from environment
+variables via `apksigner`'s `env:` mechanism, so they **never** appear on a command line, in a
+log, or in the repository (the keystore is git-ignored just like `local/` and `dist/*.apk`).
+
 ## Try the protocol on your desktop first
 
 `telegram/` is pure Java with no Android dependency, so you can validate it with a desktop JVM:
@@ -174,7 +192,8 @@ messages) provide en-US and zh-CN as well.
 - [x] **avatar loading optimised**: only the small version (a few KB) is fetched; downloads go
       straight to the file DC via `dc_id` from `userProfilePhoto`/`chatPhoto` (skipping a
       `FILE_MIGRATE` round trip); memory + disk cache so relaunches don't re-download;
-      the chat list prefetches concurrently over a 3-connection pool
+      the chat list loads avatars **one at a time, top to bottom** (so hundreds of avatars don't
+      pile up at once on an old device), and stops when the screen is no longer visible
 - [x] **own chat shown as "Saved Messages"** with no status badge; presence only on other users
 - [x] **attachments (camera/photo/video)**: the paperclip button left of the input can also
       **take a photo and send it directly** — via an in-app camera (`Camera` API, *not* the
@@ -188,7 +207,9 @@ messages) provide en-US and zh-CN as well.
       soon as it arrives), streaming thumbnails per cell; a **bundled libwebp decoder**
       (`native/build_libwebp.sh`, armeabi) decodes the WebP thumbnails, so stickers display even on
       pre-4.0 devices with no system WebP support; **animated stickers (TGS = gzipped Lottie JSON)
-      are played by a small built-in Lottie renderer** (`Lottie.java` / `AnimatedStickerView.java`)
+      are played by a small built-in Lottie renderer** (`Lottie.java` / `AnimatedStickerView.java`);
+      the picker is fully D-pad operable (focus enters the grid, centre sends), and low-RAM devices
+      can turn animation off in Settings to render static frames
 - [x] **Blobmoji colour emoji**: old font engines can't render colour fonts, so bitmaps are
       extracted at build time (`scripts/gen_emoji_pack.py`) and drawn at runtime via ImageSpan;
       **applied app-wide** — message text, list names/status, chat title, details & My Profile
@@ -201,7 +222,9 @@ messages) provide en-US and zh-CN as well.
       fully operable with the D-pad (left/right within a row, up/down between rows, centre to pick)
 - [x] **full D-pad navigation**: chat cards, buttons, the input, media bubbles, the settings
       page, the menu and dialogs are all operable with the D-pad, and the focused item has a
-      clear orange highlight; long-pressing a card opens its details
+      clear orange highlight; long-pressing a card opens its details; **opening a chat focuses
+      the input** so you can start typing immediately (the soft keyboard is not auto-shown, so it
+      never covers the messages on entry)
 - [x] **tap the profile picture to open a details page** (user/group/channel, like Talk's contact page)
 - [x] **My Profile**: tap the Saved Messages avatar (or pick it from the chat-list menu) to view and
       edit your photo, name and bio
@@ -215,14 +238,22 @@ messages) provide en-US and zh-CN as well.
 - [x] **app icon**: Eclairgram's own icon (a paper plane in a speech bubble) replaces Talk's
       launcher icon (`ic_launcher_eclairgram`, with ldpi/mdpi/hdpi/xhdpi sizes)
 - [x] **chat folders**: when the account has folders, the top bar becomes a native tab bar
-      (TabWidget) to switch between them; otherwise the title bar stays
-      (`messages.getDialogFilters` + `messages.getDialogs(folder_id)`)
+      (TabWidget) to switch between them; otherwise the title bar stays. Tabs use the stock 2.x
+      look (large icon on top, label below, ROM-provided selected background);
+      **when the tabs fit on one screen they stretch to fill it, and when there are more they
+      scroll horizontally**. Folders come from `messages.getDialogFilters`; note that
+      `messages.getDialogs`'s `folder_id` only supports the archive (0/1), so custom folders are
+      **filtered client-side**
+- [x] **complete chat list**: `messages.getDialogs` is paginated (`offset_date`/`offset_id`/
+      `offset_peer`, 100 per page), so folders and search cover the **entire** chat list rather
+      than only the most recent batch
 - [x] **chat-list system menu** (Menu key): My Profile / Search / Settings / Log out, using the
       native Android 2.1–4.0 options menu (an icon + label grid, just like stock Talk)
 - [x] **search chats**: filters by chat title (a search field appears at the top of the list); the
       system search key found on some older devices also opens it
 - [x] **settings page**: language (system default / English / Simplified Chinese — a restart applies
-      it) and a notifications toggle (off stops background new-message notifications)
+      it), a notifications toggle (off stops background new-message notifications) and an
+      **animated-stickers toggle** (off renders static frames on low-RAM devices)
 - [x] **performance work for old devices**: the emoji bitmap pack is **mmap'd off-heap** (no longer
       ~2.5 MB of Java heap); avatar/emoji bitmaps use **bounded LRU caches** and are downsampled to
       display size; the message list **polls only while visible** and skips rebinding when nothing
@@ -231,7 +262,9 @@ messages) provide en-US and zh-CN as well.
 - [x] login screen supports bring-your-own API key (BYOK)
 - [x] **two-step verification (2FA)**: after the code is accepted, if the account has a password the
       login screen asks for it (SRP 6a)
-- [ ] joint testing + screenshots on all three devices (2.1 emulator / 2.2 / 4.0)
+- [x] **joint testing on all three devices**: Android 2.1 emulator, 2.2 phone (HTC Wildfire) and
+      4.0 phone (LG-E610) — launch, full chat list, chat, sticker send/receive, search, settings and
+      D-pad navigation all pass, with no crashes
 
 ## Screenshots
 
@@ -249,8 +282,9 @@ Eclairgram on a real device (LG-E610 / Android 4.0.3, real account):
 | [`shots/ec_android40_photo_inline.png`](shots/ec_android40_photo_inline.png) | Android 4.0: a photo message with its inline thumbnail |
 | [`shots/ec_android22_dialogs.png`](shots/ec_android22_dialogs.png) | Android 2.2 phone (HTC): dark list with native frames |
 
-Install and launch were also verified on the Android 2.1 emulator (its framebuffer is frozen, so
-no screenshot was captured).
+Install, launch and the UI were also verified on the Android 2.1 emulator (its framebuffer is
+frozen and the system has no `screencap`, so screenshots were taken via the app's own `DebugShot`,
+which draws the decor view).
 
 ## Known limitations
 

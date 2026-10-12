@@ -2,6 +2,8 @@
 
 **[简体中文](README.md)** | [English (US)](README.en.md)
 
+> 当前版本：**`v1.0.0-alpha`**（首个公开预览版；`versionCode 1`）
+
 Eclairgram 把 **Google Talk（Android 2.1 原版 Talk）的界面** 原样保留下来，
 把后台的 **网络层换成 Telegram 的原生 MTProto 协议**，做成一款能跑在
 **Android 2.1（Eclair，API 7）到 Android 4.0（ICS，API 14）** 老机器上的
@@ -111,6 +113,21 @@ tg.api_hash=<你的 api_hash>
 
 没有这个文件时 `BuildSecrets` 使用占位值，应用会要求用户在登录页手动填写。
 
+### 构建正式版（生产 APK）
+
+```bash
+# 生产版：不带任何 api_id/api_hash（BYOK），并用正式 keystore 签名
+PRODUCTION=1 \
+SIGN_KS=/path/to/release.keystore SIGN_ALIAS=key0 \
+SIGN_KS_PASS=... SIGN_KEY_PASS=... \
+python3 scripts/merge_single_app.py
+# 产物：dist/eclairgram-release.apk（非 debuggable、正式签名）
+```
+
+`PRODUCTION=1` 会**忽略** `local/secrets.properties`，强制使用占位凭据，保证发布的
+APK 里不含任何人的 API key。签名口令通过 `apksigner` 的 `env:` 机制从环境变量读取，
+**不会**出现在命令行、日志或仓库里（keystore 与 `local/`、`dist/*.apk` 一样都不入库）。
+
 ## 在电脑上先跑通协议
 
 `telegram/` 是纯 Java，不依赖 Android，可以先用桌面 JVM 验证：
@@ -160,7 +177,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **头像使用系统 QuickContactBadge 相框**（原版 Talk 用的就是这个，随系统版本变化）
 - [x] **头像加载优化**：只下 small 版（几 KB）；按 `userProfilePhoto`/`chatPhoto` 的
       `dc_id` 直连文件 DC（省掉一次 `FILE_MIGRATE` 往返）；内存 + 磁盘两级缓存，
-      重启不重下；会话列表用 3 路连接池并发预取
+      重启不重下；会话列表**自上而下逐张顺序加载**（一次只下一个，避免几百个头像同时
+      排队把老设备压垮），离开界面即停止
 - [x] **自己的会话显示为「收藏夹」**且不显示状态；在线状态只用于其它用户
 - [x] **附件（拍照/图片/视频）**：输入框左侧的回形针按钮；**可直接拍照发送**——
       用应用内相机（`Camera` API，不是系统相机，因此不需要 SD 卡，支持变焦），拍到的 JPEG
@@ -173,7 +191,9 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
       **APK 内置了 libwebp 解码器**（`native/build_libwebp.sh`，armeabi），
       因此 Android 4.0 之前系统不支持 WebP 也能显示贴纸缩略图；
       **动图贴纸（TGS = gzip 后的 Lottie JSON）用自研的最小 Lottie 渲染器播放**
-      （`Lottie.java` / `AnimatedStickerView.java`），在聊天里能真正动起来
+      （`Lottie.java` / `AnimatedStickerView.java`），在聊天里能真正动起来；
+      选择器可用方向键完整操作（焦点进入网格、中键发送）；低内存机型可在设置里关掉动图，
+      改用静态帧
 - [x] **Blobmoji 彩色 emoji**：老系统字体引擎不支持彩色字体，
       改为构建期抽出位图、运行时用 ImageSpan 渲染（见 `scripts/gen_emoji_pack.py`）；
       **全应用范围生效**：消息内容、会话列表名字/状态、聊天标题、详情页与「我的资料」
@@ -184,7 +204,8 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
       可用方向键完整操作：左右在同一行内移动、上下换行、中键选中
 - [x] **全面支持方向键（D-pad）导航**：会话卡片、按钮、输入框、媒体气泡、设置页、
       菜单与各种对话框都能用方向键操作，且聚焦项有醒目的橙色高亮（不再“看不见光标”）；
-      长按卡片可打开详情
+      长按卡片可打开详情；**打开会话即聚焦输入框**，可直接开始打字（同时抑制软键盘
+      自动弹出，不会一进会话就被键盘挡住消息）
 - [x] **点按头像打开详情页**（用户/群组/频道，类似 Talk 的联系人页）
 - [x] **我的资料**：点按收藏夹头像（或从会话列表菜单）进入，可查看并修改头像、名字与简介
       （`users.getFullUser` / `account.updateProfile` / `photos.uploadProfilePhoto`）
@@ -195,19 +216,25 @@ $JDK/bin/java -cp /tmp/tg TgCli sendcode +86xxxxxxxxxxx   # 请求验证码，�
 - [x] **应用图标**：Eclairgram 自己的图标（对话气泡里的纸飞机），替换原版 Talk 的启动图标
       （`ic_launcher_eclairgram`，含 ldpi/mdpi/hdpi/xhdpi 四套尺寸）
 - [x] **会话文件夹**：账号配置了文件夹时，顶部改用原生标签栏（TabWidget）在文件夹间切换；
-      没有文件夹时仍是标题栏（`messages.getDialogFilters` + `messages.getDialogs(folder_id)`）
+      没有文件夹时仍是标题栏。标签沿用 2.x 原生样式（大图标在上、文字在下、选中态用 ROM 背景）；
+      **标签少于一屏时均分铺满整屏，多于一屏时可横向滚动**。
+      文件夹列表来自 `messages.getDialogFilters`；注意 `messages.getDialogs` 的 `folder_id`
+      只支持归档（0/1），自定义文件夹是**在客户端本地筛选**的
+- [x] **完整会话列表**：`messages.getDialogs` 分页拉取（`offset_date`/`offset_id`/`offset_peer`，
+      每页 100 条），文件夹与搜索因此覆盖**全部**会话，而不只是最近的一批
 - [x] **会话列表的系统菜单**（菜单键）：我的资料 / 搜索 / 设置 / 退出登录，沿用
       Android 2.1–4.0 的原生选项菜单（图标 + 文字的网格，和原版 Talk 一样）
 - [x] **搜索会话**：按会话标题过滤（列表顶部出现搜索框）；部分老机型自带的系统搜索键也能触发
-- [x] **设置页**：语言（跟随系统 / English / 简体中文，改动后重启界面生效）与通知开关
-      （关掉后后台不再弹新消息通知）
+- [x] **设置页**：语言（跟随系统 / English / 简体中文，改动后重启界面生效）、通知开关
+      （关掉后后台不再弹新消息通知）与**动图贴纸开关**（低内存机型可关掉，改为静态帧）
 - [x] **面向老设备的性能优化**：emoji 位图包改用 **mmap（off-heap）**，不再占用 ~2.5 MB
       堆内存；头像/emoji 位图改为**有界 LRU 缓存**并按显示尺寸降采样；消息列表**只在界面
       可见时轮询**、内容未变不重绑；**DH 私钥指数降到 256 位**（登录快数倍，安全性不受影响）；
       AES-IGE / PBKDF2 / 十六进制等热路径减少临时对象分配
 - [x] 登录页支持自带 API 凭据（BYOK）
 - [x] **两步验证（2FA）**：验证码通过后若账号有密码，登录页再要求输入密码（SRP 6a）
-- [ ] 三台设备（2.1 模拟器 / 2.2 真机 / 4.0 真机）联调与截图
+- [x] **三台设备联调**：Android 2.1 模拟器、2.2 真机（HTC Wildfire）、4.0 真机（LG-E610）
+      均已跑通启动、完整会话列表、聊天、贴纸收发、搜索、设置与方向键操作，未发现崩溃
 
 ## 截图
 
@@ -225,7 +252,8 @@ Eclairgram 实测（LG-E610 / Android 4.0.3，真实账号）：
 | [`shots/ec_android40_photo_inline.png`](shots/ec_android40_photo_inline.png) | Android 4.0：图片消息在气泡里内联显示缩略图 |
 | [`shots/ec_android22_dialogs.png`](shots/ec_android22_dialogs.png) | Android 2.2 真机（HTC）：深色列表与原生相框 |
 
-Android 2.1 模拟器上已完成安装与启动验证（该模拟器帧缓冲冻结，未取得截图）。
+Android 2.1 模拟器上已完成安装、启动与界面验证（该模拟器帧缓冲被冻结、且系统没有
+`screencap`，截图改用应用内 `DebugShot` 抓取 decor view）。
 
 ## 已知限制
 
