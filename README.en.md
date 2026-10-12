@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | **[English (US)](README.en.md)**
 
-> Current version: **`v1.0.0-alpha`** (first public preview; `versionCode 1`)
+> Current version: **`1.0.0-alpha`** (first public preview; `versionCode 1`)
 
 Eclairgram keeps the **Google Talk (Android 2.1 stock Talk) UI** exactly as it was and
 swaps the network layer underneath for **Telegram's native MTProto protocol**, producing a

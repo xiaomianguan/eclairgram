@@ -2,7 +2,7 @@
 
 **[简体中文](README.md)** | [English (US)](README.en.md)
 
-> 当前版本：**`v1.0.0-alpha`**（首个公开预览版；`versionCode 1`）
+> 当前版本：**`1.0.0-alpha`**（首个公开预览版；`versionCode 1`）
 
 Eclairgram 把 **Google Talk（Android 2.1 原版 Talk）的界面** 原样保留下来，
 把后台的 **网络层换成 Telegram 的原生 MTProto 协议**，做成一款能跑在
